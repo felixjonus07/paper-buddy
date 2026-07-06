@@ -9,6 +9,11 @@ const groupSchema = new mongoose.Schema({
   description: {
     type: String,
   },
+  parentGroup: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group',
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now,

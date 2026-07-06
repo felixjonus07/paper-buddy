@@ -1,0 +1,108 @@
+/* Glow Chart Tree - Custom CSS Flowchart */
+.tree {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  padding: 2rem;
+}
+
+.tree ul {
+  padding-top: 30px; 
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding-left: 0;
+}
+
+.tree li {
+  text-align: center;
+  list-style-type: none;
+  position: relative;
+  padding: 30px 15px 0 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Connectors */
+.tree li::before, .tree li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  border-top: 2px solid var(--primary);
+  width: 50%;
+  height: 30px;
+  z-index: 1;
+}
+.tree li::after {
+  right: auto; 
+  left: 50%;
+  border-left: 2px solid var(--primary);
+}
+
+/* Remove left connector from first child and right connector from last child */
+.tree li:first-child::before, .tree li:last-child::after {
+  border: 0 none;
+}
+
+/* Add back the vertical line for the first/last child */
+.tree li:first-child::after {
+  border-radius: 15px 0 0 0;
+}
+.tree li:last-child::before {
+  border-right: 2px solid var(--primary);
+  border-radius: 0 15px 0 0;
+}
+
+/* Remove vertical lines if it's the only child */
+.tree li:only-child::after, .tree li:only-child::before {
+  display: none;
+}
+.tree li:only-child {
+  padding-top: 0;
+}
+
+/* Vertical line from parent to children */
+.tree ul ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  border-left: 2px solid var(--primary);
+  width: 0;
+  height: 30px;
+  z-index: 1;
+}
+
+/* The Glowing Nodes */
+.glow-node {
+  background-color: var(--clay-base);
+  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 0 15px var(--primary-light), inset 2px 2px 5px rgba(255,255,255,0.05), inset -2px -2px 5px rgba(0,0,0,0.3);
+  border: 1px solid var(--primary);
+  color: var(--text-color);
+  min-width: 140px;
+  display: inline-block;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.glow-node h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+.glow-node p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.glow-node:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px var(--primary), inset 2px 2px 5px rgba(255,255,255,0.1), inset -2px -2px 5px rgba(0,0,0,0.4);
+}
