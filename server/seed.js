@@ -8,6 +8,14 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/edufin');
     console.log('Connected to MongoDB for seeding...');
 
+    // Drop the old email index if it exists
+    try {
+      await mongoose.connection.collection('users').dropIndex('email_1');
+      console.log('Dropped old email_1 index.');
+    } catch (e) {
+      console.log('No email_1 index found, proceeding...');
+    }
+
     // Clear existing users to avoid duplicates
     await User.deleteMany();
     console.log('Cleared existing users.');
@@ -19,13 +27,13 @@ const seedDatabase = async () => {
     const users = [
       {
         name: 'System Admin',
-        email: 'admin@paperbuddy.com',
+        username: 'admin',
         password: adminPassword,
         role: 'admin'
       },
       {
         name: 'John Student',
-        email: 'student@paperbuddy.com',
+        username: 'student',
         password: studentPassword,
         role: 'user'
       }

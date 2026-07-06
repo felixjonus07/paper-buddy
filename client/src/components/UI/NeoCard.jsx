@@ -5,10 +5,11 @@ const NeoCard = ({ children, className = '', style }) => {
     <div 
       className={className}
       style={{
-        backgroundColor: 'var(--bg-color)',
-        borderRadius: '20px',
-        boxShadow: 'var(--neu-shadow)',
-        padding: '2rem',
+        backgroundColor: 'var(--clay-base)',
+        borderRadius: '30px', /* Increased for softer, fluffier feel */
+        boxShadow: 'var(--clay-card)',
+        padding: '1.8rem', 
+        border: 'none', /* Removed sharp border */
         ...style
       }}
     >
