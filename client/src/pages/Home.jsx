@@ -2,12 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import NeoCard from '../components/UI/NeoCard';
 import NeoButton from '../components/UI/NeoButton';
+import ThemeToggle from '../components/UI/ThemeToggle';
 import { GraduationCap, Wallet, BookOpen } from 'lucide-react';
 
 const Home = () => {
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '90vh' }}>
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '90vh', position: 'relative' }}>
       
+      <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
+        <ThemeToggle />
+      </div>
+
       <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
         <h1 style={{ fontSize: '3rem', color: 'var(--primary)', marginBottom: '1rem' }}>
           <GraduationCap size={48} style={{ verticalAlign: 'middle', marginRight: '1rem' }} />
