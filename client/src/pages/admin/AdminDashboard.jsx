@@ -4,6 +4,7 @@ import NeoButton from '../../components/UI/NeoButton';
 import NeoInput from '../../components/UI/NeoInput';
 import NeoModal from '../../components/UI/NeoModal';
 import ThemeToggle from '../../components/UI/ThemeToggle';
+import GlowChart from '../../components/UI/GlowChart';
 import { Users, FileText, Activity, DollarSign, LayoutDashboard, Settings, Plus, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,15 +34,27 @@ const AdminDashboard = () => {
   const [feeData, setFeeData] = useState({ title: '', amount: '', groupId: '' });
   const [feeMessage, setFeeMessage] = useState('');
 
+  const [isAssignStudentModalOpen, setAssignStudentModalOpen] = useState(false);
+  const [isAssignSubgroupModalOpen, setAssignSubgroupModalOpen] = useState(false);
+  const [isGlowChartModalOpen, setGlowChartModalOpen] = useState(false);
+  
+  const [selectedUserForGroup, setSelectedUserForGroup] = useState(null);
+  const [selectedGroupForSub, setSelectedGroupForSub] = useState(null);
+  const [selectedGroupForChart, setSelectedGroupForChart] = useState(null);
+  const [expandedUser, setExpandedUser] = useState(null);
+  
+  const [assignStudentData, setAssignStudentData] = useState({ groupId: '' });
+  const [assignSubgroupData, setAssignSubgroupData] = useState({ parentId: '' });
+
   const fetchData = async () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
       const [usersRes, groupsRes, feesRes, loansRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/users', { headers }),
-        fetch('http://localhost:5000/api/admin/groups', { headers }),
-        fetch('http://localhost:5000/api/admin/fees', { headers }),
-        fetch('http://localhost:5000/api/admin/loans', { headers })
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/groups', { headers }),
+        fetch('/api/admin/fees', { headers }),
+        fetch('/api/admin/loans', { headers })
       ]);
 
       if (usersRes.ok) setUsers(await usersRes.json());
@@ -67,7 +80,7 @@ const AdminDashboard = () => {
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/admin/bulk-users', {
+      const res = await fetch('/api/admin/bulk-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(bulkData)
@@ -84,7 +97,7 @@ const AdminDashboard = () => {
   const handleGroupSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/admin/groups', {
+      const res = await fetch('/api/admin/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(groupData)
@@ -101,7 +114,7 @@ const AdminDashboard = () => {
   const handleFeeSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/admin/fees/group', {
+      const res = await fetch('/api/admin/fees/group', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(feeData)
@@ -117,13 +130,43 @@ const AdminDashboard = () => {
 
   const updateLoanStatus = async (loanId, status) => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/loans/status', {
+      const res = await fetch('/api/admin/loans/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ loanId, status })
       });
       if (res.ok) fetchData();
     } catch (err) { console.error('Failed to update loan', err); }
+  };
+
+  const handleAssignStudent = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/admin/users/assign-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ userId: selectedUserForGroup?._id, groupId: assignStudentData.groupId })
+      });
+      if (res.ok) {
+        fetchData();
+        setAssignStudentModalOpen(false);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleAssignSubgroup = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/admin/groups/assign-subgroup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ childId: selectedGroupForSub?._id, parentId: assignSubgroupData.parentId })
+      });
+      if (res.ok) {
+        fetchData();
+        setAssignSubgroupModalOpen(false);
+      }
+    } catch (err) { console.error(err); }
   };
 
   // Render Helpers
@@ -248,27 +291,44 @@ const AdminDashboard = () => {
                 <th>Username</th>
                 <th>Name</th>
                 <th>Role</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {users.map(u => (
-                <tr key={u._id}>
-                  <td>{u.username}</td>
-                  <td>{u.name}</td>
-                  <td>
-                    <span style={{ 
-                      padding: '0.4rem 0.8rem', 
-                      borderRadius: '12px', 
-                      backgroundColor: u.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-                      color: u.role === 'admin' ? '#831843' : '#115e59',
-                      fontSize: '0.8rem'
-                    }}>
-                      {u.role.toUpperCase()}
-                    </span>
-                  </td>
-                </tr>
+                <React.Fragment key={u._id}>
+                  <tr onClick={() => setExpandedUser(expandedUser === u._id ? null : u._id)} style={{ cursor: 'pointer' }}>
+                    <td>{u.username}</td>
+                    <td>{u.name}</td>
+                    <td>
+                      <span style={{ 
+                        padding: '0.4rem 0.8rem', 
+                        borderRadius: '12px', 
+                        backgroundColor: u.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
+                        color: u.role === 'admin' ? '#831843' : '#115e59',
+                        fontSize: '0.8rem'
+                      }}>
+                        {u.role.toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      {u.role === 'user' && (
+                        <NeoButton variant="mint" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setSelectedUserForGroup(u); setAssignStudentModalOpen(true); }}>Assign Group</NeoButton>
+                      )}
+                    </td>
+                  </tr>
+                  {expandedUser === u._id && (
+                    <tr>
+                      <td colSpan="4" style={{ backgroundColor: 'rgba(128,128,128,0.05)', padding: '1rem', borderBottom: '1px solid var(--text-light)' }}>
+                        <strong>Enrolled Groups:</strong> {u.groups && u.groups.length > 0 ? u.groups.map(g => (
+                          <span key={g._id} style={{ display: 'inline-block', padding: '0.3rem 0.6rem', borderRadius: '10px', backgroundColor: 'var(--clay-base)', boxShadow: 'var(--clay-outer)', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{g.name}</span>
+                        )) : <span style={{ marginLeft: '0.5rem', fontStyle: 'italic', color: 'var(--text-light)' }}>No groups assigned</span>}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
-              {users.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center' }}>No users found</td></tr>}
+              {users.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No users found</td></tr>}
             </tbody>
           </table>
         </div>
@@ -293,17 +353,24 @@ const AdminDashboard = () => {
                 <th>Group Name</th>
                 <th>Description</th>
                 <th>Created At</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {groups.map(g => (
-                <tr key={g._id}>
-                  <td>{g.name}</td>
+                <tr key={g._id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedGroupForChart(g._id); setGlowChartModalOpen(true); }}>
+                  <td>
+                    <strong>{g.name}</strong> 
+                    {g.parentGroup && <span style={{fontSize: '0.8rem', color: 'var(--text-light)', marginLeft: '0.5rem'}}>(Subgroup of {g.parentGroup.name})</span>}
+                  </td>
                   <td>{g.description || '-'}</td>
                   <td>{new Date(g.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <NeoButton variant="pink" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>Assign Parent</NeoButton>
+                  </td>
                 </tr>
               ))}
-              {groups.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center' }}>No groups found</td></tr>}
+              {groups.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center' }}>No groups found</td></tr>}
             </tbody>
           </table>
         </div>
@@ -479,6 +546,45 @@ const AdminDashboard = () => {
         </form>
       </NeoModal>
       
+      {/* Assign Student Modal */}
+      <NeoModal isOpen={isAssignStudentModalOpen} onClose={() => setAssignStudentModalOpen(false)} title={`Assign ${selectedUserForGroup?.name} to Group`}>
+        <form onSubmit={handleAssignStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <select 
+            style={{ width: '100%', backgroundColor: 'var(--clay-base)', border: 'none', borderRadius: '50px', padding: '1rem 1.5rem', fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-color)', boxShadow: 'var(--clay-outer)', outline: 'none', cursor: 'pointer' }}
+            value={assignStudentData.groupId}
+            onChange={e => setAssignStudentData({ groupId: e.target.value })}
+            required
+          >
+            <option value="">Select Group...</option>
+            {groups.map(g => <option key={g._id} value={g._id}>{g.name}</option>)}
+          </select>
+          <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Assign</NeoButton>
+        </form>
+      </NeoModal>
+
+      {/* Assign Subgroup Modal */}
+      <NeoModal isOpen={isAssignSubgroupModalOpen} onClose={() => setAssignSubgroupModalOpen(false)} title={`Set Parent for ${selectedGroupForSub?.name}`}>
+        <form onSubmit={handleAssignSubgroup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <select 
+            style={{ width: '100%', backgroundColor: 'var(--clay-base)', border: 'none', borderRadius: '50px', padding: '1rem 1.5rem', fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-color)', boxShadow: 'var(--clay-outer)', outline: 'none', cursor: 'pointer' }}
+            value={assignSubgroupData.parentId}
+            onChange={e => setAssignSubgroupData({ parentId: e.target.value })}
+            required
+          >
+            <option value="">Select Parent Group...</option>
+            {groups.filter(g => g._id !== selectedGroupForSub?._id).map(g => <option key={g._id} value={g._id}>{g.name}</option>)}
+          </select>
+          <NeoButton variant="pink" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Set Parent</NeoButton>
+        </form>
+      </NeoModal>
+
+      {/* Glow Chart Modal */}
+      <NeoModal isOpen={isGlowChartModalOpen} onClose={() => setGlowChartModalOpen(false)} title="Group Glow Chart">
+        <div style={{ width: '100%', overflowX: 'auto', padding: '2rem 0' }}>
+          <GlowChart groups={groups} rootGroupId={selectedGroupForChart} />
+        </div>
+      </NeoModal>
+
     </div>
   );
 };

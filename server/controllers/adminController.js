@@ -67,8 +67,53 @@ const createGroup = async (req, res) => {
 // Get All Groups
 const getGroups = async (req, res) => {
   try {
-    const groups = await Group.find();
+    const groups = await Group.find().populate('parentGroup', 'name');
     res.json(groups);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Assign Student to Group
+const assignStudentToGroup = async (req, res) => {
+  try {
+    const { userId, groupId } = req.body;
+    if (!userId || !groupId) {
+      return res.status(400).json({ message: 'User ID and Group ID are required' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if (!user.groups.includes(groupId)) {
+      user.groups.push(groupId);
+      await user.save();
+    }
+    
+    res.status(200).json({ message: 'Student assigned successfully', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Assign Subgroup
+const assignSubGroup = async (req, res) => {
+  try {
+    const { parentId, childId } = req.body;
+    if (!parentId || !childId) {
+      return res.status(400).json({ message: 'Parent ID and Child ID are required' });
+    }
+    if (parentId === childId) {
+      return res.status(400).json({ message: 'A group cannot be its own subgroup' });
+    }
+
+    const childGroup = await Group.findById(childId);
+    if (!childGroup) return res.status(404).json({ message: 'Child group not found' });
+
+    childGroup.parentGroup = parentId;
+    await childGroup.save();
+
+    res.status(200).json({ message: 'Subgroup assigned successfully', childGroup });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -155,5 +200,7 @@ module.exports = {
   getUsers,
   getAllFees,
   getLoans,
-  updateLoanStatus
+  updateLoanStatus,
+  assignStudentToGroup,
+  assignSubGroup
 };

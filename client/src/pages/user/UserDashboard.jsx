@@ -25,8 +25,8 @@ const UserDashboard = () => {
       const headers = { 'Authorization': `Bearer ${token}` };
       
       const [feesRes, loansRes] = await Promise.all([
-        fetch('http://localhost:5000/api/user/fees', { headers }),
-        fetch('http://localhost:5000/api/user/loans', { headers })
+        fetch('/api/user/fees', { headers }),
+        fetch('/api/user/loans', { headers })
       ]);
 
       if (feesRes.ok) setFees(await feesRes.json());
@@ -49,7 +49,7 @@ const UserDashboard = () => {
   const handleApplyLoan = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/user/loans', {
+      const res = await fetch('/api/user/loans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(loanData)
@@ -66,7 +66,7 @@ const UserDashboard = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/user/change-password', {
+      const res = await fetch('/api/user/change-password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(passwordData)
