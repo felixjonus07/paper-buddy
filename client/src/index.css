@@ -1,0 +1,63 @@
+:root {
+  /* Neumorphic Colors */
+  --bg-color: #e0e5ec;
+  --text-color: #333333;
+  --text-light: #666666;
+  --primary: #4a90e2;
+  
+  /* Shadows */
+  --shadow-light: #ffffff;
+  --shadow-dark: #a3b1c6;
+  
+  /* Extruded (Outward) Shadow */
+  --neu-shadow: 
+    9px 9px 16px var(--shadow-dark), 
+    -9px -9px 16px var(--shadow-light);
+    
+  /* Pressed (Inward) Shadow */
+  --neu-inner-shadow: 
+    inset 6px 6px 10px 0 var(--shadow-dark),
+    inset -6px -6px 10px 0 var(--shadow-light);
+
+  /* Hover Shadow for Buttons */
+  --neu-hover-shadow: 
+    5px 5px 10px var(--shadow-dark), 
+    -5px -5px 10px var(--shadow-light);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+}
+
+h1, h2, h3 {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+p {
+  color: var(--text-light);
+  line-height: 1.6;
+}
