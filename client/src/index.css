@@ -1,28 +1,91 @@
-:root {
-  /* Neumorphic Colors */
-  --bg-color: #e0e5ec;
-  --text-color: #333333;
-  --text-light: #666666;
-  --primary: #4a90e2;
-  
-  /* Shadows */
-  --shadow-light: #ffffff;
-  --shadow-dark: #a3b1c6;
-  
-  /* Extruded (Outward) Shadow */
-  --neu-shadow: 
-    9px 9px 16px var(--shadow-dark), 
-    -9px -9px 16px var(--shadow-light);
-    
-  /* Pressed (Inward) Shadow */
-  --neu-inner-shadow: 
-    inset 6px 6px 10px 0 var(--shadow-dark),
-    inset -6px -6px 10px 0 var(--shadow-light);
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-  /* Hover Shadow for Buttons */
-  --neu-hover-shadow: 
-    5px 5px 10px var(--shadow-dark), 
-    -5px -5px 10px var(--shadow-light);
+:root {
+  /* Light Mode - Monochromatic Clean */
+  --bg-color: #EFEFEF; /* Light gray background */
+  --clay-base: #FFFFFF; /* Pure white cards */
+  --text-color: #000000; /* Pure black text */
+  --text-light: #666666; /* Medium gray text */
+  --primary: #000000; /* Black accent */
+  --primary-light: #333333;
+  --overlay-bg: rgba(226, 232, 240, 0.8); /* Light mode modal backdrop */
+  
+  /* Map vibrant classes to clean grayscale shades */
+  --clay-mint: #111111; 
+  --clay-mint-light: #F0F0F0;
+  --clay-pink: #222222; 
+  --clay-pink-light: #EAEAEA;
+  --clay-peach: #000000; 
+  --clay-peach-light: #E5E5E5;
+  --clay-lavender: #333333; 
+  --clay-lavender-light: #F5F5F5;
+  
+  /* Light Mode Shadows */
+  --clay-outer: 6px 6px 12px rgba(0, 0, 0, 0.06);
+  --clay-inner-light: inset 2px 2px 5px rgba(255, 255, 255, 1);
+  --clay-inner-dark: inset -2px -2px 5px rgba(0, 0, 0, 0.03);
+
+  --clay-card: var(--clay-outer), var(--clay-inner-light), var(--clay-inner-dark);
+  --clay-btn: 4px 4px 8px rgba(0, 0, 0, 0.08), var(--clay-inner-light), var(--clay-inner-dark);
+  
+  /* Button Variants (Grayscale mapping) */
+  --clay-btn-primary: 4px 4px 8px rgba(0, 0, 0, 0.2), inset 2px 2px 4px rgba(255,255,255,0.2), inset -2px -2px 4px rgba(0,0,0,0.5);
+  --clay-btn-mint: var(--clay-btn-primary);
+  --clay-btn-pink: var(--clay-btn-primary);
+  --clay-btn-peach: var(--clay-btn-primary);
+  
+  /* Icon colors */
+  --icon-mint: #111111;
+  --icon-pink: #222222;
+  --icon-peach: #000000;
+  --icon-lavender: #333333;
+  
+  /* Pressed states */
+  --clay-pressed: inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme='dark'] {
+  /* Dark Mode - Deep Charcoal */
+  --bg-color: #121212; /* Deep black/gray background */
+  --clay-base: #1E1E1E; /* Dark charcoal cards */
+  --text-color: #FFFFFF; /* Pure white text */
+  --text-light: #AAAAAA; /* Light gray text */
+  --primary: #FFFFFF; /* White accent */
+  --primary-light: #DDDDDD;
+  --overlay-bg: rgba(0, 0, 0, 0.75); /* Dark mode modal backdrop */
+  
+  /* Map vibrant classes to dark mode grayscale shades */
+  --clay-mint: #EEEEEE; 
+  --clay-mint-light: #2A2A2A;
+  --clay-pink: #DDDDDD; 
+  --clay-pink-light: #333333;
+  --clay-peach: #FFFFFF; 
+  --clay-peach-light: #222222;
+  --clay-lavender: #CCCCCC; 
+  --clay-lavender-light: #252525;
+  
+  /* Dark Mode Shadows */
+  --clay-outer: 6px 6px 12px rgba(0, 0, 0, 0.8);
+  --clay-inner-light: inset 2px 2px 5px rgba(255, 255, 255, 0.05);
+  --clay-inner-dark: inset -2px -2px 5px rgba(0, 0, 0, 0.5);
+
+  --clay-card: var(--clay-outer), var(--clay-inner-light), var(--clay-inner-dark);
+  --clay-btn: 4px 4px 8px rgba(0, 0, 0, 0.6), var(--clay-inner-light), var(--clay-inner-dark);
+  
+  /* Button Variants (Grayscale mapping) */
+  --clay-btn-primary: 4px 4px 8px rgba(0, 0, 0, 0.5), inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.2);
+  --clay-btn-mint: var(--clay-btn-primary);
+  --clay-btn-pink: var(--clay-btn-primary);
+  --clay-btn-peach: var(--clay-btn-primary);
+  
+  /* Icon colors */
+  --icon-mint: #EEEEEE;
+  --icon-pink: #DDDDDD;
+  --icon-peach: #FFFFFF;
+  --icon-lavender: #CCCCCC;
+  
+  /* Pressed states */
+  --clay-pressed: inset 4px 4px 8px rgba(0, 0, 0, 0.8), inset -4px -4px 8px rgba(255, 255, 255, 0.05);
 }
 
 * {
@@ -32,12 +95,14 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Nunito gives that round, friendly clay feel */
+  font-family: 'Nunito', system-ui, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -46,18 +111,203 @@ a {
 }
 
 .app-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem;
   width: 100%;
 }
 
-h1, h2, h3 {
+/* Fluffy Dashboard Layout */
+.dashboard-layout {
+  display: flex;
+  gap: 2rem;
+  min-height: 90vh;
+  padding: 1rem;
+}
+
+.sidebar {
+  width: 280px;
+  background-color: var(--clay-base);
+  border-radius: 40px;
+  padding: 2rem 1.5rem;
+  box-shadow: var(--clay-card);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   color: var(--text-color);
-  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  color: var(--text-light);
+}
+
+.sidebar .nav-item:hover, .sidebar .nav-item.active {
+  color: var(--primary);
+  box-shadow: var(--clay-pressed);
+}
+
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0; /* Prevents flex children from overflowing */
+}
+
+/* Dashboard Header Responsive Layout */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-box {
+  width: 300px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-layout {
+    flex-direction: column;
+    padding-bottom: 100px; /* Space for the bottom nav */
+  }
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 40px 40px 0 0;
+    padding: 1rem 0.5rem;
+    z-index: 1000;
+    margin: 0;
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.08); /* Top shadow for light mode */
+  }
+  [data-theme='dark'] .sidebar {
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5); /* Top shadow for dark mode */
+  }
+  
+  .sidebar .nav-item {
+    padding: 0.8rem;
+    border-radius: 20px;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+  }
+  
+  .sidebar-header, .sidebar-footer, .nav-text {
+    display: none !important;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+  }
+  
+  .search-box {
+    flex: 1;
+    width: 100%;
+  }
+}
+
+h1 { font-size: 1.8rem; margin-bottom: 0.8rem; }
+h2 { font-size: 1.5rem; margin-bottom: 0.8rem; }
+h3 { font-size: 1.2rem; margin-bottom: 0.8rem; }
+h4 { font-size: 1rem; margin-bottom: 0.5rem; }
+
+h1, h2, h3, h4 {
+  color: var(--text-color);
+  font-weight: 800;
 }
 
 p {
   color: var(--text-light);
-  line-height: 1.6;
+  line-height: 1.5;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-light);
+  border-radius: 10px;
+  border: 3px solid var(--bg-color);
+}
+
+/* Clay Tables - Fully Responsive */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  color: var(--text-light);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+td {
+  padding: 0.8rem 1rem;
+  background-color: var(--clay-base);
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: var(--clay-outer); /* Only use outer shadow for clean flat look in tables */
+  border-bottom: 1px solid rgba(128,128,128,0.1);
+}
+
+tr td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+tr td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+tbody tr {
+  transition: transform 0.2s ease;
+}
+tbody tr:hover {
+  transform: translateY(-3px) scale(1.01);
 }

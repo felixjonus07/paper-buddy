@@ -5,11 +5,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  email: {
+  username: {
     type: String,
     required: true,
     unique: true,
   },
+  mustChangePassword: {
+    type: Boolean,
+    default: false,
+  },
+  groups: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group'
+  }],
   password: {
     type: String,
     required: true,
