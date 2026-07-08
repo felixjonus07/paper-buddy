@@ -2,12 +2,13 @@ import React from 'react';
 import './GlowChart.css';
 
 const GlowChartNode = ({ node, allNodes }) => {
-  // Find all children where parentGroup matches this node's ID
+  // Find all children where parentGroups includes this node's ID
   const children = allNodes.filter(n => {
-    if (!n.parentGroup) return false;
-    // Check if it's populated object or string ID
-    const parentId = typeof n.parentGroup === 'object' ? n.parentGroup._id : n.parentGroup;
-    return parentId === node._id;
+    if (!n.parentGroups || !Array.isArray(n.parentGroups)) return false;
+    return n.parentGroups.some(p => {
+      const parentId = (p && typeof p === 'object') ? p._id : p;
+      return parentId === node._id;
+    });
   });
   
   return (
@@ -38,7 +39,7 @@ const GlowChart = ({ groups, rootGroupId }) => {
     const root = groups.find(g => g._id === rootGroupId);
     if (root) rootNodes = [root];
   } else {
-    rootNodes = groups.filter(g => !g.parentGroup);
+    rootNodes = groups.filter(g => !g.parentGroups || g.parentGroups.length === 0);
   }
 
   if (rootNodes.length === 0) {

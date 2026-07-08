@@ -18,6 +18,14 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
   }],
+  scholarship: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Scholarship'
+  },
+  academicScore: {
+    type: Number,
+    default: 0
+  },
   password: {
     type: String,
     required: true,

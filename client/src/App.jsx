@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import GroupDashboard from './pages/admin/GroupDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -25,6 +26,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/groups/:groupId" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <GroupDashboard />
             </ProtectedRoute>
           } 
         />
