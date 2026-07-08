@@ -9,6 +9,11 @@ const feeSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  feeType: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FeeType',
+    required: true 
+  },
   assignedToGroup: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group',

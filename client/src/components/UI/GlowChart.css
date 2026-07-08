@@ -2,7 +2,6 @@
 .tree {
   display: flex;
   justify-content: center;
-  overflow-x: auto;
   padding: 2rem;
 }
 
