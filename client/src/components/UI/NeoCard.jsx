@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NeoCard = ({ children, className = '', style }) => {
+const NeoCard = ({ children, className = '', style, ...props }) => {
   return (
     <div 
       className={className}
@@ -12,6 +12,7 @@ const NeoCard = ({ children, className = '', style }) => {
         border: 'none', /* Removed sharp border */
         ...style
       }}
+      {...props}
     >
       {children}
     </div>
