@@ -6,6 +6,7 @@ const Payment = require('../models/Payment');
 const StudentFee = require('../models/StudentFee');
 const FeeType = require('../models/FeeType');
 const Scholarship = require('../models/Scholarship');
+const FeeRequest = require('../models/FeeRequest');
 const bcrypt = require('bcryptjs');
 
 // Helper function to apply scholarship rules
@@ -210,6 +211,44 @@ const assignSubGroup = async (req, res) => {
     }
 
     res.status(200).json({ message: 'Subgroup assigned successfully', childGroup });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Assign Fee to User
+const assignFeeToUser = async (req, res) => {
+  try {
+    const { title, amount, feeType, userId } = req.body;
+    
+    if (!title || !amount || !feeType || !userId) {
+       return res.status(400).json({ message: 'Title, amount, feeType, and userId are required' });
+    }
+
+    const user = await User.findById(userId).populate('scholarship');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const fee = await Fee.create({
+      title,
+      amount,
+      feeType,
+      assignedToUser: userId
+    });
+
+    const { baseAmount, discountAmount, finalAmount } = await applyFeeRules(user, fee);
+    await StudentFee.create({
+      studentId: userId,
+      groupId: null,
+      feeId: fee._id,
+      baseAmount,
+      discountAmount,
+      finalAmount,
+      status: 'PENDING'
+    });
+
+    res.status(201).json({ message: 'Fee assigned to user successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -457,11 +496,61 @@ const deleteScholarship = async (req, res) => {
   }
 };
 
+// Delete Fee
+const deleteFee = async (req, res) => {
+  try {
+    const feeId = req.params.id;
+
+    const fee = await Fee.findById(feeId);
+    if (!fee) return res.status(404).json({ message: 'Fee not found' });
+
+    const paidStudentFees = await StudentFee.find({ feeId, status: 'PAID' });
+    if (paidStudentFees.length > 0) {
+      return res.status(400).json({ message: 'Cannot delete fee because one or more students have already paid this fee.' });
+    }
+
+    await StudentFee.deleteMany({ feeId });
+    await Fee.findByIdAndDelete(feeId);
+
+    res.json({ message: 'Fee deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getFeeRequests = async (req, res) => {
+  try {
+    const requests = await FeeRequest.find()
+      .populate('studentId', 'name username registerNumber studentClass section year')
+      .populate('feeType', 'name')
+      .sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updateFeeRequestStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const request = await FeeRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Fee request not found' });
+    }
+    request.status = status;
+    await request.save();
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   bulkCreateUsers,
   createGroup,
   getGroups,
   assignFeeToGroup,
+  assignFeeToUser,
   getUsers,
   updateUser,
   getAllFees,
@@ -475,5 +564,8 @@ module.exports = {
   deleteFeeType,
   createScholarship,
   getScholarships,
-  deleteScholarship
+  deleteScholarship,
+  deleteFee,
+  getFeeRequests,
+  updateFeeRequestStatus
 };
