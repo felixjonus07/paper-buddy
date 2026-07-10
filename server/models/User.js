@@ -26,6 +26,13 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  phoneNumber: { type: String },
+  studentClass: { type: String },
+  section: { type: String },
+  year: { type: String },
+  personalEmail: { type: String },
+  collegeEmail: { type: String },
+  registerNumber: { type: String },
   password: {
     type: String,
     required: true,

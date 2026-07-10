@@ -6,7 +6,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, FileText, Activity, DollarSign, LayoutDashboard, Settings, Plus, LogOut } from 'lucide-react';
+import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
@@ -21,11 +21,13 @@ const AdminDashboard = () => {
   const [loans, setLoans] = useState([]);
   const [feeTypes, setFeeTypes] = useState([]);
   const [scholarships, setScholarships] = useState([]);
+  const [feeRequests, setFeeRequests] = useState([]);
 
   // Modal States
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isGroupModalOpen, setGroupModalOpen] = useState(false);
   const [isFeeModalOpen, setFeeModalOpen] = useState(false);
+  const [isAssignUserFeeModalOpen, setAssignUserFeeModalOpen] = useState(false);
   const [isEditUserModalOpen, setEditUserModalOpen] = useState(false);
 
   // Form States
@@ -37,6 +39,9 @@ const AdminDashboard = () => {
 
   const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '' });
   const [feeMessage, setFeeMessage] = useState('');
+  
+  const [userFeeData, setUserFeeData] = useState({ title: '', amount: '', feeType: '', userId: '' });
+  const [currentFeeRequest, setCurrentFeeRequest] = useState(null);
 
   const [isAssignStudentModalOpen, setAssignStudentModalOpen] = useState(false);
   const [isAssignSubgroupModalOpen, setAssignSubgroupModalOpen] = useState(false);
@@ -60,13 +65,14 @@ const AdminDashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [usersRes, groupsRes, feesRes, loansRes, catsRes, schRes] = await Promise.all([
+      const [usersRes, groupsRes, feesRes, loansRes, catsRes, schRes, feeReqRes] = await Promise.all([
         fetch('/api/admin/users', { headers }),
         fetch('/api/admin/groups', { headers }),
         fetch('/api/admin/fees', { headers }),
         fetch('/api/admin/loans', { headers }),
         fetch('/api/admin/fee-types', { headers }),
-        fetch('/api/admin/scholarships', { headers })
+        fetch('/api/admin/scholarships', { headers }),
+        fetch('/api/admin/fee-requests', { headers })
       ]);
 
       if (usersRes.ok) setUsers(await usersRes.json());
@@ -75,6 +81,7 @@ const AdminDashboard = () => {
       if (loansRes.ok) setLoans(await loansRes.json());
       if (catsRes.ok) setFeeTypes(await catsRes.json());
       if (schRes.ok) setScholarships(await schRes.json());
+      if (feeReqRes.ok) setFeeRequests(await feeReqRes.json());
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
@@ -141,6 +148,50 @@ const AdminDashboard = () => {
         setTimeout(() => setFeeModalOpen(false), 1500);
       }
     } catch (err) { setFeeMessage('Server error'); }
+  };
+
+  const handleAssignUserFeeSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/admin/fees/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(userFeeData)
+      });
+      if (res.ok) {
+        setAssignUserFeeModalOpen(false);
+        fetchData();
+        alert('Fee assigned to student successfully!');
+      } else {
+        alert('Failed to assign fee');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error assigning fee');
+    }
+  };
+
+  const handleUpdateFeeRequestStatus = async (id, status) => {
+    try {
+      const res = await fetch(`/api/admin/fee-requests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        fetchData();
+        if (status === 'approved') {
+          const request = feeRequests.find(r => r._id === id);
+          if (request) {
+            setUserFeeData({ title: request.requestedFeeTitle, amount: request.amount || '', feeType: request.feeType?._id || '', userId: request.studentId._id });
+            setCurrentFeeRequest(request);
+            setAssignUserFeeModalOpen(true);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const updateLoanStatus = async (loanId, status) => {
@@ -259,6 +310,21 @@ const AdminDashboard = () => {
       if (res.ok) fetchData();
     } catch (err) {}
   };
+  const handleDeleteFee = async (id) => {
+    if(!window.confirm('Are you sure you want to delete this fee? This will safely remove it for all students who have not paid it yet.')) return;
+    try {
+      const res = await fetch(`/api/admin/fees/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        fetchData();
+        alert('Fee deleted successfully!');
+      } else {
+        const data = await res.json();
+        alert(`Cannot delete fee: ${data.message}`);
+      }
+    } catch (err) {
+      alert('Error deleting fee');
+    }
+  };
 
   // Render Helpers
   const renderDashboard = () => {
@@ -299,11 +365,11 @@ const AdminDashboard = () => {
           <NeoCard>
              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
               <div style={{ padding: '10px', backgroundColor: 'var(--clay-peach-light)', borderRadius: '15px', color: 'var(--icon-peach)' }}>
-                <DollarSign size={20} />
+                <IndianRupee size={20} />
               </div>
               <h4 style={{ margin: 0 }}>Total Fees</h4>
             </div>
-            <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>${totalFees.toFixed(2)}</p>
+            <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalFees.toFixed(2)}</p>
           </NeoCard>
         </div>
 
@@ -323,7 +389,7 @@ const AdminDashboard = () => {
                       {l.status.toUpperCase()}
                     </span>
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>${l.amount}</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>₹{l.amount}</div>
                   
                   {l.status === 'pending' && (
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
@@ -344,7 +410,7 @@ const AdminDashboard = () => {
             </NeoCard>
             <NeoCard style={{ backgroundColor: 'var(--clay-mint-light)' }}>
               <h4 style={{ color: 'var(--icon-mint)' }}>Requested Vol</h4>
-              <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--icon-mint)' }}>${totalLoanVolume.toFixed(2)}</p>
+              <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--icon-mint)' }}>₹{totalLoanVolume.toFixed(2)}</p>
             </NeoCard>
           </div>
         </div>
@@ -457,7 +523,7 @@ const AdminDashboard = () => {
         {fees.map(f => (
           <NeoCard key={f._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{f.title}</h3>
-            <div style={{ color: 'var(--clay-peach)', fontSize: '1.8rem', fontWeight: 'bold' }}>${f.amount}</div>
+            <div style={{ color: 'var(--clay-peach)', fontSize: '1.8rem', fontWeight: 'bold' }}>₹{f.amount}</div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
               <span style={{ 
@@ -478,6 +544,10 @@ const AdminDashboard = () => {
               }}>
                 <strong>Assigned To:</strong> {f.assignedToGroup ? f.assignedToGroup.name : 'Individual'}
               </span>
+            </div>
+
+            <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
+              <NeoButton variant="peach" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={() => handleDeleteFee(f._id)}>Delete Fee</NeoButton>
             </div>
           </NeoCard>
         ))}
@@ -600,6 +670,54 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const renderFeeRequests = () => (
+    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
+      <h2 style={{ margin: 0, color: 'var(--primary)', marginBottom: '2rem' }}>Student Fee Requests</h2>
+      
+      <div style={{ display: 'grid', gap: '1.5rem' }}>
+        {feeRequests.map(r => (
+          <NeoCard key={r._id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h3 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.2rem' }}>{r.requestedFeeTitle}</h3>
+                <p style={{ margin: '0.2rem 0', color: 'var(--text-color)', fontWeight: 'bold' }}>Requested by: {r.studentId?.name} (@{r.studentId?.username})</p>
+                <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
+                  {r.studentId?.studentClass || 'N/A'} - {r.studentId?.section || 'N/A'} | Reg No: {r.studentId?.registerNumber || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span style={{ 
+                  padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 'bold',
+                  backgroundColor: r.status === 'pending' ? 'var(--clay-peach-light)' : r.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
+                  color: r.status === 'pending' ? '#9a3412' : r.status === 'approved' ? '#115e59' : '#831843'
+                }}>
+                  {r.status.toUpperCase()}
+                </span>
+              </div>
+            </div>
+            {r.reason && (
+              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-color)', borderRadius: '10px', fontSize: '0.9rem', color: 'var(--text-color)' }}>
+                <strong>Reason:</strong> {r.reason}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '2rem', padding: '1rem', backgroundColor: 'var(--bg-color)', borderRadius: '10px', fontSize: '0.9rem', color: 'var(--text-color)' }}>
+              <div><strong>Suggested Amount:</strong> ₹{r.amount}</div>
+              <div><strong>Suggested Type:</strong> {r.feeType?.name || 'Unknown'}</div>
+            </div>
+            
+            {r.status === 'pending' && (
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <NeoButton variant="mint" onClick={() => handleUpdateFeeRequestStatus(r._id, 'approved')}>Approve & Assign Fee</NeoButton>
+                <NeoButton variant="peach" onClick={() => handleUpdateFeeRequestStatus(r._id, 'rejected')}>Reject</NeoButton>
+              </div>
+            )}
+          </NeoCard>
+        ))}
+        {feeRequests.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-light)' }}>No fee requests found.</p>}
+      </div>
+    </div>
+  );
+
   return (
     <div className="app-container dashboard-layout">
       
@@ -625,13 +743,19 @@ const AdminDashboard = () => {
           <Activity size={20} /> <span className="nav-text">Student Groups</span>
         </div>
         <div className={`nav-item ${activeTab === 'fees' ? 'active' : ''}`} onClick={() => setActiveTab('fees')}>
-          <DollarSign size={20} /> <span className="nav-text">Fee Mgmt</span>
+          <IndianRupee size={20} /> <span className="nav-text">Fees</span>
         </div>
-        <div className={`nav-item ${activeTab === 'fee-types' ? 'active' : ''}`} onClick={() => setActiveTab('fee-types')}>
-          <Settings size={20} /> <span className="nav-text">Fee Types</span>
+        <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => setActiveTab('fee-requests')}>
+          <FileText size={20} /> <span className="nav-text">Fee Requests</span>
         </div>
-        <div className={`nav-item ${activeTab === 'scholarships' ? 'active' : ''}`} onClick={() => setActiveTab('scholarships')}>
-          <Settings size={20} /> <span className="nav-text">Scholarships</span>
+        <div className={`nav-item ${activeTab === 'loans' ? 'active' : ''}`} onClick={() => setActiveTab('loans')}>
+          <FileText size={20} /> <span className="nav-text">Loans</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'masters' ? 'active' : ''}`} onClick={() => setActiveTab('masters')}>
+          <Settings size={20} /> <span className="nav-text">Masters Settings</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+          <Settings size={20} /> <span className="nav-text">Settings</span>
         </div>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
@@ -650,12 +774,14 @@ const AdminDashboard = () => {
           boxShadow: 'var(--clay-outer)' 
         }}>
           <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-            {activeTab === 'dashboard' && 'Dashboard Overview'}
+            {activeTab === 'dashboard' && 'Admin Dashboard Overview'}
             {activeTab === 'users' && 'Manage Users'}
             {activeTab === 'groups' && 'Manage Groups'}
             {activeTab === 'fees' && 'Manage Fees'}
-            {activeTab === 'fee-types' && 'Manage Fee Types'}
-            {activeTab === 'scholarships' && 'Manage Scholarships'}
+            {activeTab === 'fee-requests' && 'Fee Requests'}
+            {activeTab === 'loans' && 'Manage Loans'}
+            {activeTab === 'masters' && 'Master Settings'}
+            {activeTab === 'settings' && 'Platform Settings'}
           </h2>
           <div className="header-actions">
             <div className="search-box">
@@ -669,8 +795,14 @@ const AdminDashboard = () => {
         {activeTab === 'users' && renderUserManagement()}
         {activeTab === 'groups' && renderGroupManagement()}
         {activeTab === 'fees' && renderFeeManagement()}
-        {activeTab === 'fee-types' && renderFeeTypesManagement()}
-        {activeTab === 'scholarships' && renderScholarshipsManagement()}
+        {activeTab === 'fee-requests' && renderFeeRequests()}
+        {activeTab === 'loans' && renderLoanManagement()}
+        {activeTab === 'masters' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
+            {renderFeeTypesManagement()}
+            {renderScholarshipsManagement()}
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -728,7 +860,7 @@ const AdminDashboard = () => {
       <NeoModal isOpen={isFeeModalOpen} onClose={() => { setFeeModalOpen(false); setFeeMessage(''); }} title="Assign Fee">
         <form onSubmit={handleFeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoInput type="text" placeholder="Fee Title (e.g. Fall Tuition)" value={feeData.title} onChange={e => setFeeData({...feeData, title: e.target.value})} required />
-          <NeoInput type="number" placeholder="Amount ($)" value={feeData.amount} onChange={e => setFeeData({...feeData, amount: e.target.value})} required />
+          <NeoInput type="number" placeholder="Amount (₹)" value={feeData.amount} onChange={e => setFeeData({...feeData, amount: e.target.value})} required />
           
           <div style={{ position: 'relative' }}>
             <NeoSelect 
