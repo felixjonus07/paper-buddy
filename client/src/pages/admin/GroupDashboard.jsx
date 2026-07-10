@@ -4,7 +4,7 @@ import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoModal from '../../components/UI/NeoModal';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, DollarSign, Activity, ArrowLeft, UserPlus } from 'lucide-react';
+import { Users, IndianRupee, Activity, ArrowLeft, UserPlus } from 'lucide-react';
 
 const GroupDashboard = () => {
   const { groupId } = useParams();
@@ -130,25 +130,25 @@ const GroupDashboard = () => {
             </div>
             <h4 style={{ margin: 0 }}>Total Assigned</h4>
           </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>${totalAssignedValue.toFixed(2)}</p>
+          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalAssignedValue.toFixed(2)}</p>
         </NeoCard>
         <NeoCard>
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
             <div style={{ padding: '10px', backgroundColor: 'var(--clay-mint-light)', borderRadius: '15px', color: 'var(--icon-mint)' }}>
-              <DollarSign size={20} />
+              <IndianRupee size={20} />
             </div>
             <h4 style={{ margin: 0 }}>Amount Collected</h4>
           </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>${amountCollected.toFixed(2)}</p>
+          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{amountCollected.toFixed(2)}</p>
         </NeoCard>
         <NeoCard>
            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
             <div style={{ padding: '10px', backgroundColor: 'var(--clay-pink-light)', borderRadius: '15px', color: 'var(--icon-pink)' }}>
-              <DollarSign size={20} />
+              <IndianRupee size={20} />
             </div>
             <h4 style={{ margin: 0 }}>Amount Pending</h4>
           </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>${amountPending.toFixed(2)}</p>
+          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{amountPending.toFixed(2)}</p>
         </NeoCard>
       </div>
 
@@ -186,9 +186,9 @@ const GroupDashboard = () => {
                         {l.student.scholarship ? l.student.scholarship.name : 'NONE'}
                       </span>
                     </td>
-                    <td>${l.baseTotal.toFixed(2)}</td>
-                    <td style={{ color: 'var(--clay-mint)' }}>${l.discountTotal.toFixed(2)}</td>
-                    <td style={{ fontWeight: 'bold' }}>${l.netPayable.toFixed(2)}</td>
+                    <td>₹{l.baseTotal.toFixed(2)}</td>
+                    <td style={{ color: 'var(--clay-mint)' }}>₹{l.discountTotal.toFixed(2)}</td>
+                    <td style={{ fontWeight: 'bold' }}>₹{l.netPayable.toFixed(2)}</td>
                     <td>
                       <span style={{ padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem', backgroundColor: l.status === 'PENDING' ? 'var(--clay-peach-light)' : 'var(--clay-mint-light)' }}>
                         {l.status}
