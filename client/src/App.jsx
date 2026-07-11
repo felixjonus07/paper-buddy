@@ -6,6 +6,7 @@ import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import GroupDashboard from './pages/admin/GroupDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import AIChatButton from './components/AI/AIChatButton';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
           } 
         />
       </Routes>
+      <AIChatButton />
     </Router>
   );
 }
