@@ -55,6 +55,10 @@ export default function AIDebugDashboard({ agentState, executionTrace }) {
               <div className="text-xs text-red-500 uppercase font-bold mb-1">Rollbacks Triggered</div>
               <div className="text-xl font-mono text-red-500">{rollbacks.length}</div>
             </div>
+            <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl border-green-500/20 border">
+              <div className="text-xs text-green-500 uppercase font-bold mb-1">Estimated Cost (Global)</div>
+              <div className="text-xl font-mono text-green-500">$0.003 (Mocked UI)</div>
+            </div>
           </section>
         )}
 
