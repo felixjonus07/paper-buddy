@@ -6,11 +6,12 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut } from 'lucide-react';
+import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
@@ -18,7 +19,6 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [fees, setFees] = useState([]);
-  const [loans, setLoans] = useState([]);
   const [feeTypes, setFeeTypes] = useState([]);
   const [scholarships, setScholarships] = useState([]);
   const [feeRequests, setFeeRequests] = useState([]);
@@ -65,11 +65,10 @@ const AdminDashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [usersRes, groupsRes, feesRes, loansRes, catsRes, schRes, feeReqRes] = await Promise.all([
+      const [usersRes, groupsRes, feesRes, catsRes, schRes, feeReqRes] = await Promise.all([
         fetch('/api/admin/users', { headers }),
         fetch('/api/admin/groups', { headers }),
         fetch('/api/admin/fees', { headers }),
-        fetch('/api/admin/loans', { headers }),
         fetch('/api/admin/fee-types', { headers }),
         fetch('/api/admin/scholarships', { headers }),
         fetch('/api/admin/fee-requests', { headers })
@@ -78,7 +77,6 @@ const AdminDashboard = () => {
       if (usersRes.ok) setUsers(await usersRes.json());
       if (groupsRes.ok) setGroups(await groupsRes.json());
       if (feesRes.ok) setFees(await feesRes.json());
-      if (loansRes.ok) setLoans(await loansRes.json());
       if (catsRes.ok) setFeeTypes(await catsRes.json());
       if (schRes.ok) setScholarships(await schRes.json());
       if (feeReqRes.ok) setFeeRequests(await feeReqRes.json());
@@ -329,8 +327,6 @@ const AdminDashboard = () => {
   // Render Helpers
   const renderDashboard = () => {
     const totalFees = fees.reduce((sum, f) => sum + f.amount, 0);
-    const pendingLoans = loans.filter(l => l.status === 'pending');
-    const totalLoanVolume = loans.reduce((sum, l) => sum + l.amount, 0);
 
     return (
       <div style={{ animation: 'slideUp 0.3s ease-out' }}>
@@ -372,48 +368,6 @@ const AdminDashboard = () => {
             <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalFees.toFixed(2)}</p>
           </NeoCard>
         </div>
-
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          <NeoCard style={{ flex: '2', minWidth: '400px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Recent Applications</h3>
-            <div className="card-grid">
-              {loans.slice(0, 5).map(l => (
-                <NeoCard key={l._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong>{l.user?.name}</strong>
-                    <span style={{ 
-                      padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem',
-                      backgroundColor: l.status === 'pending' ? 'var(--clay-peach-light)' : l.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
-                      color: l.status === 'pending' ? '#9a3412' : l.status === 'approved' ? '#115e59' : '#831843'
-                    }}>
-                      {l.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>₹{l.amount}</div>
-                  
-                  {l.status === 'pending' && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '0.5rem' }}>
-                      <NeoButton variant="mint" style={{ flex: 1, padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => updateLoanStatus(l._id, 'approved')}>Approve</NeoButton>
-                      <NeoButton variant="pink" style={{ flex: 1, padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => updateLoanStatus(l._id, 'rejected')}>Reject</NeoButton>
-                    </div>
-                  )}
-                </NeoCard>
-              ))}
-              {loans.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-light)', width: '100%' }}>No recent requests</p>}
-            </div>
-          </NeoCard>
-
-          <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <NeoCard style={{ backgroundColor: 'var(--clay-lavender-light)'}}>
-              <h4 style={{ color: 'var(--icon-lavender)' }}>Pending Loans</h4>
-              <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--icon-lavender)' }}>{pendingLoans.length}</p>
-            </NeoCard>
-            <NeoCard style={{ backgroundColor: 'var(--clay-mint-light)' }}>
-              <h4 style={{ color: 'var(--icon-mint)' }}>Requested Vol</h4>
-              <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--icon-mint)' }}>₹{totalLoanVolume.toFixed(2)}</p>
-            </NeoCard>
-          </div>
-        </div>
       </div>
     );
   };
@@ -439,7 +393,11 @@ const AdminDashboard = () => {
                 padding: '0.3rem 0.6rem', 
                 borderRadius: '12px', 
                 backgroundColor: u.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-                color: u.role === 'admin' ? '#831843' : '#115e59',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.4)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
+                color: u.role === 'admin' ? 'var(--primary-dark)' : 'var(--primary)',
                 fontSize: '0.75rem',
                 fontWeight: 'bold'
               }}>
@@ -491,7 +449,14 @@ const AdminDashboard = () => {
             </div>
             
             {g.parentGroups && g.parentGroups.length > 0 && (
-              <span style={{ fontSize: '0.8rem', color: 'var(--clay-peach)', display: 'inline-block', backgroundColor: 'var(--clay-peach-light)', padding: '0.2rem 0.5rem', borderRadius: '8px', alignSelf: 'flex-start' }}>
+              <span style={{ 
+                fontSize: '0.8rem', color: 'var(--primary-dark)', display: 'inline-block', 
+                backgroundColor: 'var(--clay-peach-light)', 
+                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.4)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
+                padding: '0.2rem 0.5rem', borderRadius: '8px', alignSelf: 'flex-start', fontWeight: 'bold' 
+              }}>
                 Subgroup of: {g.parentGroups.map(p => p.name).join(', ')}
               </span>
             )}
@@ -722,15 +687,31 @@ const AdminDashboard = () => {
     <div className="app-container dashboard-layout">
       
       {/* Fluffy Sidebar Navigation */}
-      <div className="sidebar">
-        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)'}}>
-           <div style={{ width: '50px', height: '50px', backgroundColor: 'var(--clay-base)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--clay-outer)' }}>
+      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)', position: 'relative'}}>
+           <div style={{ width: '50px', height: '50px', background: 'var(--overlay-bg)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid var(--border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.4)' }}>
              <Settings size={28} color="var(--primary)" />
            </div>
-           <div>
+           <div className="header-text">
              <h3 style={{ margin: 0, color: 'var(--text-color)' }}>Admin</h3>
              <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Portal</span>
            </div>
+           {/* Sidebar Toggle Button */}
+           <button 
+             onClick={() => setSidebarOpen(!isSidebarOpen)}
+             style={{
+               position: 'absolute', right: '-12px', top: '24px',
+               width: '24px', height: '24px', borderRadius: '50%',
+               background: 'rgba(248,116,16,0.15)',
+               backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+               border: '1px solid rgba(248,116,16,0.35)', color: 'var(--primary)',
+               display: 'flex', alignItems: 'center', justifyContent: 'center',
+               cursor: 'pointer', zIndex: 10, boxShadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.4)',
+               transform: isSidebarOpen ? 'none' : 'translateX(10px)'
+             }}
+           >
+             {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+           </button>
         </div>
         
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
@@ -748,19 +729,16 @@ const AdminDashboard = () => {
         <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => setActiveTab('fee-requests')}>
           <FileText size={20} /> <span className="nav-text">Fee Requests</span>
         </div>
-        <div className={`nav-item ${activeTab === 'loans' ? 'active' : ''}`} onClick={() => setActiveTab('loans')}>
-          <FileText size={20} /> <span className="nav-text">Loans</span>
-        </div>
         <div className={`nav-item ${activeTab === 'masters' ? 'active' : ''}`} onClick={() => setActiveTab('masters')}>
-          <Settings size={20} /> <span className="nav-text">Masters Settings</span>
+          <Layers size={20} /> <span className="nav-text">Fee Group Management</span>
         </div>
         <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-          <Settings size={20} /> <span className="nav-text">Settings</span>
+          <GraduationCap size={20} /> <span className="nav-text">Scholarship Control</span>
         </div>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', backgroundColor: 'rgba(128,128,128,0.2)', color: 'var(--text-color)', border: 'none' }}>
-            <LogOut size={18} /> Logout
+          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
+            <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>
         </div>
       </div>
@@ -779,9 +757,8 @@ const AdminDashboard = () => {
             {activeTab === 'groups' && 'Manage Groups'}
             {activeTab === 'fees' && 'Manage Fees'}
             {activeTab === 'fee-requests' && 'Fee Requests'}
-            {activeTab === 'loans' && 'Manage Loans'}
-            {activeTab === 'masters' && 'Master Settings'}
-            {activeTab === 'settings' && 'Platform Settings'}
+            {activeTab === 'masters' && 'Fee Group Management'}
+            {activeTab === 'settings' && 'Scholarship Control'}
           </h2>
           <div className="header-actions">
             <div className="search-box">
@@ -796,10 +773,13 @@ const AdminDashboard = () => {
         {activeTab === 'groups' && renderGroupManagement()}
         {activeTab === 'fees' && renderFeeManagement()}
         {activeTab === 'fee-requests' && renderFeeRequests()}
-        {activeTab === 'loans' && renderLoanManagement()}
         {activeTab === 'masters' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
             {renderFeeTypesManagement()}
+          </div>
+        )}
+        {activeTab === 'settings' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
             {renderScholarshipsManagement()}
           </div>
         )}
