@@ -22,6 +22,7 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const chatbotRoutes = require('./routes/chatbot');
 const cashierRoutes = require('./routes/cashier');
+const aiRoutes = require('./routes/ai.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/loans', loanRoutes);
@@ -29,6 +30,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/cashier', cashierRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/edufin').then(() => {
