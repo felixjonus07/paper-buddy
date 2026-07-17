@@ -33,15 +33,36 @@ app.use('/api/cashier', cashierRoutes);
 app.use('/api/ai', aiRoutes);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/edufin').then(() => {
-  console.log('Connected to MongoDB');
-  if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+const connectDB = async () => {
+  try {
+    if (mongoose.connection.readyState >= 1) {
+      return;
+    }
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/edufin', {
+      serverSelectionTimeoutMS: 5000,
     });
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
   }
-}).catch(err => {
-  console.error('MongoDB connection error:', err);
+};
+
+connectDB();
+
+app.get('/api/health', async (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  res.json({ 
+    status: 'ok', 
+    dbState: states[dbState] || dbState,
+    uriSet: !!process.env.MONGO_URI 
+  });
 });
+
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
