@@ -129,6 +129,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-color) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Light mode background */
 body {
   background-color: #eef1f6;
@@ -141,6 +154,7 @@ body {
 
 /* Dark mode premium background — stronger glows so they bleed through glass */
 [data-theme='dark'] body {
+  background-color: var(--bg-color);
   background-image:
     radial-gradient(ellipse 80% 60% at 12% 8%,  rgba(248,116,16,0.22) 0%, transparent 55%),
     radial-gradient(ellipse 60% 50% at 88% 92%, rgba(248,116,16,0.14) 0%, transparent 55%),
