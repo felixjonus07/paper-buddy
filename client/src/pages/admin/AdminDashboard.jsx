@@ -30,6 +30,7 @@ const AdminDashboard = () => {
   const [isAssignUserFeeModalOpen, setAssignUserFeeModalOpen] = useState(false);
   const [isEditUserModalOpen, setEditUserModalOpen] = useState(false);
   const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
+  const [isCreateMentorModalOpen, setCreateMentorModalOpen] = useState(false);
 
   // Form States
   const [bulkData, setBulkData] = useState({ prefix: '', startRange: '', endRange: '', suffix: '', initialPassword: '' });
@@ -40,6 +41,9 @@ const AdminDashboard = () => {
 
   const [editGroupData, setEditGroupData] = useState({ _id: null, name: '', description: '', isGlobal: false });
   const [editGroupMessage, setEditGroupMessage] = useState('');
+
+  const [mentorData, setMentorData] = useState({ groupId: null, name: '', username: '', password: '' });
+  const [mentorMessage, setMentorMessage] = useState('');
 
   const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '' });
   const [feeMessage, setFeeMessage] = useState('');
@@ -157,6 +161,30 @@ const AdminDashboard = () => {
         }, 1500);
       }
     } catch (err) { setEditGroupMessage('Server error'); }
+  };
+
+  const handleCreateMentorSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/admin/groups/${mentorData.groupId}/mentor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          name: mentorData.name,
+          username: mentorData.username,
+          password: mentorData.password
+        })
+      });
+      const data = await res.json();
+      setMentorMessage(res.ok ? 'Mentor created successfully!' : (data.message || 'Failed to create mentor'));
+      if (res.ok) {
+        setTimeout(() => {
+          setCreateMentorModalOpen(false);
+          setMentorMessage('');
+          setMentorData({ groupId: null, name: '', username: '', password: '' });
+        }, 1500);
+      }
+    } catch (err) { setMentorMessage('Server error'); }
   };
 
   const handleFeeSubmit = async (e) => {
@@ -491,16 +519,23 @@ const AdminDashboard = () => {
             
             <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', flex: 1 }}>{g.description || 'No description provided'}</p>
             
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: '0.5rem' }}>
-              <NeoButton variant="mint" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <NeoButton variant="mint" style={{ flex: '1 1 45%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
                 e.stopPropagation(); 
                 setEditGroupData({ _id: g._id, name: g.name, description: g.description || '', isGlobal: g.isGlobal || false });
                 setEditGroupModalOpen(true);
               }}>
                 Edit
               </NeoButton>
-              <NeoButton variant="pink" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>
+              <NeoButton variant="pink" style={{ flex: '1 1 45%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>
                 Parent Group
+              </NeoButton>
+              <NeoButton variant="secondary" style={{ flex: '1 1 100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
+                e.stopPropagation(); 
+                setMentorData({ ...mentorData, groupId: g._id });
+                setCreateMentorModalOpen(true);
+              }}>
+                <Users size={16} style={{ display: 'inline', marginRight: '5px' }} /> Create Mentor
               </NeoButton>
             </div>
           </NeoCard>
@@ -905,6 +940,17 @@ const AdminDashboard = () => {
 
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Save Changes</NeoButton>
           {editGroupMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{editGroupMessage}</p>}
+        </form>
+      </NeoModal>
+
+      <NeoModal isOpen={isCreateMentorModalOpen} onClose={() => { setCreateMentorModalOpen(false); setMentorMessage(''); }} title="Create Group Mentor">
+        <form onSubmit={handleCreateMentorSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <NeoInput type="text" placeholder="Mentor Name (e.g. John Doe)" value={mentorData.name} onChange={e => setMentorData({...mentorData, name: e.target.value})} required />
+          <NeoInput type="text" placeholder="Username" value={mentorData.username} onChange={e => setMentorData({...mentorData, username: e.target.value})} required />
+          <NeoInput type="password" placeholder="Password" value={mentorData.password} onChange={e => setMentorData({...mentorData, password: e.target.value})} required />
+
+          <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Create Mentor</NeoButton>
+          {mentorMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{mentorMessage}</p>}
         </form>
       </NeoModal>
 

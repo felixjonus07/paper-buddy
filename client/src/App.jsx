@@ -6,6 +6,7 @@ import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import GroupDashboard from './pages/admin/GroupDashboard';
 import CashierDashboard from './pages/cashier/CashierDashboard';
+import MentorDashboard from './pages/mentor/MentorDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatBot from './components/UI/ChatBot';
 
@@ -46,6 +47,22 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="cashier">
                   <CashierDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/mentor/dashboard" 
+              element={
+                <ProtectedRoute requiredRole="mentor">
+                  <MentorDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/mentor/groups/:groupId" 
+              element={
+                <ProtectedRoute requiredRole="mentor">
+                  <GroupDashboard />
                 </ProtectedRoute>
               } 
             />

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoModal from '../../components/UI/NeoModal';
+import NeoInput from '../../components/UI/NeoInput';
+import NeoSelect from '../../components/UI/NeoSelect';
 import GlowChart from '../../components/UI/GlowChart';
 import { Users, IndianRupee, Activity, ArrowLeft, UserPlus, Network, PlusCircle } from 'lucide-react';
 
@@ -36,7 +38,9 @@ const GroupDashboard = () => {
   // Fetch all users for the modal
   const fetchAllUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users', {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -59,7 +63,9 @@ const GroupDashboard = () => {
     if (selectedStudentIds.length === 0) return;
     setIsAddingStudents(true);
     try {
-      const res = await fetch('/api/admin/users/assign-group', {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/users/assign-group`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +87,9 @@ const GroupDashboard = () => {
 
   const fetchFeeTypes = async () => {
     try {
-      const res = await fetch('/api/admin/fee-types', {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/fee-types`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -108,7 +116,9 @@ const GroupDashboard = () => {
     }
     setIsAddingFee(true);
     try {
-      const endpoint = selectedUserIdForFee ? '/api/admin/fees/user' : '/api/admin/fees/group';
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const endpoint = selectedUserIdForFee ? `${basePath}/fees/user` : `${basePath}/fees/group`;
       const payload = selectedUserIdForFee 
         ? { ...newFee, userId: selectedUserIdForFee, groupId } 
         : { ...newFee, groupId };
@@ -139,7 +149,12 @@ const GroupDashboard = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`/api/admin/groups/${groupId}/dashboard`, {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const endpoint = user.role === 'mentor' 
+          ? `/api/mentor/groups/${groupId}/dashboard` 
+          : `/api/admin/groups/${groupId}/dashboard`;
+
+        const res = await fetch(endpoint, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) {
@@ -175,7 +190,10 @@ const GroupDashboard = () => {
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <NeoButton variant="secondary" onClick={() => navigate('/admin/dashboard')} style={{ padding: '0.6rem', borderRadius: '50%' }}>
+        <NeoButton variant="secondary" onClick={() => {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          navigate(user.role === 'mentor' ? '/mentor/dashboard' : '/admin/dashboard');
+        }} style={{ padding: '0.6rem', borderRadius: '50%' }}>
           <ArrowLeft size={20} />
         </NeoButton>
         <div style={{ flex: 1 }}>
@@ -479,43 +497,46 @@ const GroupDashboard = () => {
       {isAddFeeModalOpen && (
         <NeoModal isOpen={isAddFeeModalOpen} onClose={() => setIsAddFeeModalOpen(false)} title={selectedUserIdForFee ? "Assign Fee to User" : "Assign Fee to Group"}>
           <form onSubmit={handleAddFeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <p>{selectedUserIdForFee ? "Assigning a fee will apply it specifically to this user." : "Assigning a fee will apply it to all current students in this group."}</p>
-            <div className="form-group">
-              <label>Fee Title</label>
-              <input 
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
+              {selectedUserIdForFee ? "Assigning a fee will apply it specifically to this user." : "Assigning a fee will apply it to all current students in this group."}
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Fee Title</label>
+              <NeoInput 
                 type="text" 
+                placeholder="Fee Title (e.g. Exam Fee)" 
                 value={newFee.title} 
                 onChange={e => setNewFee({...newFee, title: e.target.value})} 
                 required 
-                placeholder="e.g. Exam Fee" 
-                style={{ padding: '0.8rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--clay-base)', boxShadow: 'inset 5px 5px 10px rgba(163, 177, 198, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.8)', outline: 'none', width: '100%' }}
               />
             </div>
-            <div className="form-group">
-              <label>Amount (₹)</label>
-              <input 
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Amount (₹)</label>
+              <NeoInput 
                 type="number" 
+                placeholder="Amount (₹)" 
                 value={newFee.amount} 
                 onChange={e => setNewFee({...newFee, amount: e.target.value})} 
                 required 
                 min="0"
-                style={{ padding: '0.8rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--clay-base)', boxShadow: 'inset 5px 5px 10px rgba(163, 177, 198, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.8)', outline: 'none', width: '100%' }}
               />
             </div>
-            <div className="form-group">
-              <label>Fee Type</label>
-              <select 
-                value={newFee.feeType} 
-                onChange={e => setNewFee({...newFee, feeType: e.target.value})} 
-                required
-                style={{ padding: '0.8rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--clay-base)', boxShadow: 'inset 5px 5px 10px rgba(163, 177, 198, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.8)', outline: 'none', width: '100%' }}
-              >
-                <option value="">Select Fee Type</option>
-                {feeTypes.map(t => (
-                  <option key={t._id} value={t._id}>{t.name}</option>
-                ))}
-              </select>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Fee Type</label>
+              <div style={{ position: 'relative' }}>
+                <NeoSelect 
+                  value={newFee.feeType}
+                  onChange={val => setNewFee({...newFee, feeType: val})}
+                  required={true}
+                  placeholder="Select Fee Type..."
+                  options={feeTypes.map(t => ({ value: t._id, label: t.name }))}
+                />
+              </div>
             </div>
+
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <NeoButton variant="secondary" type="button" onClick={() => setIsAddFeeModalOpen(false)} style={{ flex: 1 }}>Cancel</NeoButton>
               <NeoButton variant="primary" type="submit" disabled={isAddingFee} style={{ flex: 1 }}>

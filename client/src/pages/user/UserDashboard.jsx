@@ -10,14 +10,14 @@ import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const loadRazorpayScript = () => {
+const loadPaytmScript = (mid) => {
   return new Promise((resolve) => {
-    if (window.Razorpay) {
+    if (window.Paytm && window.Paytm.CheckoutJS) {
       resolve(true);
       return;
     }
     const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.src = `https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${mid}.js`;
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -186,64 +186,81 @@ const UserDashboard = () => {
         return;
       }
 
-      const isLoaded = await loadRazorpayScript();
+      const isLoaded = await loadPaytmScript(orderData.mid);
       if (!isLoaded) {
-        alert('Failed to load Razorpay SDK. Are you online?');
+        alert('Failed to load Paytm SDK. Are you online?');
         return;
       }
 
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Paper Buddy',
-        description: 'Fee Payment',
-        order_id: orderData.order_id,
-        handler: async function (response) {
-          try {
-            const verifyRes = await fetch(`/api/user/verify-payment`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                id,
-                isMissing
-              })
-            });
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok) {
-              alert('Payment successful!');
-              fetchData();
-            } else {
-              alert(`Payment verification failed: ${verifyData.message}`);
+      const config = {
+        "root": "",
+        "flow": "DEFAULT",
+        "data": {
+          "orderId": orderData.orderId,
+          "token": orderData.txnToken,
+          "tokenType": "TXN_TOKEN",
+          "amount": orderData.amount
+        },
+        "handler": {
+          "notifyMerchant": async function (eventName, data) {
+            console.log("notifyMerchant handler function called");
+            console.log("eventName => ", eventName);
+            console.log("data => ", data);
+          },
+          "transactionStatus": async function (paymentStatus) {
+            console.log("paymentStatus => ", paymentStatus);
+            try {
+              const verifyRes = await fetch(`/api/user/verify-payment`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                  orderId: orderData.orderId,
+                  id,
+                  isMissing,
+                  mocked: orderData.mocked
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyRes.ok) {
+                alert('Payment successful!');
+                fetchData();
+              } else {
+                alert(`Payment verification failed: ${verifyData.message}`);
+              }
+            } catch (err) {
+              alert('Payment verification failed.');
             }
-          } catch (err) {
-            alert('Payment verification failed.');
+            if (window.Paytm && window.Paytm.CheckoutJS && typeof window.Paytm.CheckoutJS.close === 'function') {
+              window.Paytm.CheckoutJS.close();
+            }
           }
-        },
-        prefill: {
-          name: user.name,
-          email: user.email
-        },
-        theme: {
-          color: '#14b8a6'
         }
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response){
-        alert(`Payment Failed: ${response.error.description}`);
-      });
-      rzp.open();
+      if (orderData.mocked) {
+        // If we are in mock mode, bypass Paytm JS Checkout completely and just simulate a success callback
+        setTimeout(() => {
+          config.handler.transactionStatus({ STATUS: "TXN_SUCCESS" });
+        }, 1000);
+      } else {
+        if(window.Paytm && window.Paytm.CheckoutJS && typeof window.Paytm.CheckoutJS.init === 'function'){
+          window.Paytm.CheckoutJS.init(config).then(function onSuccess() {
+              window.Paytm.CheckoutJS.invoke();
+          }).catch(function onError(error){
+              console.log("error => ", error);
+              alert("Error in initializing Paytm Checkout");
+          });
+        } else {
+          alert("Paytm Checkout SDK failed to load completely. Please check your network or Merchant ID.");
+        }
+      }
 
     } catch (err) {
       console.error(err);
-      alert('Error occurred while processing payment');
+      alert(`Error occurred while processing payment: ${err.message}`);
     }
   };
 
