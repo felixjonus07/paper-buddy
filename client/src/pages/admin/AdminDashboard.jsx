@@ -29,13 +29,17 @@ const AdminDashboard = () => {
   const [isFeeModalOpen, setFeeModalOpen] = useState(false);
   const [isAssignUserFeeModalOpen, setAssignUserFeeModalOpen] = useState(false);
   const [isEditUserModalOpen, setEditUserModalOpen] = useState(false);
+  const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
 
   // Form States
   const [bulkData, setBulkData] = useState({ prefix: '', startRange: '', endRange: '', suffix: '', initialPassword: '' });
   const [bulkMessage, setBulkMessage] = useState('');
   
-  const [groupData, setGroupData] = useState({ name: '', description: '', studentIds: [] });
+  const [groupData, setGroupData] = useState({ name: '', description: '', studentIds: [], isGlobal: false });
   const [groupMessage, setGroupMessage] = useState('');
+
+  const [editGroupData, setEditGroupData] = useState({ _id: null, name: '', description: '', isGlobal: false });
+  const [editGroupMessage, setEditGroupMessage] = useState('');
 
   const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '' });
   const [feeMessage, setFeeMessage] = useState('');
@@ -125,10 +129,34 @@ const AdminDashboard = () => {
       setGroupMessage(res.ok ? 'Group created successfully!' : (data.message || 'Failed to create group'));
       if (res.ok) {
         fetchData();
-        setGroupData({ name: '', description: '', studentIds: [] });
+        setGroupData({ name: '', description: '', studentIds: [], isGlobal: false });
         setTimeout(() => setGroupModalOpen(false), 1500);
       }
     } catch (err) { setGroupMessage('Server error'); }
+  };
+
+  const handleEditGroupSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/admin/groups/${editGroupData._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          name: editGroupData.name,
+          description: editGroupData.description,
+          isGlobal: editGroupData.isGlobal
+        })
+      });
+      const data = await res.json();
+      setEditGroupMessage(res.ok ? 'Group updated successfully!' : (data.message || 'Failed to update group'));
+      if (res.ok) {
+        fetchData();
+        setTimeout(() => {
+          setEditGroupModalOpen(false);
+          setEditGroupMessage('');
+        }, 1500);
+      }
+    } catch (err) { setEditGroupMessage('Server error'); }
   };
 
   const handleFeeSubmit = async (e) => {
@@ -463,9 +491,16 @@ const AdminDashboard = () => {
             
             <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', flex: 1 }}>{g.description || 'No description provided'}</p>
             
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
-              <NeoButton variant="pink" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>
-                Assign Parent Group
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: '0.5rem' }}>
+              <NeoButton variant="mint" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
+                e.stopPropagation(); 
+                setEditGroupData({ _id: g._id, name: g.name, description: g.description || '', isGlobal: g.isGlobal || false });
+                setEditGroupModalOpen(true);
+              }}>
+                Edit
+              </NeoButton>
+              <NeoButton variant="pink" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>
+                Parent Group
               </NeoButton>
             </div>
           </NeoCard>
@@ -805,6 +840,19 @@ const AdminDashboard = () => {
           <NeoInput type="text" placeholder="Group Name (e.g. Batch A)" value={groupData.name} onChange={e => setGroupData({...groupData, name: e.target.value})} required />
           <NeoInput type="text" placeholder="Description" value={groupData.description} onChange={e => setGroupData({...groupData, description: e.target.value})} />
           
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0' }}>
+            <input 
+              type="checkbox" 
+              id="isGlobalToggle"
+              checked={groupData.isGlobal || false} 
+              onChange={e => setGroupData({...groupData, isGlobal: e.target.checked})} 
+              style={{ accentColor: 'var(--primary)', transform: 'scale(1.2)', cursor: 'pointer' }} 
+            />
+            <label htmlFor="isGlobalToggle" style={{ fontSize: '0.9rem', color: 'var(--text-color)', cursor: 'pointer' }}>
+              <strong>Global Group</strong> (Aggregates all fees/payments for members regardless of group assignment)
+            </label>
+          </div>
+
           <div style={{ position: 'relative' }}>
             <label style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem', display: 'block' }}>Assign Students (Optional)</label>
             <div style={{
@@ -834,6 +882,29 @@ const AdminDashboard = () => {
 
           <NeoButton variant="pink" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Create Group</NeoButton>
           {groupMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-pink)', textAlign: 'center' }}>{groupMessage}</p>}
+        </form>
+      </NeoModal>
+
+      <NeoModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditGroupMessage(''); }} title="Edit Group">
+        <form onSubmit={handleEditGroupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <NeoInput type="text" placeholder="Group Name" value={editGroupData.name} onChange={e => setEditGroupData({...editGroupData, name: e.target.value})} required />
+          <NeoInput type="text" placeholder="Description" value={editGroupData.description} onChange={e => setEditGroupData({...editGroupData, description: e.target.value})} />
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0' }}>
+            <input 
+              type="checkbox" 
+              id="editIsGlobalToggle"
+              checked={editGroupData.isGlobal || false} 
+              onChange={e => setEditGroupData({...editGroupData, isGlobal: e.target.checked})} 
+              style={{ accentColor: 'var(--primary)', transform: 'scale(1.2)', cursor: 'pointer' }} 
+            />
+            <label htmlFor="editIsGlobalToggle" style={{ fontSize: '0.9rem', color: 'var(--text-color)', cursor: 'pointer' }}>
+              <strong>Global Group</strong> (Aggregates all fees/payments for members regardless of group assignment)
+            </label>
+          </div>
+
+          <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Save Changes</NeoButton>
+          {editGroupMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{editGroupMessage}</p>}
         </form>
       </NeoModal>
 
