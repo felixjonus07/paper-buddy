@@ -4,8 +4,19 @@ const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
 const FeeRequest = require('../models/FeeRequest');
 const FeeType = require('../models/FeeType');
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
+
+const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('pg-sdk-node');
+
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
+const getPhonePeClient = () => {
+  return StandardCheckoutClient.getInstance(
+    process.env.PHONEPE_CLIENT_ID,
+    process.env.PHONEPE_CLIENT_SECRET,
+    parseInt(process.env.PHONEPE_CLIENT_VERSION) || 1,
+    process.env.PHONEPE_ENV === 'PRODUCTION' ? Env.PRODUCTION : Env.SANDBOX
+  );
+};
 
 const getMyFees = async (req, res) => {
   try {
@@ -150,16 +161,13 @@ const payNewFee = async (req, res) => {
   }
 };
 
-const razorpayInstance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
-});
+const axios = require('axios');
 
 const createPaymentOrder = async (req, res) => {
   try {
     const { id, isMissing } = req.body;
     let amountToPay = 0;
-    
+
     if (isMissing) {
       const fee = await Fee.findById(id);
       if (!fee) return res.status(404).json({ message: 'Fee not found' });
@@ -171,73 +179,139 @@ const createPaymentOrder = async (req, res) => {
       amountToPay = studentFee.finalAmount;
     }
 
-    const options = {
-      amount: Math.round(amountToPay * 100),
-      currency: 'INR',
-      receipt: `rcpt_${id.substring(0, 10)}_${Date.now()}`
-    };
+    const merchantOrderId = `MT${Date.now()}${id.substring(0, 6)}`;
+    const amountInPaise = Math.round(amountToPay * 100);
+    const redirectUrl = `${CLIENT_URL}/user/dashboard?merchantOrderId=${merchantOrderId}&feeId=${id}&isMissing=${isMissing}`;
 
-    const order = await razorpayInstance.orders.create(options);
-    res.json({ order_id: order.id, amount: options.amount, currency: options.currency, key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key' });
+    const request = StandardCheckoutPayRequest.builder()
+      .merchantOrderId(merchantOrderId)
+      .amount(amountInPaise)
+      .redirectUrl(redirectUrl)
+      .build();
+
+    const client = getPhonePeClient();
+    const response = await client.pay(request);
+
+    const checkoutPageUrl = response?.redirectUrl;
+
+    if (checkoutPageUrl) {
+      // Store a pending payment record for tracking
+      const feeDoc = isMissing ? await Fee.findById(id) : await StudentFee.findById(id);
+      const payment = new Payment({
+        user: req.user._id,
+        group: isMissing ? feeDoc?.assignedToGroup : feeDoc?.groupId,
+        fee: isMissing ? id : feeDoc?.feeId,
+        amount: amountToPay,
+        merchantTransactionId: merchantOrderId,
+        paymentMethod: 'PHONEPE',
+        status: 'PENDING',
+      });
+      await payment.save();
+
+      res.json({ redirectUrl: checkoutPageUrl, merchantTransactionId: merchantOrderId });
+    } else {
+      res.status(500).json({ message: 'Failed to get PhonePe redirect URL' });
+    }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('PhonePe initiate error:', error?.message || error);
+    res.status(500).json({ message: error?.message || 'Failed to initiate payment' });
   }
 };
 
 const verifyPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, id, isMissing } = req.body;
+    const { merchantTransactionId, feeId, isMissing } = req.body;
 
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_secret';
-    const expectedSignature = crypto.createHmac('sha256', secret)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest('hex');
+    const client = getPhonePeClient();
+    const statusResponse = await client.getOrderStatus(merchantTransactionId);
 
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ message: 'Invalid payment signature' });
-    }
+    const paymentState = statusResponse?.state;
 
-    let paymentAmount = 0;
-    let groupId = null;
-    let feeId = null;
+    if (paymentState === 'COMPLETED') {
+      // Update the pending payment record
+      const payment = await Payment.findOne({ merchantTransactionId });
+      if (payment) {
+        payment.status = 'SUCCESS';
+        payment.providerTransactionId = statusResponse?.paymentDetails?.[0]?.transactionId || null;
+        payment.paidAt = new Date();
+        await payment.save();
+      }
 
-    if (isMissing) {
-      const fee = await Fee.findById(id);
-      paymentAmount = fee.amount;
-      feeId = fee._id;
-      groupId = fee.assignedToGroup || null;
-      
-      const studentFee = new StudentFee({
-        studentId: req.user._id,
-        groupId,
-        feeId,
-        baseAmount: fee.amount,
-        discountAmount: 0,
-        finalAmount: fee.amount,
-        status: 'PAID'
-      });
-      await studentFee.save();
+      // Mark fee as paid
+      if (isMissing === 'true' || isMissing === true) {
+        const fee = await Fee.findById(feeId);
+        if (fee) {
+          const studentFee = new StudentFee({
+            studentId: req.user._id,
+            groupId: fee.assignedToGroup || null,
+            feeId: fee._id,
+            baseAmount: fee.amount,
+            discountAmount: 0,
+            finalAmount: fee.amount,
+            status: 'PAID'
+          });
+          await studentFee.save();
+        }
+      } else {
+        const studentFee = await StudentFee.findById(feeId);
+        if (studentFee) {
+          studentFee.status = 'PAID';
+          await studentFee.save();
+        }
+      }
+
+      res.json({ success: true, message: 'Payment verified successfully' });
+    } else if (paymentState === 'PENDING') {
+      res.json({ success: false, message: 'Payment is still pending', status: 'PENDING' });
     } else {
-      const studentFee = await StudentFee.findById(id);
-      studentFee.status = 'PAID';
-      await studentFee.save();
-      
-      paymentAmount = studentFee.finalAmount;
-      feeId = studentFee.feeId;
-      groupId = studentFee.groupId;
+      // Update payment as failed
+      const payment = await Payment.findOne({ merchantTransactionId });
+      if (payment) {
+        payment.status = 'FAILED';
+        await payment.save();
+      }
+      res.status(400).json({ success: false, message: 'Payment failed or was cancelled' });
+    }
+  } catch (error) {
+    console.error('PhonePe verify error:', error?.message || error);
+    res.status(500).json({ message: error?.message || 'Verification failed' });
+  }
+};
+
+const phonepeCallback = async (req, res) => {
+  try {
+    const client = getPhonePeClient();
+    const { authorization, response: responseBody } = req.headers;
+
+    // Validate the webhook payload using the SDK
+    const isValid = client.validateWebhookPayload(
+      authorization,
+      responseBody || JSON.stringify(req.body)
+    );
+
+    if (!isValid) {
+      console.warn('PhonePe callback: invalid webhook signature');
     }
 
-    const payment = new Payment({
-      user: req.user._id,
-      group: groupId,
-      fee: feeId,
-      amount: paymentAmount
-    });
-    await payment.save();
+    const event = req.body;
+    console.log('PhonePe callback event:', JSON.stringify(event));
 
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    if (event?.type === 'checkout.order.completed') {
+      const merchantOrderId = event?.payload?.merchantOrderId;
+      const payment = await Payment.findOne({ merchantTransactionId: merchantOrderId });
+
+      if (payment && payment.status !== 'SUCCESS') {
+        payment.status = 'SUCCESS';
+        payment.providerTransactionId = event?.payload?.paymentDetails?.[0]?.transactionId || null;
+        payment.paidAt = new Date();
+        await payment.save();
+      }
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('PhonePe callback error:', error.message);
+    res.status(200).json({ success: true }); // Always return 200 to PhonePe
   }
 };
 
@@ -279,4 +353,4 @@ const getFeeTypes = async (req, res) => {
   }
 };
 
-module.exports = { getMyFees, getProfile, getStudentFees, payFee, payNewFee, createPaymentOrder, verifyPayment, updateProfile, createFeeRequest, getMyFeeRequests, getFeeTypes };
+module.exports = { getMyFees, getProfile, getStudentFees, payFee, payNewFee, createPaymentOrder, verifyPayment, phonepeCallback, updateProfile, createFeeRequest, getMyFeeRequests, getFeeTypes };

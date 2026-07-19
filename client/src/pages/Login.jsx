@@ -76,6 +76,8 @@ const Login = () => {
           navigate('/admin/dashboard');
         } else if (data.role === 'cashier') {
           navigate('/cashier/dashboard');
+        } else if (data.role === 'mentor') {
+          navigate('/mentor/dashboard');
         } else {
           navigate('/user/dashboard');
         }

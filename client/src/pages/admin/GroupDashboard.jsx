@@ -3,8 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoModal from '../../components/UI/NeoModal';
+import NeoInput from '../../components/UI/NeoInput';
+import NeoSelect from '../../components/UI/NeoSelect';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, IndianRupee, Activity, ArrowLeft, UserPlus, Network } from 'lucide-react';
+import GroupStats from '../../components/group/GroupStats';
+import SubgroupList from '../../components/group/SubgroupList';
+import StudentList from '../../components/group/StudentList';
+import AddStudentModal from '../../components/group/AddStudentModal';
+import AddFeeModal from '../../components/group/AddFeeModal';
+import { Users, IndianRupee, Activity, ArrowLeft, UserPlus, Network, PlusCircle } from 'lucide-react';
 
 const GroupDashboard = () => {
   const { groupId } = useParams();
@@ -23,10 +30,22 @@ const GroupDashboard = () => {
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [isAddingStudents, setIsAddingStudents] = useState(false);
 
+  // Add Fee State
+  const [isAddFeeModalOpen, setIsAddFeeModalOpen] = useState(false);
+  const [feeTypes, setFeeTypes] = useState([]);
+  const [newFee, setNewFee] = useState({ title: '', amount: '', feeType: '' });
+  const [isAddingFee, setIsAddingFee] = useState(false);
+  const [selectedUserIdForFee, setSelectedUserIdForFee] = useState(null);
+
+  // Toggle State
+  const [showAllUsers, setShowAllUsers] = useState(true);
+
   // Fetch all users for the modal
   const fetchAllUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users', {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -49,7 +68,9 @@ const GroupDashboard = () => {
     if (selectedStudentIds.length === 0) return;
     setIsAddingStudents(true);
     try {
-      const res = await fetch('/api/admin/users/assign-group', {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/users/assign-group`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,12 +90,76 @@ const GroupDashboard = () => {
     }
   };
 
+  const fetchFeeTypes = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/fee-types`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setFeeTypes(json);
+      }
+    } catch (err) {
+      console.error('Failed to fetch fee types', err);
+    }
+  };
+
+  const openAddFeeModal = (userId = null) => {
+    setSelectedUserIdForFee(userId);
+    setNewFee({ title: '', amount: '', feeType: '' });
+    setIsAddFeeModalOpen(true);
+    if (feeTypes.length === 0) fetchFeeTypes();
+  };
+
+  const handleAddFeeSubmit = async (e) => {
+    e.preventDefault();
+    if (!newFee.title || !newFee.amount || !newFee.feeType) {
+      alert("Please fill all fields");
+      return;
+    }
+    setIsAddingFee(true);
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const endpoint = selectedUserIdForFee ? `${basePath}/fees/user` : `${basePath}/fees/group`;
+      const payload = selectedUserIdForFee 
+        ? { ...newFee, userId: selectedUserIdForFee, groupId } 
+        : { ...newFee, groupId };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Failed to add fee');
+      }
+      setIsAddFeeModalOpen(false);
+      window.location.reload();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsAddingFee(false);
+    }
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`/api/admin/groups/${groupId}/dashboard`, {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const endpoint = user.role === 'mentor' 
+          ? `/api/mentor/groups/${groupId}/dashboard` 
+          : `/api/admin/groups/${groupId}/dashboard`;
+
+        const res = await fetch(endpoint, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) {
@@ -110,16 +195,36 @@ const GroupDashboard = () => {
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <NeoButton variant="secondary" onClick={() => navigate('/admin/dashboard')} style={{ padding: '0.6rem', borderRadius: '50%' }}>
+        <NeoButton variant="secondary" onClick={() => {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          navigate(user.role === 'mentor' ? '/mentor/dashboard' : '/admin/dashboard');
+        }} style={{ padding: '0.6rem', borderRadius: '50%' }}>
           <ArrowLeft size={20} />
         </NeoButton>
         <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, color: 'var(--primary)' }}>{group?.name || 'Unknown'} Dashboard</h1>
-          {group?.description && <p style={{ margin: 0 }}>{group.description}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <h1 style={{ margin: 0, color: 'var(--primary)' }}>{group?.name || 'Unknown'} Dashboard</h1>
+            <span style={{ 
+              padding: '0.3rem 0.8rem', 
+              borderRadius: '20px', 
+              fontSize: '0.75rem', 
+              fontWeight: 'bold',
+              backgroundColor: group?.isGlobal ? 'var(--clay-peach-light)' : 'var(--clay-mint-light)',
+              color: group?.isGlobal ? 'var(--clay-peach)' : 'var(--clay-mint)',
+              border: `1px solid ${group?.isGlobal ? 'rgba(255, 180, 162, 0.5)' : 'rgba(181, 228, 140, 0.5)'}`
+            }}>
+              {group?.isGlobal ? 'GLOBAL GROUP' : 'LOCAL GROUP'}
+            </span>
+          </div>
+          {group?.description && <p style={{ margin: 0, marginTop: '0.3rem', color: 'var(--text-light)' }}>{group.description}</p>}
         </div>
         <NeoButton variant="mint" onClick={() => setIsHierarchyModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Network size={18} />
           View Hierarchy
+        </NeoButton>
+        <NeoButton variant="primary" onClick={() => openAddFeeModal(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <PlusCircle size={18} />
+          Add Fee
         </NeoButton>
         <NeoButton variant="primary" onClick={openAddStudentsModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <UserPlus size={18} />
@@ -127,172 +232,13 @@ const GroupDashboard = () => {
         </NeoButton>
       </div>
 
-      {/* Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-        <NeoCard>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ padding: '10px', backgroundColor: 'var(--clay-mint-light)', borderRadius: '15px', color: 'var(--icon-mint)' }}>
-              <Users size={20} />
-            </div>
-            <h4 style={{ margin: 0 }}>Enrolled Students</h4>
-          </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>{users?.length || 0}</p>
-        </NeoCard>
-        <NeoCard>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ padding: '10px', backgroundColor: 'var(--clay-lavender-light)', borderRadius: '15px', color: 'var(--icon-lavender)' }}>
-              <Activity size={20} />
-            </div>
-            <h4 style={{ margin: 0 }}>Total Assigned</h4>
-          </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalAssignedValue?.toFixed(2) || '0.00'}</p>
-        </NeoCard>
-        <NeoCard>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ padding: '10px', backgroundColor: 'var(--clay-mint-light)', borderRadius: '15px', color: 'var(--icon-mint)' }}>
-              <IndianRupee size={20} />
-            </div>
-            <h4 style={{ margin: 0 }}>Amount Collected</h4>
-          </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{amountCollected?.toFixed(2) || '0.00'}</p>
-        </NeoCard>
-        <NeoCard>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ padding: '10px', backgroundColor: 'var(--clay-pink-light)', borderRadius: '15px', color: 'var(--icon-pink)' }}>
-              <IndianRupee size={20} />
-            </div>
-            <h4 style={{ margin: 0 }}>Amount Pending</h4>
-          </div>
-          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{amountPending?.toFixed(2) || '0.00'}</p>
-        </NeoCard>
-      </div>
-
+      <GroupStats users={users} totalAssignedValue={totalAssignedValue} amountCollected={amountCollected} amountPending={amountPending} />
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        {/* Subgroups Section */}
-        {subgroups.length > 0 && (
-          <NeoCard style={{ flex: '1', minWidth: '300px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Subgroups</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {subgroups.map(sub => (
-                <div 
-                  key={sub._id}
-                  onClick={() => navigate(`/admin/groups/${sub._id}`)}
-                  style={{
-                    padding: '1rem',
-                    backgroundColor: 'var(--clay-base)',
-                    borderRadius: '15px',
-                    cursor: 'pointer',
-                    boxShadow: 'var(--clay-btn)',
-                    transition: 'all 0.2s',
-                    border: '1px solid rgba(255, 255, 255, 0.05)'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                >
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--primary)' }}>{sub?.name || 'Unnamed Group'}</h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem' }}>{sub?.description || 'No description'}</p>
-                </div>
-              ))}
-            </div>
-          </NeoCard>
-        )}
-
-        {/* Students List Section */}
-        <NeoCard style={{ flex: '2', minWidth: '500px' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Enrolled Students Ledger</h3>
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Student Name</th>
-                  <th>Score / Tier</th>
-                  <th>Base Total Fee</th>
-                  <th>Scholarship Applied</th>
-                  <th>Net Payable</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentLedgers?.map(l => (
-                  <tr key={l?.student?._id || Math.random()}>
-                    <td>{l?.student?.name || 'Unknown'} <br/><span style={{fontSize: '0.8rem', color: 'var(--text-light)'}}>{l?.student?.username || ''}</span></td>
-                    <td>
-                      <strong>{l?.student?.academicScore || 'N/A'}</strong> / 
-                      <span style={{ fontSize: '0.8rem', marginLeft: '5px', padding: '0.2rem 0.5rem', borderRadius: '10px', backgroundColor: l?.student?.scholarship ? 'var(--clay-mint-light)' : 'var(--clay-base)' }}>
-                        {l?.student?.scholarship ? l.student.scholarship.name : 'NONE'}
-                      </span>
-                    </td>
-                    <td>₹{l?.baseTotal?.toFixed(2) || '0.00'}</td>
-                    <td style={{ color: 'var(--clay-mint)' }}>₹{l?.discountTotal?.toFixed(2) || '0.00'}</td>
-                    <td style={{ fontWeight: 'bold' }}>₹{l?.netPayable?.toFixed(2) || '0.00'}</td>
-                    <td>
-                      <span style={{ padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem', backgroundColor: l?.status === 'PENDING' ? 'var(--clay-peach-light)' : 'var(--clay-mint-light)' }}>
-                        {l?.status || 'UNKNOWN'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {(!studentLedgers || studentLedgers.length === 0) && (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: 'center' }}>No billing records for this group.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </NeoCard>
+        <SubgroupList subgroups={subgroups} navigate={navigate} />
+        <StudentList showAllUsers={showAllUsers} setShowAllUsers={setShowAllUsers} studentLedgers={studentLedgers} users={users} openAddFeeModal={openAddFeeModal} />
       </div>
-      
-      {/* Add Students Modal */}
-      {isAddStudentsModalOpen && (
-        <NeoModal isOpen={isAddStudentsModalOpen} onClose={() => setIsAddStudentsModalOpen(false)} title="Add Students to Group">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <p>Select students to enroll in this group. Students already in the group are hidden.</p>
-            
-            <input 
-              type="text" 
-              placeholder="Search students..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              style={{
-                padding: '0.8rem',
-                borderRadius: '15px',
-                border: 'none',
-                backgroundColor: 'var(--clay-base)',
-                boxShadow: 'inset 5px 5px 10px rgba(163, 177, 198, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.8)',
-                outline: 'none',
-                width: '100%'
-              }}
-            />
-            
-            <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.5rem' }}>
-              {allSystemUsers
-                .filter(u => !u.groups.some(g => g._id === group._id)) // Hide users already in group
-                .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.username.toLowerCase().includes(searchTerm.toLowerCase()))
-                .map(u => (
-                  <div key={u._id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem', backgroundColor: 'var(--clay-base)', borderRadius: '15px', cursor: 'pointer' }} onClick={() => {
-                    setSelectedStudentIds(prev => prev.includes(u._id) ? prev.filter(id => id !== u._id) : [...prev, u._id]);
-                  }}>
-                    <input type="checkbox" checked={selectedStudentIds.includes(u._id)} readOnly style={{ accentColor: 'var(--primary)' }} />
-                    <div>
-                      <strong>{u.name}</strong> <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>({u.username})</span>
-                    </div>
-                  </div>
-              ))}
-              {allSystemUsers.length > 0 && allSystemUsers.filter(u => !u.groups.some(g => g._id === group._id)).length === 0 && (
-                <p style={{ textAlign: 'center', color: 'var(--text-light)' }}>All available students are already in this group.</p>
-              )}
-              {isAddingStudents && <p style={{ textAlign: 'center' }}>Loading users...</p>}
-            </div>
-
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <NeoButton variant="secondary" onClick={() => setIsAddStudentsModalOpen(false)} style={{ flex: 1 }}>Cancel</NeoButton>
-              <NeoButton variant="primary" onClick={handleAddStudentsSubmit} disabled={selectedStudentIds.length === 0} style={{ flex: 1 }}>Add Selected ({selectedStudentIds.length})</NeoButton>
-            </div>
-          </div>
-        </NeoModal>
-      )}
-
+      <AddStudentModal isAddStudentsModalOpen={isAddStudentsModalOpen} setIsAddStudentsModalOpen={setIsAddStudentsModalOpen} searchTerm={searchTerm} setSearchTerm={setSearchTerm} allSystemUsers={allSystemUsers} group={group} selectedStudentIds={selectedStudentIds} setSelectedStudentIds={setSelectedStudentIds} isAddingStudents={isAddingStudents} handleAddStudentsSubmit={handleAddStudentsSubmit} />
+      <AddFeeModal isAddFeeModalOpen={isAddFeeModalOpen} setIsAddFeeModalOpen={setIsAddFeeModalOpen} selectedUserIdForFee={selectedUserIdForFee} newFee={newFee} setNewFee={setNewFee} feeTypes={feeTypes} isAddingFee={isAddingFee} handleAddFeeSubmit={handleAddFeeSubmit} />
       {/* Hierarchy Modal */}
       {isHierarchyModalOpen && (
         <NeoModal 
