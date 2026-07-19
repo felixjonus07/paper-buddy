@@ -9,7 +9,7 @@ const paymentSchema = new mongoose.Schema({
   group: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group',
-    required: true,
+    required: false,
   },
   fee: {
     type: mongoose.Schema.Types.ObjectId,

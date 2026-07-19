@@ -13,6 +13,10 @@ const groupSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
   }],
+  isGlobal: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now,

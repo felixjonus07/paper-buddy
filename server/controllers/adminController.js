@@ -82,8 +82,18 @@ const bulkCreateUsers = async (req, res) => {
 // Create Group
 const createGroup = async (req, res) => {
   try {
-    const { name, description, studentIds } = req.body;
-    const group = await Group.create({ name, description });
+    const { name, description, studentIds, isGlobal } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ message: 'Group name is required' });
+    }
+
+    // Create group
+    const group = await Group.create({ 
+      name, 
+      description,
+      isGlobal: isGlobal || false
+    });
 
     if (studentIds && Array.isArray(studentIds) && studentIds.length > 0) {
       await User.updateMany(
@@ -119,6 +129,55 @@ const createGroup = async (req, res) => {
     }
 
     res.status(201).json(group);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update Group
+const updateGroup = async (req, res) => {
+  try {
+    const { name, description, isGlobal } = req.body;
+    const group = await Group.findById(req.params.id);
+    if (!group) return res.status(404).json({ message: 'Group not found' });
+    
+    if (name) group.name = name;
+    if (description !== undefined) group.description = description;
+    if (isGlobal !== undefined) group.isGlobal = isGlobal;
+    
+    await group.save();
+    res.json(group);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Create Mentor for a Group
+const createGroupMentor = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { name, username, password } = req.body;
+
+    const group = await Group.findById(groupId);
+    if (!group) return res.status(404).json({ message: 'Group not found' });
+
+    const userExists = await User.findOne({ username });
+    if (userExists) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const mentor = await User.create({
+      name,
+      username,
+      password: hashedPassword,
+      role: 'mentor',
+      groups: [groupId]
+    });
+
+    res.status(201).json({ _id: mentor._id, name: mentor.name, username: mentor.username });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -219,28 +278,27 @@ const assignSubGroup = async (req, res) => {
 // Assign Fee to User
 const assignFeeToUser = async (req, res) => {
   try {
-    const { title, amount, feeType, userId } = req.body;
+    const { title, amount, feeType, userId, groupId } = req.body;
     
     if (!title || !amount || !feeType || !userId) {
        return res.status(400).json({ message: 'Title, amount, feeType, and userId are required' });
     }
 
     const user = await User.findById(userId).populate('scholarship');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const fee = await Fee.create({
       title,
       amount,
       feeType,
-      assignedToUser: userId
+      assignedToUser: userId,
+      assignedToGroup: groupId || null
     });
 
     const { baseAmount, discountAmount, finalAmount } = await applyFeeRules(user, fee);
     await StudentFee.create({
       studentId: userId,
-      groupId: null,
+      groupId: groupId || null,
       feeId: fee._id,
       baseAmount,
       discountAmount,
@@ -384,12 +442,25 @@ const getGroupDashboardData = async (req, res) => {
     
     const users = await User.find({ groups: id }).select('-password').populate('scholarship', 'name');
     const fees = await Fee.find({ assignedToGroup: id }).populate('feeType', 'name');
-    const payments = await Payment.find({ group: id });
-    const studentFees = await StudentFee.find({ groupId: id }).populate({
-      path: 'studentId',
-      select: 'name username academicScore scholarship',
-      populate: { path: 'scholarship', select: 'name' }
-    });
+    
+    let payments, studentFees;
+    
+    if (group.isGlobal) {
+      const studentIds = users.map(u => u._id);
+      studentFees = await StudentFee.find({ studentId: { $in: studentIds } }).populate({
+        path: 'studentId',
+        select: 'name username academicScore scholarship',
+        populate: { path: 'scholarship', select: 'name' }
+      });
+      payments = await Payment.find({ user: { $in: studentIds } });
+    } else {
+      studentFees = await StudentFee.find({ groupId: id }).populate({
+        path: 'studentId',
+        select: 'name username academicScore scholarship',
+        populate: { path: 'scholarship', select: 'name' }
+      });
+      payments = await Payment.find({ group: id });
+    }
     
     const totalAssignedValue = studentFees.reduce((sum, sf) => sum + sf.finalAmount, 0);
     
@@ -409,12 +480,34 @@ const getGroupDashboardData = async (req, res) => {
           baseTotal: 0,
           discountTotal: 0,
           netPayable: 0,
+          amountPaid: 0,
+          amountPending: 0,
           status: 'PENDING'
         };
       }
       ledgerByStudent[sId].baseTotal += sf.baseAmount;
       ledgerByStudent[sId].discountTotal += sf.discountAmount;
       ledgerByStudent[sId].netPayable += sf.finalAmount;
+    }
+
+    // Add payments
+    for (const p of payments) {
+      if (!p.user) continue;
+      const sId = p.user.toString();
+      if (ledgerByStudent[sId]) {
+        ledgerByStudent[sId].amountPaid += p.amount;
+      }
+    }
+
+    // Calculate outstanding and status
+    for (const sId in ledgerByStudent) {
+      const ledger = ledgerByStudent[sId];
+      ledger.amountPending = Math.max(0, ledger.netPayable - ledger.amountPaid);
+      if (ledger.amountPending === 0 && ledger.netPayable > 0) {
+        ledger.status = 'PAID';
+      } else if (ledger.amountPaid > 0) {
+        ledger.status = 'PARTIAL';
+      }
     }
     
     const studentLedgers = Object.values(ledgerByStudent);
@@ -548,6 +641,8 @@ const updateFeeRequestStatus = async (req, res) => {
 module.exports = {
   bulkCreateUsers,
   createGroup,
+  updateGroup,
+  createGroupMentor,
   getGroups,
   assignFeeToGroup,
   assignFeeToUser,

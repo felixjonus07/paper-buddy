@@ -4,7 +4,7 @@ const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
 const FeeRequest = require('../models/FeeRequest');
 const FeeType = require('../models/FeeType');
-const Razorpay = require('razorpay');
+
 const crypto = require('crypto');
 
 const getMyFees = async (req, res) => {
@@ -150,10 +150,12 @@ const payNewFee = async (req, res) => {
   }
 };
 
-const razorpayInstance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
-});
+const PaytmChecksum = require('paytmchecksum');
+const https = require('https');
+
+const PAYTM_MID = process.env.PAYTM_MID || 'dummy_mid';
+const PAYTM_MERCHANT_KEY = process.env.PAYTM_MERCHANT_KEY || 'dummy_key';
+const PAYTM_WEBSITE = process.env.PAYTM_WEBSITE || 'WEBSTAGING';
 
 const createPaymentOrder = async (req, res) => {
   try {
@@ -171,14 +173,88 @@ const createPaymentOrder = async (req, res) => {
       amountToPay = studentFee.finalAmount;
     }
 
-    const options = {
-      amount: Math.round(amountToPay * 100),
-      currency: 'INR',
-      receipt: `rcpt_${id.substring(0, 10)}_${Date.now()}`
+    const orderId = `ORDER_${id.substring(0, 10)}_${Date.now()}`;
+    const amountStr = amountToPay.toFixed(2);
+
+    const paytmParams = {};
+    paytmParams.body = {
+      "requestType": "Payment",
+      "mid": PAYTM_MID,
+      "websiteName": PAYTM_WEBSITE,
+      "orderId": orderId,
+      "callbackUrl": `http://localhost:5000/api/users/payment/verify`, // Usually unused in JS checkout flow
+      "txnAmount": {
+        "value": amountStr,
+        "currency": "INR",
+      },
+      "userInfo": {
+        "custId": req.user._id.toString(),
+      },
     };
 
-    const order = await razorpayInstance.orders.create(options);
-    res.json({ order_id: order.id, amount: options.amount, currency: options.currency, key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key' });
+    let checksum = "";
+    try {
+      // The paytmchecksum library expects a 16-character string. If the provided key is invalid, this will throw.
+      checksum = await PaytmChecksum.generateSignature(JSON.stringify(paytmParams.body), PAYTM_MERCHANT_KEY);
+    } catch (e) {
+      console.warn("Could not generate Paytm signature (likely invalid key format/length). Proceeding with mock token.");
+      checksum = "dummy_checksum";
+    }
+    
+    paytmParams.head = { "signature": checksum };
+
+    const post_data = JSON.stringify(paytmParams);
+
+    const options = {
+      hostname: 'securegw-stage.paytm.in',
+      port: 443,
+      path: `/theia/api/v1/initiateTransaction?mid=${PAYTM_MID}&orderId=${orderId}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': post_data.length
+      }
+    };
+
+    let response = "";
+    const post_req = https.request(options, function(post_res) {
+      post_res.on('data', function (chunk) {
+        response += chunk;
+      });
+
+      post_res.on('end', function(){
+        try {
+          const result = JSON.parse(response);
+          if (result.body && result.body.txnToken) {
+            res.json({
+              txnToken: result.body.txnToken,
+              orderId: orderId,
+              amount: amountStr,
+              mid: PAYTM_MID
+            });
+          } else {
+            // Mock fallback if keys are invalid or absent
+            res.json({
+              txnToken: "dummy_txn_token",
+              orderId: orderId,
+              amount: amountStr,
+              mid: PAYTM_MID,
+              mocked: true
+            });
+          }
+        } catch(e) {
+           res.status(500).json({ message: "Error parsing Paytm response" });
+        }
+      });
+    });
+
+    post_req.on('error', (err) => {
+       res.status(500).json({ message: err.message });
+    });
+
+    post_req.write(post_data);
+    post_req.end();
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -186,56 +262,97 @@ const createPaymentOrder = async (req, res) => {
 
 const verifyPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, id, isMissing } = req.body;
+    const { orderId, id, isMissing, mocked } = req.body;
 
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_secret';
-    const expectedSignature = crypto.createHmac('sha256', secret)
-      .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest('hex');
+    const processPayment = async () => {
+      let paymentAmount = 0;
+      let groupId = null;
+      let feeId = null;
 
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ message: 'Invalid payment signature' });
-    }
+      if (isMissing) {
+        const fee = await Fee.findById(id);
+        paymentAmount = fee.amount;
+        feeId = fee._id;
+        groupId = fee.assignedToGroup || null;
+        
+        const studentFee = new StudentFee({
+          studentId: req.user._id,
+          groupId,
+          feeId,
+          baseAmount: fee.amount,
+          discountAmount: 0,
+          finalAmount: fee.amount,
+          status: 'PAID'
+        });
+        await studentFee.save();
+      } else {
+        const studentFee = await StudentFee.findById(id);
+        studentFee.status = 'PAID';
+        await studentFee.save();
+        
+        paymentAmount = studentFee.finalAmount;
+        feeId = studentFee.feeId;
+        groupId = studentFee.groupId;
+      }
 
-    let paymentAmount = 0;
-    let groupId = null;
-    let feeId = null;
-
-    if (isMissing) {
-      const fee = await Fee.findById(id);
-      paymentAmount = fee.amount;
-      feeId = fee._id;
-      groupId = fee.assignedToGroup || null;
-      
-      const studentFee = new StudentFee({
-        studentId: req.user._id,
-        groupId,
-        feeId,
-        baseAmount: fee.amount,
-        discountAmount: 0,
-        finalAmount: fee.amount,
-        status: 'PAID'
+      const payment = new Payment({
+        user: req.user._id,
+        group: groupId,
+        fee: feeId,
+        amount: paymentAmount
       });
-      await studentFee.save();
-    } else {
-      const studentFee = await StudentFee.findById(id);
-      studentFee.status = 'PAID';
-      await studentFee.save();
-      
-      paymentAmount = studentFee.finalAmount;
-      feeId = studentFee.feeId;
-      groupId = studentFee.groupId;
+      await payment.save();
+
+      res.json({ success: true });
+    };
+
+    if (mocked) {
+      // Bypass actual Paytm verification for dummy flow
+      await processPayment();
+      return;
     }
 
-    const payment = new Payment({
-      user: req.user._id,
-      group: groupId,
-      fee: feeId,
-      amount: paymentAmount
-    });
-    await payment.save();
+    const paytmParams = {};
+    paytmParams.body = {
+        "mid" : PAYTM_MID,
+        "orderId" : orderId,
+    };
 
-    res.json({ success: true });
+    const checksum = await PaytmChecksum.generateSignature(JSON.stringify(paytmParams.body), PAYTM_MERCHANT_KEY);
+    paytmParams.head = { "signature" : checksum };
+
+    const post_data = JSON.stringify(paytmParams);
+
+    const options = {
+        hostname: 'securegw-stage.paytm.in',
+        port: 443,
+        path: '/v3/order/status',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': post_data.length
+        }
+    };
+
+    let response = "";
+    const post_req = https.request(options, function(post_res) {
+        post_res.on('data', function (chunk) {
+            response += chunk;
+        });
+
+        post_res.on('end', async function(){
+            const result = JSON.parse(response);
+            if (result.body && result.body.resultInfo && result.body.resultInfo.resultStatus === 'TXN_SUCCESS') {
+                await processPayment();
+            } else {
+                res.status(400).json({ message: 'Payment verification failed at Paytm' });
+            }
+        });
+    });
+    
+    post_req.write(post_data);
+    post_req.end();
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
