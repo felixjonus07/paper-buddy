@@ -41,4 +41,12 @@ const cashier = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin, cashier };
+const mentor = (req, res, next) => {
+  if (req.user && (req.user.role === 'mentor' || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(401).json({ message: 'Not authorized as a mentor' });
+  }
+};
+
+module.exports = { protect, admin, cashier, mentor };

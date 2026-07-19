@@ -9,7 +9,7 @@ const paymentSchema = new mongoose.Schema({
   group: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group',
-    required: true,
+    required: false,
   },
   fee: {
     type: mongoose.Schema.Types.ObjectId,
@@ -19,6 +19,24 @@ const paymentSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true,
+  },
+  merchantTransactionId: {
+    type: String,
+    default: null,
+  },
+  providerTransactionId: {
+    type: String,
+    default: null,
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['PHONEPE', 'CASH', 'OTHER'],
+    default: 'OTHER',
+  },
+  status: {
+    type: String,
+    enum: ['SUCCESS', 'PENDING', 'FAILED'],
+    default: 'SUCCESS',
   },
   paidAt: {
     type: Date,

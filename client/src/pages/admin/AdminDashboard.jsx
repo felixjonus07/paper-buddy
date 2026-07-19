@@ -8,6 +8,13 @@ import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
 import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DashboardOverview from '../../components/admin/DashboardOverview';
+import UserManagement from '../../components/admin/UserManagement';
+import GroupManagement from '../../components/admin/GroupManagement';
+import FeeManagement from '../../components/admin/FeeManagement';
+import FeeRequests from '../../components/admin/FeeRequests';
+import FeeTypesManagement from '../../components/admin/FeeTypesManagement';
+import ScholarshipsManagement from '../../components/admin/ScholarshipsManagement';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -30,6 +37,7 @@ const AdminDashboard = () => {
   const [isAssignUserFeeModalOpen, setAssignUserFeeModalOpen] = useState(false);
   const [isEditUserModalOpen, setEditUserModalOpen] = useState(false);
   const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
+  const [isCreateMentorModalOpen, setCreateMentorModalOpen] = useState(false);
 
   // Form States
   const [bulkData, setBulkData] = useState({ prefix: '', startRange: '', endRange: '', suffix: '', initialPassword: '' });
@@ -40,6 +48,9 @@ const AdminDashboard = () => {
 
   const [editGroupData, setEditGroupData] = useState({ _id: null, name: '', description: '', isGlobal: false });
   const [editGroupMessage, setEditGroupMessage] = useState('');
+
+  const [mentorData, setMentorData] = useState({ groupId: null, name: '', username: '', password: '' });
+  const [mentorMessage, setMentorMessage] = useState('');
 
   const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '' });
   const [feeMessage, setFeeMessage] = useState('');
@@ -157,6 +168,30 @@ const AdminDashboard = () => {
         }, 1500);
       }
     } catch (err) { setEditGroupMessage('Server error'); }
+  };
+
+  const handleCreateMentorSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/admin/groups/${mentorData.groupId}/mentor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          name: mentorData.name,
+          username: mentorData.username,
+          password: mentorData.password
+        })
+      });
+      const data = await res.json();
+      setMentorMessage(res.ok ? 'Mentor created successfully!' : (data.message || 'Failed to create mentor'));
+      if (res.ok) {
+        setTimeout(() => {
+          setCreateMentorModalOpen(false);
+          setMentorMessage('');
+          setMentorData({ groupId: null, name: '', username: '', password: '' });
+        }, 1500);
+      }
+    } catch (err) { setMentorMessage('Server error'); }
   };
 
   const handleFeeSubmit = async (e) => {
@@ -352,372 +387,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Render Helpers
-  const renderDashboard = () => {
-    const totalFees = fees.reduce((sum, f) => sum + f.amount, 0);
-
-    return (
-      <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-        
-        {/* Header Hero Card */}
-        <NeoCard style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
-           <div>
-             <h2 style={{ margin: 0, color: 'var(--primary)' }}>Welcome back, Admin! 👋</h2>
-             <p>Here's a quick overview of the Paper Buddy system today.</p>
-           </div>
-        </NeoCard>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-          <NeoCard>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '10px', backgroundColor: 'var(--clay-mint-light)', borderRadius: '15px', color: 'var(--icon-mint)' }}>
-                <Users size={20} />
-              </div>
-              <h4 style={{ margin: 0 }}>Total Users</h4>
-            </div>
-            <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>{users.length}</p>
-          </NeoCard>
-          <NeoCard>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '10px', backgroundColor: 'var(--clay-pink-light)', borderRadius: '15px', color: 'var(--icon-pink)' }}>
-                <Activity size={20} />
-              </div>
-              <h4 style={{ margin: 0 }}>Total Groups</h4>
-            </div>
-            <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>{groups.length}</p>
-          </NeoCard>
-          <NeoCard>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '10px', backgroundColor: 'var(--clay-peach-light)', borderRadius: '15px', color: 'var(--icon-peach)' }}>
-                <IndianRupee size={20} />
-              </div>
-              <h4 style={{ margin: 0 }}>Total Fees</h4>
-            </div>
-            <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalFees.toFixed(2)}</p>
-          </NeoCard>
-        </div>
-      </div>
-    );
-  };
-
-  const renderUserManagement = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ margin: 0, color: 'var(--primary)' }}>User Management</h2>
-        <NeoButton variant="mint" onClick={() => setUserModalOpen(true)}>
-          <Plus size={20} /> Bulk Create
-        </NeoButton>
-      </div>
-      
-      <div className="card-grid">
-        {users.map(u => (
-          <NeoCard key={u._id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.2rem', cursor: 'pointer' }} onClick={() => setExpandedUser(expandedUser === u._id ? null : u._id)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h3 style={{ margin: 0 }}>{u.name}</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>@{u.username}</span>
-              </div>
-              <span style={{ 
-                padding: '0.3rem 0.6rem', 
-                borderRadius: '12px', 
-                backgroundColor: u.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.4)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
-                color: u.role === 'admin' ? 'var(--primary-dark)' : 'var(--primary)',
-                fontSize: '0.75rem',
-                fontWeight: 'bold'
-              }}>
-                {u.role.toUpperCase()}
-              </span>
-            </div>
-
-            {expandedUser === u._id && (
-              <div style={{ backgroundColor: 'rgba(128,128,128,0.05)', padding: '0.8rem', borderRadius: '12px', marginTop: '0.5rem' }}>
-                <strong style={{ fontSize: '0.85rem' }}>Enrolled Groups:</strong> 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {u.groups && u.groups.length > 0 ? u.groups.map(g => (
-                    <span key={g._id} style={{ padding: '0.3rem 0.6rem', borderRadius: '10px', backgroundColor: 'var(--clay-base)', boxShadow: 'var(--clay-outer)', fontSize: '0.8rem' }}>{g.name}</span>
-                  )) : <span style={{ fontStyle: 'italic', color: 'var(--text-light)', fontSize: '0.8rem' }}>No groups assigned</span>}
-                </div>
-              </div>
-            )}
-
-            {u.role === 'user' && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem' }}>
-                <NeoButton variant="peach" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0 }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
-                <NeoButton variant="mint" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setSelectedUserForGroup(u); setAssignStudentModalOpen(true); }}>Assign Group</NeoButton>
-              </div>
-            )}
-          </NeoCard>
-        ))}
-        {users.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No users found</p>}
-      </div>
-    </div>
-  );
-
-  const renderGroupManagement = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ margin: 0, color: 'var(--primary)' }}>Group Management</h2>
-        <NeoButton variant="pink" onClick={() => setGroupModalOpen(true)}>
-          <Plus size={20} /> Create Group
-        </NeoButton>
-      </div>
-      
-      <div className="card-grid">
-        {groups.map(g => (
-          <NeoCard key={g._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem', cursor: 'pointer' }} onClick={() => navigate('/admin/groups/' + g._id)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{g.name}</h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                {new Date(g.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            
-            {g.parentGroups && g.parentGroups.length > 0 && (
-              <span style={{ 
-                fontSize: '0.8rem', color: 'var(--primary-dark)', display: 'inline-block', 
-                backgroundColor: 'var(--clay-peach-light)', 
-                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.4)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
-                padding: '0.2rem 0.5rem', borderRadius: '8px', alignSelf: 'flex-start', fontWeight: 'bold' 
-              }}>
-                Subgroup of: {g.parentGroups.map(p => p.name).join(', ')}
-              </span>
-            )}
-            
-            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', flex: 1 }}>{g.description || 'No description provided'}</p>
-            
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: '0.5rem' }}>
-              <NeoButton variant="mint" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
-                e.stopPropagation(); 
-                setEditGroupData({ _id: g._id, name: g.name, description: g.description || '', isGlobal: g.isGlobal || false });
-                setEditGroupModalOpen(true);
-              }}>
-                Edit
-              </NeoButton>
-              <NeoButton variant="pink" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>
-                Parent Group
-              </NeoButton>
-            </div>
-          </NeoCard>
-        ))}
-        {groups.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No groups found</p>}
-      </div>
-    </div>
-  );
-
-  const renderFeeManagement = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ margin: 0, color: 'var(--primary)' }}>Fee Management</h2>
-        <NeoButton variant="peach" onClick={() => setFeeModalOpen(true)}>
-          <Plus size={20} /> Assign Fee
-        </NeoButton>
-      </div>
-
-      <div className="card-grid">
-        {fees.map(f => (
-          <NeoCard key={f._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{f.title}</h3>
-            <div style={{ color: 'var(--clay-peach)', fontSize: '1.8rem', fontWeight: 'bold' }}>₹{f.amount}</div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <span style={{ 
-                padding: '0.4rem 0.8rem', 
-                borderRadius: '12px', 
-                backgroundColor: 'var(--bg-color)',
-                boxShadow: 'var(--clay-outer)',
-                fontSize: '0.85rem'
-              }}>
-                <strong>Type:</strong> {f.feeType?.name || 'N/A'}
-              </span>
-              <span style={{ 
-                padding: '0.4rem 0.8rem', 
-                borderRadius: '12px', 
-                backgroundColor: 'var(--bg-color)',
-                boxShadow: 'var(--clay-outer)',
-                fontSize: '0.85rem'
-              }}>
-                <strong>Assigned To:</strong> {f.assignedToGroup ? f.assignedToGroup.name : 'Individual'}
-              </span>
-            </div>
-
-            <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
-              <NeoButton variant="peach" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={() => handleDeleteFee(f._id)}>Delete Fee</NeoButton>
-            </div>
-          </NeoCard>
-        ))}
-        {fees.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No fees found</p>}
-      </div>
-    </div>
-  );
-
-  const renderFeeTypesManagement = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ margin: 0, color: 'var(--primary)' }}>Fee Types</h2>
-      </div>
-
-      {masterMessage && <p style={{ color: 'var(--clay-mint)', textAlign: 'center', marginBottom: '1rem' }}>{masterMessage}</p>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
-        <NeoCard>
-          <form onSubmit={handleCreateFeeType} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-            <NeoInput type="text" placeholder="Fee Type Name (e.g. Tuition)" value={newFeeType.name} onChange={e => setNewFeeType({...newFeeType, name: e.target.value})} required />
-            <NeoInput type="text" placeholder="Description" value={newFeeType.description} onChange={e => setNewFeeType({...newFeeType, description: e.target.value})} />
-            <NeoButton variant="pink" type="submit">Create Fee Type</NeoButton>
-          </form>
-
-          <h3 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Existing Fee Types</h3>
-          <div className="card-grid">
-            {feeTypes.map(c => (
-              <NeoCard key={c._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{c.name}</h4>
-                  <NeoButton variant="peach" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }} onClick={() => handleDeleteFeeType(c._id)}>Delete</NeoButton>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', flex: 1 }}>{c.description || 'No description provided'}</p>
-              </NeoCard>
-            ))}
-            {feeTypes.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No fee types defined</p>}
-          </div>
-        </NeoCard>
-      </div>
-    </div>
-  );
-
-  const renderScholarshipsManagement = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ margin: 0, color: 'var(--primary)' }}>Scholarships</h2>
-      </div>
-
-      {masterMessage && <p style={{ color: 'var(--clay-mint)', textAlign: 'center', marginBottom: '1rem' }}>{masterMessage}</p>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
-        <NeoCard>
-          <form onSubmit={handleCreateScholarship} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-            <NeoInput type="text" placeholder="Scholarship Name" value={newScholarship.name} onChange={e => setNewScholarship({...newScholarship, name: e.target.value})} required />
-            <NeoInput type="text" placeholder="Description (Optional)" value={newScholarship.description || ''} onChange={e => setNewScholarship({...newScholarship, description: e.target.value})} />
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <NeoInput type="number" placeholder="Discount %" value={newScholarship.discountPercentage} onChange={e => setNewScholarship({...newScholarship, discountPercentage: e.target.value})} required />
-              <NeoInput type="number" placeholder="Min Score (Optional)" value={newScholarship.minAcademicScore} onChange={e => setNewScholarship({...newScholarship, minAcademicScore: e.target.value})} />
-            </div>
-            
-            <div style={{ position: 'relative' }}>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem', display: 'block' }}>Applicable Fee Types (Leave blank for all)</label>
-              <div style={{
-                maxHeight: '150px',
-                overflowY: 'auto',
-                backgroundColor: 'var(--clay-base)',
-                borderRadius: '20px',
-                padding: '1rem',
-                boxShadow: 'var(--clay-outer)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.8rem'
-              }}>
-                {feeTypes.map(c => (
-                  <div key={c._id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }} onClick={() => {
-                    const current = newScholarship.applicableFeeTypes || [];
-                    const next = current.includes(c._id) ? current.filter(id => id !== c._id) : [...current, c._id];
-                    setNewScholarship({...newScholarship, applicableFeeTypes: next});
-                  }}>
-                    <input type="checkbox" checked={(newScholarship.applicableFeeTypes || []).includes(c._id)} readOnly style={{ accentColor: 'var(--primary)', transform: 'scale(1.2)' }} />
-                    <span style={{ color: 'var(--text-color)' }}>{c.name}</span>
-                  </div>
-                ))}
-                {feeTypes.length === 0 && <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>No fee types available.</span>}
-              </div>
-            </div>
-            <NeoButton variant="mint" type="submit">Create Scholarship</NeoButton>
-          </form>
-
-          <h3 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Existing Scholarships</h3>
-          <div className="card-grid">
-            {scholarships.map(s => (
-              <NeoCard key={s._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.2rem' }}>{s.name}</h4>
-                  <div style={{ color: 'var(--clay-mint)', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.discountPercentage}%</div>
-                </div>
-                {s.description && (
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', fontStyle: 'italic' }}>{s.description}</p>
-                )}
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                    <strong>Min Score:</strong> {s.minAcademicScore}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                    <strong>Applies to:</strong> {s.applicableFeeTypes && s.applicableFeeTypes.length > 0 ? s.applicableFeeTypes.map(c => c ? (feeTypes.find(fc => fc._id === (c._id || c))?.name || c.name || 'Unknown') : 'Unknown').join(', ') : 'All Fee Types'}
-                  </span>
-                </div>
-
-                <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
-                  <NeoButton variant="peach" style={{ width: '100%', padding: '0.4rem', fontSize: '0.8rem' }} onClick={() => handleDeleteScholarship(s._id)}>Delete Scholarship</NeoButton>
-                </div>
-              </NeoCard>
-            ))}
-            {scholarships.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No scholarships defined</p>}
-          </div>
-        </NeoCard>
-      </div>
-    </div>
-  );
-
-  const renderFeeRequests = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-      <h2 style={{ margin: 0, color: 'var(--primary)', marginBottom: '2rem' }}>Student Fee Requests</h2>
-      
-      <div style={{ display: 'grid', gap: '1.5rem' }}>
-        {feeRequests.map(r => (
-          <NeoCard key={r._id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h3 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.2rem' }}>{r.requestedFeeTitle}</h3>
-                <p style={{ margin: '0.2rem 0', color: 'var(--text-color)', fontWeight: 'bold' }}>Requested by: {r.studentId?.name} (@{r.studentId?.username})</p>
-                <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
-                  {r.studentId?.studentClass || 'N/A'} - {r.studentId?.section || 'N/A'} | Reg No: {r.studentId?.registerNumber || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <span style={{ 
-                  padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 'bold',
-                  backgroundColor: r.status === 'pending' ? 'var(--clay-peach-light)' : r.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
-                  color: r.status === 'pending' ? '#9a3412' : r.status === 'approved' ? '#115e59' : '#831843'
-                }}>
-                  {r.status.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            {r.reason && (
-              <div style={{ padding: '1rem', backgroundColor: 'var(--bg-color)', borderRadius: '10px', fontSize: '0.9rem', color: 'var(--text-color)' }}>
-                <strong>Reason:</strong> {r.reason}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: '2rem', padding: '1rem', backgroundColor: 'var(--bg-color)', borderRadius: '10px', fontSize: '0.9rem', color: 'var(--text-color)' }}>
-              <div><strong>Suggested Amount:</strong> ₹{r.amount}</div>
-              <div><strong>Suggested Type:</strong> {r.feeType?.name || 'Unknown'}</div>
-            </div>
-            
-            {r.status === 'pending' && (
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <NeoButton variant="mint" onClick={() => handleUpdateFeeRequestStatus(r._id, 'approved')}>Approve & Assign Fee</NeoButton>
-                <NeoButton variant="peach" onClick={() => handleUpdateFeeRequestStatus(r._id, 'rejected')}>Reject</NeoButton>
-              </div>
-            )}
-          </NeoCard>
-        ))}
-        {feeRequests.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-light)' }}>No fee requests found.</p>}
-      </div>
-    </div>
-  );
-
   return (
     <div className="app-container dashboard-layout">
       
@@ -803,21 +472,13 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'users' && renderUserManagement()}
-        {activeTab === 'groups' && renderGroupManagement()}
-        {activeTab === 'fees' && renderFeeManagement()}
-        {activeTab === 'fee-requests' && renderFeeRequests()}
-        {activeTab === 'masters' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
-            {renderFeeTypesManagement()}
-          </div>
-        )}
-        {activeTab === 'settings' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
-            {renderScholarshipsManagement()}
-          </div>
-        )}
+        {activeTab === 'dashboard' && <DashboardOverview users={users} groups={groups} fees={fees} />}
+        {activeTab === 'users' && <UserManagement users={users} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} />}
+        {activeTab === 'groups' && <GroupManagement groups={groups} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} />}
+        {activeTab === 'fees' && <FeeManagement fees={fees} setFeeModalOpen={setFeeModalOpen} handleDeleteFee={handleDeleteFee} />}
+        {activeTab === 'fee-requests' && <FeeRequests feeRequests={feeRequests} handleUpdateFeeRequestStatus={handleUpdateFeeRequestStatus} />}
+        {activeTab === 'masters' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} /></div>}
+        {activeTab === 'settings' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} /></div>}
       </div>
 
       {/* Modals */}
@@ -905,6 +566,17 @@ const AdminDashboard = () => {
 
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Save Changes</NeoButton>
           {editGroupMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{editGroupMessage}</p>}
+        </form>
+      </NeoModal>
+
+      <NeoModal isOpen={isCreateMentorModalOpen} onClose={() => { setCreateMentorModalOpen(false); setMentorMessage(''); }} title="Create Group Mentor">
+        <form onSubmit={handleCreateMentorSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <NeoInput type="text" placeholder="Mentor Name (e.g. John Doe)" value={mentorData.name} onChange={e => setMentorData({...mentorData, name: e.target.value})} required />
+          <NeoInput type="text" placeholder="Username" value={mentorData.username} onChange={e => setMentorData({...mentorData, username: e.target.value})} required />
+          <NeoInput type="password" placeholder="Password" value={mentorData.password} onChange={e => setMentorData({...mentorData, password: e.target.value})} required />
+
+          <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Create Mentor</NeoButton>
+          {mentorMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{mentorMessage}</p>}
         </form>
       </NeoModal>
 

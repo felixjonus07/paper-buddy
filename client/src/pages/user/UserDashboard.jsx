@@ -6,23 +6,18 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import UserOverview from '../../components/user/UserOverview';
+import UserProfile from '../../components/user/UserProfile';
+import UserPayFees from '../../components/user/UserPayFees';
+import UserFeeRequests from '../../components/user/UserFeeRequests';
+import UserApplyLoan from '../../components/user/UserApplyLoan';
+import UserPaidFees from '../../components/user/UserPaidFees';
+import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+// PhonePe uses redirect-based checkout — no SDK script loading needed
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -47,6 +42,72 @@ const UserDashboard = () => {
   const [feeTypes, setFeeTypes] = useState([]);
   const [requestFeeModalOpen, setRequestFeeModalOpen] = useState(false);
   const [feeRequestData, setFeeRequestData] = useState({ requestedFeeTitle: '', amount: '', feeType: '', reason: '' });
+
+  const [paymentVerifying, setPaymentVerifying] = useState(false);
+  const [paymentResult, setPaymentResult] = useState(null); // null | 'success' | 'failed' | 'pending'
+
+  const location = useLocation();
+
+  // Handle PhonePe redirect return — runs on mount only
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const merchantTransactionId = params.get('merchantOrderId') || params.get('merchantTransactionId');
+    const feeId = params.get('feeId');
+    const isMissing = params.get('isMissing');
+
+    if (!merchantTransactionId || !feeId) return;
+
+    // Clear URL params immediately so refresh doesn't re-trigger
+    navigate('/user/dashboard', { replace: true });
+
+    const verifyPhonePePayment = async () => {
+      setPaymentVerifying(true);
+      setPaymentResult(null);
+      try {
+        const verifyRes = await fetch('/api/user/verify-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ merchantTransactionId, feeId, isMissing })
+        });
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.success) {
+          setPaymentResult('success');
+        } else if (verifyData.status === 'PENDING') {
+          setPaymentResult('pending');
+        } else {
+          setPaymentResult('failed');
+        }
+      } catch (err) {
+        console.error('Payment verification error:', err);
+        setPaymentResult('failed');
+      } finally {
+        setPaymentVerifying(false);
+      }
+    };
+
+    verifyPhonePePayment();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refresh data whenever payment result changes to success
+  useEffect(() => {
+    if (paymentResult === 'success') {
+      // fetchData will be defined by this point
+      setTimeout(() => {
+        const headers = { 'Authorization': `Bearer ${token}` };
+        Promise.all([
+          fetch('/api/user/fees', { headers }).then(r => r.ok ? r.json() : null),
+          fetch('/api/user/student-fees', { headers }).then(r => r.ok ? r.json() : null),
+        ]).then(([fees, studentFees]) => {
+          if (fees) setFees(fees);
+          if (studentFees) setStudentFees(studentFees);
+        });
+      }, 500);
+    }
+  }, [paymentResult]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -186,64 +247,16 @@ const UserDashboard = () => {
         return;
       }
 
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        alert('Failed to load Razorpay SDK. Are you online?');
-        return;
+      if (orderData.redirectUrl) {
+        // Redirect user to PhonePe payment page
+        window.location.href = orderData.redirectUrl;
+      } else {
+        alert('Failed to get payment redirect URL. Please try again.');
       }
-
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Paper Buddy',
-        description: 'Fee Payment',
-        order_id: orderData.order_id,
-        handler: async function (response) {
-          try {
-            const verifyRes = await fetch(`/api/user/verify-payment`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                id,
-                isMissing
-              })
-            });
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok) {
-              alert('Payment successful!');
-              fetchData();
-            } else {
-              alert(`Payment verification failed: ${verifyData.message}`);
-            }
-          } catch (err) {
-            alert('Payment verification failed.');
-          }
-        },
-        prefill: {
-          name: user.name,
-          email: user.email
-        },
-        theme: {
-          color: '#14b8a6'
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response){
-        alert(`Payment Failed: ${response.error.description}`);
-      });
-      rzp.open();
 
     } catch (err) {
       console.error(err);
-      alert('Error occurred while processing payment');
+      alert(`Error occurred while processing payment: ${err.message}`);
     }
   };
 
@@ -303,394 +316,63 @@ const UserDashboard = () => {
 
     doc.save(`Receipt_${(f.feeId?.title || 'Fee').replace(/\s+/g, '_')}_${user.name.replace(/\s+/g, '_')}.pdf`);
   };
-  const renderDashboard = () => {
-    const pendingFees = studentFees.filter(f => f.status === 'PENDING');
-    const totalFees = pendingFees.reduce((sum, f) => sum + f.finalAmount, 0);
-    const pendingLoans = loans.filter(l => l.status === 'pending');
-
-    return (
-      <div style={{ animation: 'slideUp 0.3s ease-out' }}>
-        <NeoCard style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
-           <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'var(--clay-peach)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--clay-outer)' }}>
-             <User size={40} color="white" />
-           </div>
-           <div>
-             <h2 style={{ margin: 0, color: 'var(--primary)' }}>Hello, {user.name}!</h2>
-             <p>Welcome to your personal Paper Buddy dashboard.</p>
-           </div>
-        </NeoCard>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-          <NeoCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '10px', backgroundColor: 'var(--clay-pink-light)', borderRadius: '15px', color: 'var(--icon-pink)' }}>
-                <IndianRupee size={20} />
-              </div>
-              <h4 style={{ margin: 0 }}>Outstanding Fees</h4>
-            </div>
-            <p style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalFees.toFixed(2)}</p>
-          </NeoCard>
-
-          <NeoCard>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '10px', backgroundColor: 'var(--clay-mint-light)', borderRadius: '15px', color: 'var(--icon-mint)' }}>
-                <FileText size={20} />
-              </div>
-              <h4 style={{ margin: 0 }}>Pending Loans</h4>
-            </div>
-            <p style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-color)' }}>{pendingLoans.length}</p>
-          </NeoCard>
-          
-          {profile?.scholarship && (
-            <NeoCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                <div style={{ padding: '10px', backgroundColor: 'var(--clay-lavender-light)', borderRadius: '15px', color: 'var(--icon-lavender)' }}>
-                  <FileText size={20} />
-                </div>
-                <h4 style={{ margin: 0 }}>Active Scholarship</h4>
-              </div>
-              <p style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-color)' }}>{profile.scholarship.name}</p>
-              <p style={{ margin: 0, color: 'var(--clay-mint)', fontWeight: 'bold' }}>{profile.scholarship.discountPercentage}% Discount</p>
-            </NeoCard>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-
-
-          <NeoCard style={{ flex: '1', minWidth: '350px', backgroundColor: 'var(--clay-lavender-light)' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--icon-lavender)' }}>Loan History</h3>
-            <div className="table-container">
-              <table style={{ backgroundColor: 'transparent' }}>
-                <thead>
-                  <tr>
-                    <th style={{ color: 'var(--icon-lavender)' }}>Amount</th>
-                    <th style={{ color: 'var(--icon-lavender)' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loans.map(l => (
-                    <tr key={l._id}>
-                      <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>₹{l.amount}</td>
-                      <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
-                        <span style={{ 
-                          padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem',
-                          backgroundColor: l.status === 'pending' ? 'var(--clay-peach-light)' : l.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
-                          color: l.status === 'pending' ? '#9a3412' : l.status === 'approved' ? '#115e59' : '#831843'
-                        }}>
-                          {l.status.toUpperCase()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {loans.length === 0 && <tr><td colSpan="2" style={{ textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.4)' }}>No loans found</td></tr>}
-                </tbody>
-              </table>
-            </div>
-          </NeoCard>
-        </div>
-      </div>
-    );
-  };
-
-  const renderPayFees = () => {
-    const pendingStudentFees = studentFees.filter(f => f.status === 'PENDING');
-    const missingFees = fees.filter(f => !studentFees.some(sf => sf.feeId?._id === f._id || sf.feeId === f._id));
-    
-    const allPending = [
-      ...pendingStudentFees.map(sf => ({
-        id: sf._id,
-        title: sf.feeId?.title || 'Unknown Fee',
-        amountDue: sf.finalAmount,
-        isMissing: false
-      })),
-      ...missingFees.map(f => ({
-        id: f._id,
-        title: f.title,
-        amountDue: f.amount,
-        isMissing: true
-      }))
-    ];
-
-    return (
-      <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <h2 style={{ color: 'var(--primary)', marginBottom: '2rem', textAlign: 'center' }}>Pay Outstanding Fees</h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-          {allPending.map(f => (
-            <NeoCard key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--primary)' }}>{f.title}</h3>
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>
-                ₹{f.amountDue.toFixed(2)}
-              </div>
-              <NeoButton 
-                variant="mint" 
-                onClick={() => handlePayFee(f.id, f.isMissing)} 
-                style={{ marginTop: 'auto', width: '100%', padding: '0.8rem' }}
-              >
-                Pay Now
-              </NeoButton>
-            </NeoCard>
-          ))}
-          {allPending.length === 0 && (
-            <p style={{ textAlign: 'center', color: 'var(--text-light)', width: '100%', gridColumn: '1 / -1' }}>No outstanding fees to pay!</p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderFeeRequests = () => {
-    return (
-      <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h2 style={{ color: 'var(--primary)', margin: 0 }}>My Fee Requests</h2>
-          <NeoButton variant="mint" onClick={() => setRequestFeeModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <PlusCircle size={18} /> Request Fee Add-on
-          </NeoButton>
-        </div>
-
-        <NeoCard>
-          <div className="table-container">
-            <table style={{ backgroundColor: 'transparent' }}>
-              <thead>
-                <tr>
-                  <th style={{ color: 'var(--text-color)' }}>Fee Title</th>
-                  <th style={{ color: 'var(--text-color)' }}>Amount</th>
-                  <th style={{ color: 'var(--text-color)' }}>Type</th>
-                  <th style={{ color: 'var(--text-color)' }}>Reason</th>
-                  <th style={{ color: 'var(--text-color)' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feeRequests.map(r => (
-                  <tr key={r._id}>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)', fontWeight: 'bold' }}>{r.requestedFeeTitle}</td>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>₹{r.amount}</td>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>{feeTypes.find(t => t._id === r.feeType)?.name || 'Unknown'}</td>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>{r.reason || '-'}</td>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
-                      <span style={{ 
-                        padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 'bold',
-                        backgroundColor: r.status === 'pending' ? 'var(--clay-peach-light)' : r.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
-                        color: r.status === 'pending' ? '#9a3412' : r.status === 'approved' ? '#115e59' : '#831843'
-                      }}>
-                        {r.status.toUpperCase()}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {feeRequests.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.4)' }}>No requests submitted</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </NeoCard>
-      </div>
-    );
-  };
-
-  const renderApplyLoan = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '600px', margin: '0 auto' }}>
-      <NeoCard>
-        <h2 style={{ color: 'var(--primary)', marginBottom: '2rem', textAlign: 'center' }}>Apply for a Loan</h2>
-        <form onSubmit={handleApplyLoan} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <NeoInput 
-            type="number" 
-            placeholder="Loan Amount (₹)" 
-            value={loanData.amount} 
-            onChange={e => setLoanData({...loanData, amount: e.target.value})} 
-            Icon={IndianRupee}
-            required 
-          />
-          <NeoInput 
-            type="text" 
-            placeholder="Purpose (e.g. Tuition, Books)" 
-            value={loanData.purpose} 
-            onChange={e => setLoanData({...loanData, purpose: e.target.value})} 
-            Icon={FileText}
-            required 
-          />
-          <NeoButton variant="mint" type="submit">Submit Application</NeoButton>
-          {loanMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{loanMessage}</p>}
-        </form>
-      </NeoCard>
-    </div>
-  );
-
-  const renderSettings = () => (
-    <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '600px', margin: '0 auto' }}>
-      <NeoCard>
-        <h2 style={{ color: 'var(--primary)', marginBottom: '2rem', textAlign: 'center' }}>Account Settings</h2>
-        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <h3 style={{ marginBottom: '0.5rem' }}>Change Password</h3>
-          <NeoInput 
-            type="password" 
-            placeholder="Current Password" 
-            value={passwordData.currentPassword} 
-            onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} 
-            required 
-          />
-          <NeoInput 
-            type="password" 
-            placeholder="New Password" 
-            value={passwordData.newPassword} 
-            onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} 
-            required 
-          />
-          <NeoButton variant="pink" type="submit">Update Password</NeoButton>
-          {passwordMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-pink)', textAlign: 'center' }}>{passwordMessage}</p>}
-        </form>
-      </NeoCard>
-    </div>
-  );
-  const renderProfile = () => {
-    if (!profile) return <p style={{ textAlign: 'center' }}>Loading profile...</p>;
-
-    return (
-      <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <NeoCard style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '3rem 2rem' }}>
-          <div style={{ width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'var(--clay-peach)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--clay-outer)', marginBottom: '1rem' }}>
-            <User size={50} color="white" />
-          </div>
-          <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '2rem' }}>{profile.name}</h2>
-          <span style={{ fontSize: '1.2rem', color: 'var(--text-light)' }}>@{profile.username}</span>
-          
-          <div style={{ 
-            marginTop: '1.5rem', 
-            padding: '0.5rem 1.5rem', 
-            borderRadius: '20px', 
-            backgroundColor: profile.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-            color: profile.role === 'admin' ? '#831843' : '#115e59',
-            fontWeight: 'bold',
-            textTransform: 'uppercase'
-          }}>
-            {profile.role}
-          </div>
-          
-          <NeoButton variant="mint" style={{ marginTop: '1rem', padding: '0.4rem 1.2rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={openProfileEdit}>
-            <Edit size={16} /> Edit Details
-          </NeoButton>
-        </NeoCard>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-          <NeoCard>
-            <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Personal Information</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Register No:</span>
-                <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.registerNumber || '-'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Phone Number:</span>
-                <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.phoneNumber || '-'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Personal Email:</span>
-                <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.personalEmail || '-'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>College Email:</span>
-                <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.collegeEmail || '-'}</span>
-              </div>
-            </div>
-          </NeoCard>
-
-          <NeoCard>
-            <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Academic Profile</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Class / Year:</span>
-                <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>
-                  {profile.studentClass ? `${profile.studentClass}` : '-'} {profile.year ? `(${profile.year})` : ''}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Section:</span>
-                <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.section || '-'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Current Score:</span>
-                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-color)' }}>{profile.academicScore || 0}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Scholarship:</span>
-                {profile.scholarship ? (
-                   <span style={{ backgroundColor: 'var(--clay-mint-light)', color: '#115e59', padding: '0.3rem 0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                     {profile.scholarship.name} ({profile.scholarship.discountPercentage}%)
-                   </span>
-                ) : (
-                   <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>None</span>
-                )}
-              </div>
-            </div>
-          </NeoCard>
-
-          <NeoCard>
-            <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Enrolled Groups</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
-              {profile.groups && profile.groups.length > 0 ? profile.groups.map(g => (
-                <span key={g._id} style={{ padding: '0.5rem 1rem', borderRadius: '15px', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)', fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold' }}>
-                  {g.name}
-                </span>
-              )) : (
-                <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>Not enrolled in any groups</span>
-              )}
-            </div>
-          </NeoCard>
-        </div>
-      </div>
-    );
-  };
-
-  const renderPaidFees = () => {
-    const paidFees = studentFees.filter(f => f.status === 'PAID');
-    return (
-      <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h2 style={{ color: 'var(--primary)', margin: 0, textAlign: 'left' }}>Payment History</h2>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-          {paidFees.map(f => (
-            <NeoCard key={f._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--primary)' }}>{f.feeId?.title || 'Unknown Fee'}</h3>
-              </div>
-              
-              <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>
-                ₹{f.finalAmount.toFixed(2)}
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Base Amount:</span>
-                  <span>₹{f.baseAmount.toFixed(2)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Discount:</span>
-                  <span style={{ color: 'var(--clay-mint)', fontWeight: 'bold' }}>-₹{f.discountAmount.toFixed(2)}</span>
-                </div>
-              </div>
-              
-              <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)', fontSize: '0.85rem', color: 'var(--text-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Paid on {new Date(f.updatedAt).toLocaleDateString()}</span>
-                <NeoButton variant="mint" onClick={() => handleDownloadReceipt(f)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <Download size={14} /> Receipt
-                </NeoButton>
-              </div>
-            </NeoCard>
-          ))}
-          {paidFees.length === 0 && (
-            <p style={{ textAlign: 'center', color: 'var(--text-light)', width: '100%', gridColumn: '1 / -1' }}>No paid fees found.</p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="app-container dashboard-layout">
+      {/* PhonePe Payment Verifying Overlay */}
+      {paymentVerifying && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)', zIndex: 9999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem'
+        }}>
+          <div style={{
+            width: 64, height: 64, border: '4px solid rgba(255,255,255,0.2)',
+            borderTop: '4px solid #5f43e9', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+          <div style={{ textAlign: 'center' }}>
+            <h3 style={{ color: '#fff', margin: 0, fontSize: '1.4rem' }}>Verifying Payment...</h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', margin: '0.5rem 0 0' }}>Please wait, do not close this tab</p>
+          </div>
+        </div>
+      )}
+
+      {/* PhonePe Payment Result Banner */}
+      {paymentResult && (
+        <div style={{
+          position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9998, minWidth: 340, maxWidth: 480,
+          background: paymentResult === 'success' ? 'linear-gradient(135deg, #1a8a4a, #22c55e)' :
+                       paymentResult === 'pending'  ? 'linear-gradient(135deg, #b45309, #f59e0b)' :
+                                                      'linear-gradient(135deg, #991b1b, #ef4444)',
+          borderRadius: '16px', padding: '1.2rem 1.5rem',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: '1rem',
+          animation: 'slideDown 0.4s ease-out'
+        }}>
+          <span style={{ fontSize: '2rem' }}>
+            {paymentResult === 'success' ? '✅' : paymentResult === 'pending' ? '⏳' : '❌'}
+          </span>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>
+              {paymentResult === 'success' ? 'Payment Successful!' :
+               paymentResult === 'pending'  ? 'Payment Pending' :
+                                              'Payment Failed'}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+              {paymentResult === 'success' ? 'Your fee has been marked as paid.' :
+               paymentResult === 'pending'  ? 'Your payment is being processed. Please check back shortly.' :
+                                              'Your payment could not be completed. Please try again.'}
+            </div>
+          </div>
+          <button onClick={() => setPaymentResult(null)} style={{
+            background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
+            borderRadius: '50%', width: 28, height: 28, cursor: 'pointer',
+            fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>×</button>
+        </div>
+      )}
+
       {/* Fluffy Sidebar Navigation */}
       <div className="sidebar">
         <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)'}}>
@@ -757,13 +439,13 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'profile' && renderProfile()}
-        {activeTab === 'pay-fees' && renderPayFees()}
-        {activeTab === 'fee-requests' && renderFeeRequests()}
-        {activeTab === 'loan' && renderApplyLoan()}
-        {activeTab === 'paid-fees' && renderPaidFees()}
-        {activeTab === 'settings' && renderSettings()}
+        {activeTab === 'dashboard' && <UserOverview user={user} studentFees={studentFees} loans={loans} profile={profile} />}
+        {activeTab === 'profile' && <UserProfile profile={profile} openProfileEdit={openProfileEdit} />}
+        {activeTab === 'pay-fees' && <UserPayFees studentFees={studentFees} fees={fees} handlePayFee={handlePayFee} />}
+        {activeTab === 'fee-requests' && <UserFeeRequests feeRequests={feeRequests} feeTypes={feeTypes} setRequestFeeModalOpen={setRequestFeeModalOpen} />}
+        {activeTab === 'loan' && <UserApplyLoan handleApplyLoan={handleApplyLoan} loanData={loanData} setLoanData={setLoanData} loanMessage={loanMessage} />}
+        {activeTab === 'paid-fees' && <UserPaidFees studentFees={studentFees} handleDownloadReceipt={handleDownloadReceipt} />}
+        {activeTab === 'settings' && <UserSettings handleChangePassword={handleChangePassword} passwordData={passwordData} setPasswordData={setPasswordData} passwordMessage={passwordMessage} />}
       </div>
 
       <NeoModal isOpen={editProfileModalOpen} onClose={() => setEditProfileModalOpen(false)} title="Edit Profile Details">
