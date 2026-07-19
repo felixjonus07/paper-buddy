@@ -6,7 +6,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import UserOverview from '../../components/user/UserOverview';
 import UserProfile from '../../components/user/UserProfile';
 import UserPayFees from '../../components/user/UserPayFees';
@@ -17,19 +17,7 @@ import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const loadPaytmScript = (mid) => {
-  return new Promise((resolve) => {
-    if (window.Paytm && window.Paytm.CheckoutJS) {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${mid}.js`;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+// PhonePe uses redirect-based checkout — no SDK script loading needed
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -54,6 +42,72 @@ const UserDashboard = () => {
   const [feeTypes, setFeeTypes] = useState([]);
   const [requestFeeModalOpen, setRequestFeeModalOpen] = useState(false);
   const [feeRequestData, setFeeRequestData] = useState({ requestedFeeTitle: '', amount: '', feeType: '', reason: '' });
+
+  const [paymentVerifying, setPaymentVerifying] = useState(false);
+  const [paymentResult, setPaymentResult] = useState(null); // null | 'success' | 'failed' | 'pending'
+
+  const location = useLocation();
+
+  // Handle PhonePe redirect return — runs on mount only
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const merchantTransactionId = params.get('merchantOrderId') || params.get('merchantTransactionId');
+    const feeId = params.get('feeId');
+    const isMissing = params.get('isMissing');
+
+    if (!merchantTransactionId || !feeId) return;
+
+    // Clear URL params immediately so refresh doesn't re-trigger
+    navigate('/user/dashboard', { replace: true });
+
+    const verifyPhonePePayment = async () => {
+      setPaymentVerifying(true);
+      setPaymentResult(null);
+      try {
+        const verifyRes = await fetch('/api/user/verify-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ merchantTransactionId, feeId, isMissing })
+        });
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.success) {
+          setPaymentResult('success');
+        } else if (verifyData.status === 'PENDING') {
+          setPaymentResult('pending');
+        } else {
+          setPaymentResult('failed');
+        }
+      } catch (err) {
+        console.error('Payment verification error:', err);
+        setPaymentResult('failed');
+      } finally {
+        setPaymentVerifying(false);
+      }
+    };
+
+    verifyPhonePePayment();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refresh data whenever payment result changes to success
+  useEffect(() => {
+    if (paymentResult === 'success') {
+      // fetchData will be defined by this point
+      setTimeout(() => {
+        const headers = { 'Authorization': `Bearer ${token}` };
+        Promise.all([
+          fetch('/api/user/fees', { headers }).then(r => r.ok ? r.json() : null),
+          fetch('/api/user/student-fees', { headers }).then(r => r.ok ? r.json() : null),
+        ]).then(([fees, studentFees]) => {
+          if (fees) setFees(fees);
+          if (studentFees) setStudentFees(studentFees);
+        });
+      }, 500);
+    }
+  }, [paymentResult]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -193,76 +247,11 @@ const UserDashboard = () => {
         return;
       }
 
-      const isLoaded = await loadPaytmScript(orderData.mid);
-      if (!isLoaded) {
-        alert('Failed to load Paytm SDK. Are you online?');
-        return;
-      }
-
-      const config = {
-        "root": "",
-        "flow": "DEFAULT",
-        "data": {
-          "orderId": orderData.orderId,
-          "token": orderData.txnToken,
-          "tokenType": "TXN_TOKEN",
-          "amount": orderData.amount
-        },
-        "handler": {
-          "notifyMerchant": async function (eventName, data) {
-            console.log("notifyMerchant handler function called");
-            console.log("eventName => ", eventName);
-            console.log("data => ", data);
-          },
-          "transactionStatus": async function (paymentStatus) {
-            console.log("paymentStatus => ", paymentStatus);
-            try {
-              const verifyRes = await fetch(`/api/user/verify-payment`, {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({
-                  orderId: orderData.orderId,
-                  id,
-                  isMissing,
-                  mocked: orderData.mocked
-                })
-              });
-              const verifyData = await verifyRes.json();
-              if (verifyRes.ok) {
-                alert('Payment successful!');
-                fetchData();
-              } else {
-                alert(`Payment verification failed: ${verifyData.message}`);
-              }
-            } catch (err) {
-              alert('Payment verification failed.');
-            }
-            if (window.Paytm && window.Paytm.CheckoutJS && typeof window.Paytm.CheckoutJS.close === 'function') {
-              window.Paytm.CheckoutJS.close();
-            }
-          }
-        }
-      };
-
-      if (orderData.mocked) {
-        // If we are in mock mode, bypass Paytm JS Checkout completely and just simulate a success callback
-        setTimeout(() => {
-          config.handler.transactionStatus({ STATUS: "TXN_SUCCESS" });
-        }, 1000);
+      if (orderData.redirectUrl) {
+        // Redirect user to PhonePe payment page
+        window.location.href = orderData.redirectUrl;
       } else {
-        if(window.Paytm && window.Paytm.CheckoutJS && typeof window.Paytm.CheckoutJS.init === 'function'){
-          window.Paytm.CheckoutJS.init(config).then(function onSuccess() {
-              window.Paytm.CheckoutJS.invoke();
-          }).catch(function onError(error){
-              console.log("error => ", error);
-              alert("Error in initializing Paytm Checkout");
-          });
-        } else {
-          alert("Paytm Checkout SDK failed to load completely. Please check your network or Merchant ID.");
-        }
+        alert('Failed to get payment redirect URL. Please try again.');
       }
 
     } catch (err) {
@@ -329,6 +318,61 @@ const UserDashboard = () => {
   };
   return (
     <div className="app-container dashboard-layout">
+      {/* PhonePe Payment Verifying Overlay */}
+      {paymentVerifying && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(8px)', zIndex: 9999,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem'
+        }}>
+          <div style={{
+            width: 64, height: 64, border: '4px solid rgba(255,255,255,0.2)',
+            borderTop: '4px solid #5f43e9', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+          <div style={{ textAlign: 'center' }}>
+            <h3 style={{ color: '#fff', margin: 0, fontSize: '1.4rem' }}>Verifying Payment...</h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', margin: '0.5rem 0 0' }}>Please wait, do not close this tab</p>
+          </div>
+        </div>
+      )}
+
+      {/* PhonePe Payment Result Banner */}
+      {paymentResult && (
+        <div style={{
+          position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9998, minWidth: 340, maxWidth: 480,
+          background: paymentResult === 'success' ? 'linear-gradient(135deg, #1a8a4a, #22c55e)' :
+                       paymentResult === 'pending'  ? 'linear-gradient(135deg, #b45309, #f59e0b)' :
+                                                      'linear-gradient(135deg, #991b1b, #ef4444)',
+          borderRadius: '16px', padding: '1.2rem 1.5rem',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', gap: '1rem',
+          animation: 'slideDown 0.4s ease-out'
+        }}>
+          <span style={{ fontSize: '2rem' }}>
+            {paymentResult === 'success' ? '✅' : paymentResult === 'pending' ? '⏳' : '❌'}
+          </span>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>
+              {paymentResult === 'success' ? 'Payment Successful!' :
+               paymentResult === 'pending'  ? 'Payment Pending' :
+                                              'Payment Failed'}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+              {paymentResult === 'success' ? 'Your fee has been marked as paid.' :
+               paymentResult === 'pending'  ? 'Your payment is being processed. Please check back shortly.' :
+                                              'Your payment could not be completed. Please try again.'}
+            </div>
+          </div>
+          <button onClick={() => setPaymentResult(null)} style={{
+            background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
+            borderRadius: '50%', width: 28, height: 28, cursor: 'pointer',
+            fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>×</button>
+        </div>
+      )}
+
       {/* Fluffy Sidebar Navigation */}
       <div className="sidebar">
         <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)'}}>
