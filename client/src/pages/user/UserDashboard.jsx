@@ -242,7 +242,7 @@ const UserDashboard = () => {
       
       const orderData = await res.json();
       
-      if (!res.ok) {
+      if(!res.ok){
         alert(`Failed to initiate payment: ${orderData.message || 'Unknown error'}`);
         return;
       }
