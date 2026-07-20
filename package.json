@@ -13,6 +13,8 @@
     "mongoose": "^9.7.3",
     "@google/genai": "^2.11.0",
     "openai": "^6.46.0",
+    "pg-sdk-node": "^2.0.2",
+    "axios": "^1.7.0",
     "razorpay": "^2.9.6"
   }
 }
