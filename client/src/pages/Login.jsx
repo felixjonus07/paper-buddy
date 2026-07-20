@@ -58,8 +58,14 @@ const Login = () => {
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
-
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(`Server returned ${response.status}: ${text.substring(0, 50)}...`);
+      }
       if (response.ok) {
         if (data.mustChangePassword) {
            setNeedsReset(true);
@@ -85,7 +91,8 @@ const Login = () => {
         setError(data.message || 'Authentication failed');
       }
     } catch (err) {
-      setError('Failed to connect to server. Ensure backend is running.');
+      console.error("Login error:", err);
+      setError(err.message || 'Failed to connect to server. Ensure backend is running.');
     }
   };
 
