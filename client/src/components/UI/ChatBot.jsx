@@ -4,6 +4,11 @@ import { MessageCircle, X, Send, Bot, User, AlertTriangle, CheckCircle, Lock } f
 // Use relative path so Vite proxy handles it — no hardcoded localhost
 const API_BASE = '/api';
 const getToken = () => localStorage.getItem('token');
+const getUserRole = () => {
+  const t = getToken();
+  if (!t) return 'student';
+  try { return JSON.parse(atob(t.split('.')[1])).role || 'student'; } catch { return 'student'; }
+};
 
 // ─── Reusable field styles ─────────────────────────────────────────────────────
 const fieldStyle = {
@@ -38,6 +43,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
   const [fees, setFees] = useState([]);
   const [loans, setLoans] = useState([]);
   const [feeRequests, setFeeRequests] = useState([]);
+  const [colleges, setColleges] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(false);
 
   const [form, setForm] = useState({});
@@ -68,11 +74,12 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
       DELETE_FEE: ['fees'],
       APPROVE_LOAN: ['loans'],
       APPROVE_FEE_REQUEST: ['feeRequests'],
-      UPDATE_USER_SCHOLARSHIP: ['users', 'scholarships']
+      UPDATE_USER_SCHOLARSHIP: ['users', 'scholarships'],
+      CREATE_FEE_REQUEST: ['userFeeTypes']
     };
 
     const toFetch = needs[intent] || [];
-    if (toFetch.length === 0) return;
+    if (toFetch.length === 0 && intent !== 'TOGGLE_AI_ACCESS' && intent !== 'CREATE_COLLEGE_ADMIN' && intent !== 'EDIT_PROFILE') return;
 
     setFetchLoading(true);
     const requests = {
@@ -82,21 +89,41 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
       scholarships: () => fetch(`${API_BASE}/admin/scholarships`, { headers: h }).then(r => r.ok ? r.json() : []),
       fees: () => fetch(`${API_BASE}/admin/fees`, { headers: h }).then(r => r.ok ? r.json() : []),
       loans: () => fetch(`${API_BASE}/admin/loans`, { headers: h }).then(r => r.ok ? r.json() : []),
-      feeRequests: () => fetch(`${API_BASE}/admin/fee-requests`, { headers: h }).then(r => r.ok ? r.json() : [])
+      feeRequests: () => fetch(`${API_BASE}/admin/fee-requests`, { headers: h }).then(r => r.ok ? r.json() : []),
+      userFeeTypes: () => fetch(`${API_BASE}/user/fee-types`, { headers: h }).then(r => r.ok ? r.json() : [])
     };
 
     Promise.all(toFetch.map(k => requests[k]().then(d => [k, d])))
-      .then(results => {
+      .then(async results => {
         let fetchedGroups = null;
         results.forEach(([k, d]) => {
           if (k === 'groups') { setGroups(d); fetchedGroups = d; }
           if (k === 'users') setUsers(d);
           if (k === 'feeTypes') setFeeTypes(d);
-          if (k === 'scholarships') setScholarships(d);
+          if (k === 'scholarships') { setScholarships(d); }
           if (k === 'fees') setFees(d);
           if (k === 'loans') setLoans(d);
           if (k === 'feeRequests') setFeeRequests(d);
+          if (k === 'userFeeTypes') setFeeTypes(d);
         });
+
+        if (intent === 'TOGGLE_AI_ACCESS' || intent === 'CREATE_COLLEGE_ADMIN') {
+          const colRes = await fetch(`${API_BASE}/superadmin/colleges`, { headers: { Authorization: `Bearer ${getToken()}` } });
+          if (colRes.ok) {
+            const cols = await colRes.json();
+            setColleges(cols);
+            setForm(prev => {
+              if (prev.collegeQuery && !prev.collegeId) {
+                const match = cols.find(c => 
+                  c.name.toLowerCase().includes(prev.collegeQuery.toLowerCase()) || 
+                  c.code.toLowerCase().includes(prev.collegeQuery.toLowerCase())
+                );
+                if (match) return { ...prev, collegeId: match._id };
+              }
+              return prev;
+            });
+          }
+        }
 
         // For ASSIGN_SUBGROUP: auto-select child/parent IDs from AI-extracted names
         if (intent === 'ASSIGN_SUBGROUP' && fetchedGroups) {
@@ -420,6 +447,128 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
           </>
         );
 
+      case 'TOGGLE_AI_ACCESS':
+        return (
+          <>
+            <label style={labelStyle}>
+              <span style={labelTextStyle}>College</span>
+              <select value={form.collegeId || ''} onChange={e => setF('collegeId', e.target.value)} style={fieldStyle}>
+                <option value="">Choose a college...</option>
+                {colleges.map(c => <option key={c._id} value={c._id}>{c.name} ({c.code})</option>)}
+              </select>
+            </label>
+            <label style={labelStyle}>
+              <span style={labelTextStyle}>AI Access Action</span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {['enable', 'disable'].map(s => (
+                  <button key={s} onClick={() => setF('action', s)} style={{
+                    flex: 1, padding: '0.6rem', borderRadius: '12px', border: 'none',
+                    cursor: 'pointer', fontWeight: 700,
+                    background: form.action === s
+                      ? s === 'enable' ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#ef4444,#dc2626)'
+                      : 'rgba(128,128,128,0.1)',
+                    color: form.action === s ? 'white' : 'var(--text-light)',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    {s === 'enable' ? '✅ Enable' : '❌ Disable'}
+                  </button>
+                ))}
+              </div>
+            </label>
+          </>
+        );
+
+      case 'CREATE_COLLEGE_ADMIN':
+        return (
+          <>
+            <div style={{
+              background: 'rgba(248,116,16,0.07)',
+              border: '1px solid rgba(248,116,16,0.2)',
+              borderRadius: '8px', padding: '12px', marginBottom: '16px'
+            }}>
+              <h4 style={{ margin: '0 0 8px', color: '#fff', fontSize: '14px' }}>Create College Admin</h4>
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
+                Create a new admin account for a college.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <select value={form.collegeId || ''} onChange={e => setF('collegeId', e.target.value)} style={fieldStyle}>
+                <option value="">Choose a college...</option>
+                {colleges.map(c => <option key={c._id} value={c._id}>{c.name} ({c.code})</option>)}
+              </select>
+              <input type="text" placeholder="Admin Full Name" value={form.name || ''} onChange={e => setF('name', e.target.value)} style={fieldStyle} />
+              <input type="text" placeholder="Username" value={form.username || ''} onChange={e => setF('username', e.target.value)} style={fieldStyle} />
+              <input type="password" placeholder="Password" value={form.password || ''} onChange={e => setF('password', e.target.value)} style={fieldStyle} />
+            </div>
+          </>
+        );
+
+      case 'CREATE_COLLEGE':
+        return (
+          <>
+            <div style={{
+              background: 'rgba(248,116,16,0.07)',
+              border: '1px solid rgba(248,116,16,0.2)',
+              borderRadius: '8px', padding: '12px', marginBottom: '16px'
+            }}>
+              <h4 style={{ margin: '0 0 8px', color: '#fff', fontSize: '14px' }}>Add New College</h4>
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
+                Please review the new tenant details.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input type="text" placeholder="College Name" value={form.name || ''} onChange={e => setF('name', e.target.value)} style={fieldStyle} />
+              <input type="text" placeholder="Unique Code (e.g., MIT01)" value={form.code || ''} onChange={e => setF('code', e.target.value)} style={fieldStyle} />
+              <input type="text" placeholder="Address" value={form.address || ''} onChange={e => setF('address', e.target.value)} style={fieldStyle} />
+            </div>
+          </>
+        );
+
+      case 'CREATE_FEE_REQUEST':
+        return (
+          <>
+            <div style={{
+              background: 'rgba(248,116,16,0.07)',
+              border: '1px solid rgba(248,116,16,0.2)',
+              borderRadius: '8px', padding: '12px', marginBottom: '16px'
+            }}>
+              <h4 style={{ margin: '0 0 8px', color: '#fff', fontSize: '14px' }}>Request Fee Waiver/Custom Fee</h4>
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
+                Please review your fee request details.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input type="text" placeholder="Title (e.g. Medical Waiver)" value={form.requestedFeeTitle || ''} onChange={e => setF('requestedFeeTitle', e.target.value)} style={fieldStyle} />
+              <input type="number" placeholder="Amount (₹)" value={form.amount || ''} onChange={e => setF('amount', e.target.value)} style={fieldStyle} />
+              <textarea placeholder="Reason for request" value={form.reason || ''} onChange={e => setF('reason', e.target.value)} style={{ ...fieldStyle, minHeight: '80px', resize: 'vertical' }} />
+              <select value={form.feeTypeId || ''} onChange={e => setF('feeTypeId', e.target.value)} style={fieldStyle}>
+                <option value="">Select Category...</option>
+                {feeTypes.map(ft => <option key={ft._id} value={ft._id}>{ft.name}</option>)}
+              </select>
+            </div>
+          </>
+        );
+
+      case 'EDIT_PROFILE':
+        return (
+          <>
+            <div style={{
+              background: 'rgba(248,116,16,0.07)',
+              border: '1px solid rgba(248,116,16,0.2)',
+              borderRadius: '8px', padding: '12px', marginBottom: '16px'
+            }}>
+              <h4 style={{ margin: '0 0 8px', color: '#fff', fontSize: '14px' }}>Update Profile</h4>
+              <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
+                Update your contact information.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input type="text" placeholder="Phone Number" value={form.phoneNumber || ''} onChange={e => setF('phoneNumber', e.target.value)} style={fieldStyle} />
+              <input type="email" placeholder="Personal Email" value={form.personalEmail || ''} onChange={e => setF('personalEmail', e.target.value)} style={fieldStyle} />
+            </div>
+          </>
+        );
+
       default:
         return <p style={{ color: 'var(--text-light)', textAlign: 'center' }}>No action required.</p>;
     }
@@ -435,9 +584,14 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
     CREATE_FEE_TYPE: '🏷️ Create Fee Type',
     CREATE_SCHOLARSHIP: '🎓 Create Scholarship',
     DELETE_FEE: '🗑️ Delete Fee',
-    APPROVE_LOAN: '🏦 Manage Loan',
-    APPROVE_FEE_REQUEST: '📝 Manage Fee Request',
-    UPDATE_USER_SCHOLARSHIP: '🎓 Assign Scholarship to Student'
+    APPROVE_LOAN: '💰 Approve/Reject Loan',
+    APPROVE_FEE_REQUEST: '📝 Approve/Reject Fee Request',
+    UPDATE_USER_SCHOLARSHIP: '🎓 Assign Scholarship',
+    TOGGLE_AI_ACCESS: '🤖 Toggle AI Access',
+    CREATE_COLLEGE_ADMIN: '🛡️ Create College Admin',
+    CREATE_COLLEGE: '🏢 Create New College',
+    CREATE_FEE_REQUEST: '📝 Create Fee Request',
+    EDIT_PROFILE: '👤 Edit Profile'
   };
 
   return (
@@ -624,6 +778,42 @@ const executeAction = async (intent, form) => {
         body: JSON.stringify({ scholarship: form.scholarshipId })
       });
 
+    case 'TOGGLE_AI_ACCESS':
+      if (!form.collegeId) throw new Error('Please select a college from the dropdown.');
+      if (!form.action) throw new Error('Please select whether to enable or disable AI access.');
+      return fetch(`${API_BASE}/superadmin/colleges/${form.collegeId}/ai-access`, {
+        method: 'PUT', headers: h,
+        body: JSON.stringify({ aiAccess: form.action === 'enable' })
+      });
+
+    case 'CREATE_COLLEGE_ADMIN':
+      if (!form.collegeId) throw new Error('Please select a college.');
+      if (!form.name || !form.username || !form.password) throw new Error('Please fill all fields.');
+      return fetch(`${API_BASE}/superadmin/admins`, {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ collegeId: form.collegeId, name: form.name, username: form.username, password: form.password })
+      });
+
+    case 'CREATE_COLLEGE':
+      if (!form.name || !form.code || !form.address) throw new Error('Please fill all fields.');
+      return fetch(`${API_BASE}/superadmin/colleges`, {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ name: form.name, code: form.code, address: form.address, subscriptionStatus: 'active' })
+      });
+
+    case 'CREATE_FEE_REQUEST':
+      if (!form.requestedFeeTitle || !form.amount || !form.feeTypeId || !form.reason) throw new Error('Please fill all fields.');
+      return fetch(`${API_BASE}/user/fee-requests`, {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ requestedFeeTitle: form.requestedFeeTitle, amount: Number(form.amount), feeType: form.feeTypeId, reason: form.reason })
+      });
+
+    case 'EDIT_PROFILE':
+      return fetch(`${API_BASE}/user/profile`, {
+        method: 'PUT', headers: h,
+        body: JSON.stringify({ phoneNumber: form.phoneNumber, personalEmail: form.personalEmail })
+      });
+
     default:
       throw new Error('Unknown intent');
   }
@@ -640,16 +830,27 @@ const successMessages = {
   CREATE_FEE_TYPE: (f) => `✅ Fee type **"${f.name}"** has been created.`,
   CREATE_SCHOLARSHIP: (f) => `✅ Scholarship **"${f.name}"** with ${f.discountPercentage}% discount has been created.`,
   DELETE_FEE: () => `✅ The selected fee has been deleted successfully.`,
-  APPROVE_LOAN: (f) => `✅ Loan has been **${f.status}** successfully.`,
-  APPROVE_FEE_REQUEST: (f) => `✅ Fee request has been **${f.status}** successfully.`,
-  UPDATE_USER_SCHOLARSHIP: () => `✅ Scholarship has been assigned to the student successfully.`
+  CREATE_COLLEGE: (f) => `✅ College **"${f.name}"** (${f.code}) has been created successfully.`,
+  APPROVE_LOAN: (f) => `✅ Loan has been **${f.status}**.`,
+  APPROVE_FEE_REQUEST: (f) => `✅ Fee request has been **${f.status}**.`,
+  UPDATE_USER_SCHOLARSHIP: () => `✅ Scholarship has been assigned to the student successfully.`,
+  TOGGLE_AI_ACCESS: (f) => `✅ AI Access has been **${f.action}d** for the college.`,
+  CREATE_FEE_REQUEST: () => `✅ Your fee request has been submitted and is pending approval.`,
+  EDIT_PROFILE: () => `✅ Your profile has been updated successfully.`
 };
 
 // ─── Main ChatBot Widget ───────────────────────────────────────────────────────
 const ChatBot = () => {
   const [open, setOpen] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  
+  const initialMessage = getUserRole() === 'admin' || getUserRole() === 'superadmin' 
+    ? '👋 Hi! I\'m EduFin AI. I can help you manage fees, groups, scholarships, loans, and more.\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
+    : '👋 Hi! I\'m EduFin AI. How can I help you today?';
+
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: '👋 Hi! I\'m EduFin AI. I can help you manage fees, groups, scholarships, loans, and more.\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"' }
+    { role: 'assistant', content: initialMessage }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -667,6 +868,18 @@ const ChatBot = () => {
 
   useEffect(() => {
     if (inputRef.current) inputRef.current.focus();
+  }, []);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    fetch(`${API_BASE}/chatbot/status`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        setIsVisible(d.enabled);
+        setCheckingStatus(false);
+      })
+      .catch(() => setCheckingStatus(false));
   }, []);
 
   const showNotification = (msg, type = 'success') => {
@@ -735,12 +948,15 @@ const ChatBot = () => {
       } else {
         showNotification(data.message || 'Action failed. Please try again.', 'error');
       }
-    } catch {
-      showNotification('Connection error. Please try again.', 'error');
+    } catch (err) {
+      showNotification(err.message || 'Connection error. Please try again.', 'error');
     } finally {
       setActionLoading(false);
     }
   };
+
+  if (checkingStatus) return null;
+  if (!isVisible && getUserRole() !== 'superadmin') return null;
 
   return (
     <>
