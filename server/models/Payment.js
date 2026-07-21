@@ -42,6 +42,11 @@ const paymentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  processedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
   collegeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'College',

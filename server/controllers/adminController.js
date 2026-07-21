@@ -928,6 +928,50 @@ const updatePaymentSettings = async (req, res) => {
   }
 };
 
+// Get all cashiers for the college
+const getCashiers = async (req, res) => {
+  try {
+    const cashiers = await User.find({
+      collegeId: req.user.collegeId,
+      role: 'cashier'
+    }).select('name username personalEmail phoneNumber');
+    res.json(cashiers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get payment logs for a specific cashier on a given date
+const getCashierLogs = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.query; // expects YYYY-MM-DD
+    
+    let query = { collegeId: req.user.collegeId, processedBy: id, status: 'SUCCESS' };
+    
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      query.paidAt = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    const logs = await Payment.find(query)
+      .populate('user', 'name username registerNumber')
+      .populate('fee', 'title')
+      .sort({ paidAt: -1 });
+
+    const totalCollected = logs.reduce((sum, p) => sum + p.amount, 0);
+
+    res.json({ logs, totalCollected });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   bulkCreateUsers,
   uploadBulkUsers,
@@ -956,5 +1000,7 @@ module.exports = {
   updateFeeRequestStatus,
   getPaymentReports,
   updatePaymentSettings,
-  getPaymentSettings
+  getPaymentSettings,
+  getCashiers,
+  getCashierLogs
 };

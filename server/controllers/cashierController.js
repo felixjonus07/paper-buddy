@@ -77,6 +77,7 @@ const processCashPayment = async (req, res) => {
       paymentMethod: 'CASH',
       status: 'SUCCESS',
       collegeId: req.user.collegeId,
+      processedBy: req.user._id,
       paidAt: new Date()
     });
 

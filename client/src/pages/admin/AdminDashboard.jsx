@@ -17,7 +17,8 @@ import FeeTypesManagement from '../../components/admin/FeeTypesManagement';
 import ScholarshipsManagement from '../../components/admin/ScholarshipsManagement';
 import ReportsManagement from '../../components/admin/ReportsManagement';
 import PaymentSettings from '../../components/admin/PaymentSettings';
-import { TrendingUp } from 'lucide-react';
+import CashierManagement from '../../components/admin/CashierManagement';
+import { TrendingUp, UserCog } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -544,6 +545,9 @@ const AdminDashboard = () => {
         <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
           <GraduationCap size={20} /> <span className="nav-text">Scholarship Control</span>
         </div>
+        <div className={`nav-item ${activeTab === 'cashiers' ? 'active' : ''}`} onClick={() => setActiveTab('cashiers')}>
+          <UserCog size={20} /> <span className="nav-text">Cashier Management</span>
+        </div>
         <div className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
           <TrendingUp size={20} /> <span className="nav-text">Reports</span>
         </div>
@@ -576,6 +580,7 @@ const AdminDashboard = () => {
               {activeTab === 'payment-settings' && 'Payment Settings'}
               {activeTab === 'masters' && 'Fee Group Management'}
               {activeTab === 'settings' && 'Scholarship Control'}
+              {activeTab === 'cashiers' && 'Cashier Management'}
               {activeTab === 'reports' && 'Reports & Auditing'}
             </h2>
             {isReadOnly && (
@@ -635,6 +640,7 @@ const AdminDashboard = () => {
               {activeTab === 'payment-settings' && 'Here you can set up how your college collects money. You can use Centralized (company bank) or Decentralized (your own bank account) payments.'}
               {activeTab === 'masters' && 'This page is for creating standard "Fee Types" (like Tuition Fee, Exam Fee). You must create a Fee Type here before you can assign a fee.'}
               {activeTab === 'settings' && 'This page is for creating standard "Scholarships". You can define rules like "50% off if the student has a high academic score".'}
+              {activeTab === 'cashiers' && 'This page helps you track your Cashiers. You can see who is assigned, view their daily collected cash logs, and download reports.'}
               {activeTab === 'reports' && 'This page helps you generate detailed financial reports. You can select dates and see all successful payments made by students.'}
             </p>
           </div>
@@ -649,6 +655,7 @@ const AdminDashboard = () => {
         {activeTab === 'payment-settings' && <PaymentSettings isReadOnly={isReadOnly} />}
         {activeTab === 'masters' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} isReadOnly={isReadOnly} /></div>}
         {activeTab === 'settings' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} isReadOnly={isReadOnly} /></div>}
+        {activeTab === 'cashiers' && <CashierManagement isReadOnly={isReadOnly} collegeId={collegeId} />}
         {activeTab === 'reports' && <ReportsManagement />}
       </div>
 
