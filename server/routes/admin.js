@@ -1,13 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { bulkCreateUsers, uploadBulkUsers, createGroup, updateGroup, createGroupMentor, getGroups, assignFeeToGroup, assignFeeToUser, getUsers, updateUser, getAllFees, getLoans, updateLoanStatus, assignStudentToGroup, assignSubGroup, getGroupDashboardData, createFeeType, getFeeTypes, deleteFeeType, createScholarship, getScholarships, deleteScholarship, deleteFee, getFeeRequests, updateFeeRequestStatus, getPaymentReports, updatePaymentSettings, getPaymentSettings, getCashiers, getCashierLogs } = require('../controllers/adminController');
+const { bulkCreateUsers, uploadBulkUsers, createGroup, updateGroup, createGroupMentor, getGroups, assignFeeToGroup, assignFeeToUser, getUsers, updateUser, getAllFees, getLoans, updateLoanStatus, assignStudentToGroup, assignSubGroup, getGroupDashboardData, createFeeType, getFeeTypes, deleteFeeType, createScholarship, getScholarships, deleteScholarship, deleteFee, getFeeRequests, updateFeeRequestStatus, getPaymentReports, updatePaymentSettings, getPaymentSettings, getCashiers, getCashierLogs, getLedger, confirmSettlement } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 // All admin routes are protected and require admin role
 router.use(protect, admin);
+
+// Analytics & Finance
+router.get('/finance/ledger', getLedger);
+router.put('/finance/settlements/:id/confirm', confirmSettlement);
 
 router.get('/reports/payments', getPaymentReports);
 router.get('/college/payment-settings', getPaymentSettings);

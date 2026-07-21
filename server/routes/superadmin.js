@@ -4,6 +4,7 @@ const College = require('../models/College');
 const AuditLog = require('../models/AuditLog');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
+const Settlement = require('../models/Settlement');
 const { protect } = require('../middleware/authMiddleware');
 const bcrypt = require('bcryptjs');
 
@@ -239,6 +240,11 @@ router.get('/billing-overview', async (req, res) => {
       const platformAmount = isCentralized ? onlineTotal : 0;
       const ownGatewayAmount = !isCentralized ? onlineTotal : 0;
 
+      // Settlement totals
+      const settlements = await Settlement.find({ collegeId: college._id });
+      const totalSettled = settlements.filter(s => s.status === 'COMPLETED').reduce((sum, s) => sum + s.amount, 0);
+      const pendingSettlement = settlements.filter(s => s.status === 'PENDING_ADMIN_CONFIRMATION').reduce((sum, s) => sum + s.amount, 0);
+
       return {
         _id: college._id,
         name: college.name,
@@ -248,6 +254,9 @@ router.get('/billing-overview', async (req, res) => {
         totalCollected: total,
         // Money credited to PLATFORM account (centralized online)
         platformAmount,
+        totalSettled,
+        pendingSettlement,
+        balanceOwed: platformAmount - totalSettled - pendingSettlement,
         platformCount: isCentralized ? onlinePayments.length : 0,
         // Money credited to COLLEGE's OWN gateway (decentralized online)
         ownGatewayAmount,
@@ -277,6 +286,27 @@ router.get('/billing-overview', async (req, res) => {
         totalColleges: colleges.length
       }
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Initiate a payout (Settlement) from Platform to College
+router.post('/settlements', async (req, res) => {
+  try {
+    const { collegeId, amount, reference } = req.body;
+    if (!collegeId || !amount) {
+      return res.status(400).json({ message: 'collegeId and amount are required' });
+    }
+
+    const settlement = await Settlement.create({
+      collegeId,
+      amount,
+      reference,
+      status: 'PENDING_ADMIN_CONFIRMATION'
+    });
+
+    res.status(201).json(settlement);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
