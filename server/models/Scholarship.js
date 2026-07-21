@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const scholarshipSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   description: {
     type: String
@@ -22,6 +21,11 @@ const scholarshipSchema = new mongoose.Schema({
   minAcademicScore: {
     type: Number,
     default: 0
+  },
+  collegeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'College',
+    required: true
   },
   createdAt: {
     type: Date,

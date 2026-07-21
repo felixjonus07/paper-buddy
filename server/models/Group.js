@@ -17,6 +17,11 @@ const groupSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  collegeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'College',
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now,

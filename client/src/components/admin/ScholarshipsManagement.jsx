@@ -10,7 +10,8 @@ const ScholarshipsManagement = ({
   setNewScholarship, 
   feeTypes, 
   scholarships, 
-  handleDeleteScholarship 
+  handleDeleteScholarship,
+  isReadOnly 
 }) => {
   return (
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
@@ -22,42 +23,44 @@ const ScholarshipsManagement = ({
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
         <NeoCard>
-          <form onSubmit={handleCreateScholarship} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-            <NeoInput type="text" placeholder="Scholarship Name" value={newScholarship.name} onChange={e => setNewScholarship({...newScholarship, name: e.target.value})} required />
-            <NeoInput type="text" placeholder="Description (Optional)" value={newScholarship.description || ''} onChange={e => setNewScholarship({...newScholarship, description: e.target.value})} />
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <NeoInput type="number" placeholder="Discount %" value={newScholarship.discountPercentage} onChange={e => setNewScholarship({...newScholarship, discountPercentage: e.target.value})} required />
-              <NeoInput type="number" placeholder="Min Score (Optional)" value={newScholarship.minAcademicScore} onChange={e => setNewScholarship({...newScholarship, minAcademicScore: e.target.value})} />
-            </div>
-            
-            <div style={{ position: 'relative' }}>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem', display: 'block' }}>Applicable Fee Types (Leave blank for all)</label>
-              <div style={{
-                maxHeight: '150px',
-                overflowY: 'auto',
-                backgroundColor: 'var(--clay-base)',
-                borderRadius: '20px',
-                padding: '1rem',
-                boxShadow: 'var(--clay-outer)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.8rem'
-              }}>
-                {feeTypes.map(c => (
-                  <div key={c._id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }} onClick={() => {
-                    const current = newScholarship.applicableFeeTypes || [];
-                    const next = current.includes(c._id) ? current.filter(id => id !== c._id) : [...current, c._id];
-                    setNewScholarship({...newScholarship, applicableFeeTypes: next});
-                  }}>
-                    <input type="checkbox" checked={(newScholarship.applicableFeeTypes || []).includes(c._id)} readOnly style={{ accentColor: 'var(--primary)', transform: 'scale(1.2)' }} />
-                    <span style={{ color: 'var(--text-color)' }}>{c.name}</span>
-                  </div>
-                ))}
-                {feeTypes.length === 0 && <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>No fee types available.</span>}
+          {!isReadOnly && (
+            <form onSubmit={handleCreateScholarship} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+              <NeoInput type="text" placeholder="Scholarship Name" value={newScholarship.name} onChange={e => setNewScholarship({...newScholarship, name: e.target.value})} required />
+              <NeoInput type="text" placeholder="Description (Optional)" value={newScholarship.description || ''} onChange={e => setNewScholarship({...newScholarship, description: e.target.value})} />
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <NeoInput type="number" placeholder="Discount %" value={newScholarship.discountPercentage} onChange={e => setNewScholarship({...newScholarship, discountPercentage: e.target.value})} required />
+                <NeoInput type="number" placeholder="Min Score (Optional)" value={newScholarship.minAcademicScore} onChange={e => setNewScholarship({...newScholarship, minAcademicScore: e.target.value})} />
               </div>
-            </div>
-            <NeoButton variant="mint" type="submit">Create Scholarship</NeoButton>
-          </form>
+              
+              <div style={{ position: 'relative' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem', display: 'block' }}>Applicable Fee Types (Leave blank for all)</label>
+                <div style={{
+                  maxHeight: '150px',
+                  overflowY: 'auto',
+                  backgroundColor: 'var(--clay-base)',
+                  borderRadius: '20px',
+                  padding: '1rem',
+                  boxShadow: 'var(--clay-outer)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.8rem'
+                }}>
+                  {feeTypes.map(c => (
+                    <div key={c._id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }} onClick={() => {
+                      const current = newScholarship.applicableFeeTypes || [];
+                      const next = current.includes(c._id) ? current.filter(id => id !== c._id) : [...current, c._id];
+                      setNewScholarship({...newScholarship, applicableFeeTypes: next});
+                    }}>
+                      <input type="checkbox" checked={(newScholarship.applicableFeeTypes || []).includes(c._id)} readOnly style={{ accentColor: 'var(--primary)', transform: 'scale(1.2)' }} />
+                      <span style={{ color: 'var(--text-color)' }}>{c.name}</span>
+                    </div>
+                  ))}
+                  {feeTypes.length === 0 && <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>No fee types available.</span>}
+                </div>
+              </div>
+              <NeoButton variant="mint" type="submit">Create Scholarship</NeoButton>
+            </form>
+          )}
 
           <h3 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Existing Scholarships</h3>
           <div className="card-grid">
@@ -80,9 +83,11 @@ const ScholarshipsManagement = ({
                   </span>
                 </div>
 
-                <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
-                  <NeoButton variant="peach" style={{ width: '100%', padding: '0.4rem', fontSize: '0.8rem' }} onClick={() => handleDeleteScholarship(s._id)}>Delete Scholarship</NeoButton>
-                </div>
+                {!isReadOnly && (
+                  <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)' }}>
+                    <NeoButton variant="peach" style={{ width: '100%', padding: '0.4rem', fontSize: '0.8rem' }} onClick={() => handleDeleteScholarship(s._id)}>Delete Scholarship</NeoButton>
+                  </div>
+                )}
               </NeoCard>
             ))}
             {scholarships.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No scholarships defined</p>}

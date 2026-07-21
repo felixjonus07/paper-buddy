@@ -9,7 +9,20 @@ const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('pg-
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-const getPhonePeClient = () => {
+const getPhonePeClient = async (collegeId) => {
+  if (collegeId) {
+    const College = require('../models/College');
+    const { decrypt } = require('../utils/encryption');
+    const college = await College.findById(collegeId);
+    if (college && college.paymentType === 'DECENTRALIZED' && college.paymentCredentials?.merchantId) {
+      return StandardCheckoutClient.getInstance(
+        college.paymentCredentials.merchantId,
+        decrypt(college.paymentCredentials.saltKey),
+        college.paymentCredentials.saltIndex || 1,
+        college.paymentCredentials.env === 'PRODUCTION' ? Env.PRODUCTION : Env.SANDBOX
+      );
+    }
+  }
   return StandardCheckoutClient.getInstance(
     process.env.PHONEPE_CLIENT_ID,
     process.env.PHONEPE_CLIENT_SECRET,
@@ -189,7 +202,7 @@ const createPaymentOrder = async (req, res) => {
       .redirectUrl(redirectUrl)
       .build();
 
-    const client = getPhonePeClient();
+    const client = await getPhonePeClient(req.user.collegeId);
     const response = await client.pay(request);
 
     const checkoutPageUrl = response?.redirectUrl;
@@ -222,7 +235,7 @@ const verifyPayment = async (req, res) => {
   try {
     const { merchantTransactionId, feeId, isMissing } = req.body;
 
-    const client = getPhonePeClient();
+    const client = await getPhonePeClient(req.user.collegeId);
     const statusResponse = await client.getOrderStatus(merchantTransactionId);
 
     const paymentState = statusResponse?.state;
@@ -280,24 +293,45 @@ const verifyPayment = async (req, res) => {
 
 const phonepeCallback = async (req, res) => {
   try {
-    const client = getPhonePeClient();
     const { authorization, response: responseBody } = req.headers;
+    const base64Response = req.body.response || responseBody;
+    
+    let merchantId = null;
+    let decodedEvent = null;
+    if (base64Response) {
+      try {
+        decodedEvent = JSON.parse(Buffer.from(base64Response, 'base64').toString('utf-8'));
+        merchantId = decodedEvent.merchantId;
+      } catch (e) {}
+    } else if (req.body && req.body.merchantId) {
+      merchantId = req.body.merchantId;
+      decodedEvent = req.body;
+    }
+
+    let client = await getPhonePeClient(null);
+    if (merchantId && merchantId !== process.env.PHONEPE_CLIENT_ID) {
+      const College = require('../models/College');
+      const college = await College.findOne({ 'paymentCredentials.merchantId': merchantId, paymentType: 'DECENTRALIZED' });
+      if (college) {
+        client = await getPhonePeClient(college._id);
+      }
+    }
 
     // Validate the webhook payload using the SDK
     const isValid = client.validateWebhookPayload(
       authorization,
-      responseBody || JSON.stringify(req.body)
+      base64Response || JSON.stringify(req.body)
     );
 
     if (!isValid) {
       console.warn('PhonePe callback: invalid webhook signature');
     }
 
-    const event = req.body;
+    const event = decodedEvent || req.body;
     console.log('PhonePe callback event:', JSON.stringify(event));
 
-    if (event?.type === 'checkout.order.completed') {
-      const merchantOrderId = event?.payload?.merchantOrderId;
+    if (event?.type === 'checkout.order.completed' || event?.code === 'PAYMENT_SUCCESS') {
+      const merchantOrderId = event?.payload?.merchantOrderId || event?.data?.merchantTransactionId;
       const payment = await Payment.findOne({ merchantTransactionId: merchantOrderId });
 
       if (payment && payment.status !== 'SUCCESS') {

@@ -9,9 +9,20 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    // If they are logged in but have the wrong role, send them to their own dashboard
-    return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'} replace />;
+  if (requiredRole) {
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    if (allowedRoles.includes('user') && user.role === 'student') {
+      // Allow student to access user dashboard
+    } else if (allowedRoles.includes('admin') && user.role === 'superadmin') {
+      // Allow superadmin to access admin dashboard
+    } else if (!allowedRoles.includes(user.role)) {
+      // If they are logged in but have the wrong role, send them to their own dashboard
+      if (user.role === 'admin' || user.role === 'superadmin') return <Navigate to="/admin/dashboard" replace />;
+      if (user.role === 'cashier') return <Navigate to="/cashier/dashboard" replace />;
+      if (user.role === 'mentor') return <Navigate to="/mentor/dashboard" replace />;
+      return <Navigate to="/user/dashboard" replace />;
+    }
   }
 
   return children;

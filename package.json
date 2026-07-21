@@ -10,6 +10,9 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.7.3"
+    "mongoose": "^9.7.3",
+    "@google/genai": "^2.11.0",
+    "openai": "^6.46.0",
+    "razorpay": "^2.9.6"
   }
 }

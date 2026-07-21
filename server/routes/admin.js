@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { bulkCreateUsers, createGroup, updateGroup, createGroupMentor, getGroups, assignFeeToGroup, assignFeeToUser, getUsers, updateUser, getAllFees, getLoans, updateLoanStatus, assignStudentToGroup, assignSubGroup, getGroupDashboardData, createFeeType, getFeeTypes, deleteFeeType, createScholarship, getScholarships, deleteScholarship, deleteFee, getFeeRequests, updateFeeRequestStatus } = require('../controllers/adminController');
+const { bulkCreateUsers, createGroup, updateGroup, createGroupMentor, getGroups, assignFeeToGroup, assignFeeToUser, getUsers, updateUser, getAllFees, getLoans, updateLoanStatus, assignStudentToGroup, assignSubGroup, getGroupDashboardData, createFeeType, getFeeTypes, deleteFeeType, createScholarship, getScholarships, deleteScholarship, deleteFee, getFeeRequests, updateFeeRequestStatus, getPaymentReports, updatePaymentSettings, getPaymentSettings } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // All admin routes are protected and require admin role
 router.use(protect, admin);
+
+router.get('/reports/payments', getPaymentReports);
+router.get('/college/payment-settings', getPaymentSettings);
+router.put('/college/payment-settings', updatePaymentSettings);
 
 router.post('/bulk-users', bulkCreateUsers);
 router.get('/users', getUsers);

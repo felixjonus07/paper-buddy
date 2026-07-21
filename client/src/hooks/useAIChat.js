@@ -51,7 +51,7 @@ export function useAIChat(conversationId = 'default') {
     setIsStreaming(true);
 
     try {
-      const response = await fetch('http://localhost:5050/api/ai/chat/stream', {
+      const response = await fetch('/api/ai/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, conversationId })

@@ -22,6 +22,11 @@ const feeSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  collegeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'College',
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now,

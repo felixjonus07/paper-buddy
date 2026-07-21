@@ -11,15 +11,18 @@ const UserManagement = ({
   setEditUserData,
   setEditUserModalOpen,
   setSelectedUserForGroup,
-  setAssignStudentModalOpen
+  setAssignStudentModalOpen,
+  isReadOnly
 }) => {
   return (
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ margin: 0, color: 'var(--primary)' }}>User Management</h2>
-        <NeoButton variant="mint" onClick={() => setUserModalOpen(true)}>
-          <Plus size={20} /> Bulk Create
-        </NeoButton>
+        {!isReadOnly && (
+          <NeoButton variant="mint" onClick={() => setUserModalOpen(true)}>
+            <Plus size={20} /> Bulk Create
+          </NeoButton>
+        )}
       </div>
       
       <div className="card-grid">
@@ -57,7 +60,7 @@ const UserManagement = ({
               </div>
             )}
 
-            {u.role === 'user' && (
+            {u.role === 'user' && !isReadOnly && (
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem' }}>
                 <NeoButton variant="peach" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0 }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
                 <NeoButton variant="mint" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setSelectedUserForGroup(u); setAssignStudentModalOpen(true); }}>Assign Group</NeoButton>

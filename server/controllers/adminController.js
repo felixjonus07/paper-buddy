@@ -61,6 +61,7 @@ const bulkCreateUsers = async (req, res) => {
         username,
         password: hashedPassword,
         role: 'user',
+        collegeId: req.user.collegeId,
         mustChangePassword: true
       });
     }
@@ -92,12 +93,13 @@ const createGroup = async (req, res) => {
     const group = await Group.create({ 
       name, 
       description,
-      isGlobal: isGlobal || false
+      isGlobal: isGlobal || false,
+      collegeId: req.user.collegeId
     });
 
     if (studentIds && Array.isArray(studentIds) && studentIds.length > 0) {
       await User.updateMany(
-        { _id: { $in: studentIds } },
+        { _id: { $in: studentIds }, collegeId: req.user.collegeId },
         { $addToSet: { groups: group._id } }
       );
       
@@ -138,8 +140,8 @@ const createGroup = async (req, res) => {
 const updateGroup = async (req, res) => {
   try {
     const { name, description, isGlobal } = req.body;
-    const group = await Group.findById(req.params.id);
-    if (!group) return res.status(404).json({ message: 'Group not found' });
+    const group = await Group.findOne({ _id: req.params.id, collegeId: req.user.collegeId });
+    if (!group) return res.status(404).json({ message: 'Group not found or unauthorized' });
     
     if (name) group.name = name;
     if (description !== undefined) group.description = description;
@@ -158,8 +160,8 @@ const createGroupMentor = async (req, res) => {
     const { groupId } = req.params;
     const { name, username, password } = req.body;
 
-    const group = await Group.findById(groupId);
-    if (!group) return res.status(404).json({ message: 'Group not found' });
+    const group = await Group.findOne({ _id: groupId, collegeId: req.user.collegeId });
+    if (!group) return res.status(404).json({ message: 'Group not found or unauthorized' });
 
     const userExists = await User.findOne({ username });
     if (userExists) {
@@ -174,6 +176,7 @@ const createGroupMentor = async (req, res) => {
       username,
       password: hashedPassword,
       role: 'mentor',
+      collegeId: req.user.collegeId,
       groups: [groupId]
     });
 
@@ -186,7 +189,7 @@ const createGroupMentor = async (req, res) => {
 // Get All Groups
 const getGroups = async (req, res) => {
   try {
-    const groups = await Group.find().populate('parentGroups', 'name');
+    const groups = await Group.find({ collegeId: req.user.collegeId }).populate('parentGroups', 'name');
     res.json(groups);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -214,7 +217,7 @@ const assignStudentToGroup = async (req, res) => {
     const allNewStudentFees = [];
     
     for (const id of idsToProcess) {
-      const user = await User.findById(id);
+      const user = await User.findOne({ _id: id, collegeId: req.user.collegeId });
       if (!user) continue; // Skip if user not found
       
       if (!user.groups.includes(groupId)) {
@@ -258,8 +261,8 @@ const assignSubGroup = async (req, res) => {
       return res.status(400).json({ message: 'A group cannot be its own subgroup' });
     }
 
-    const childGroup = await Group.findById(childId);
-    if (!childGroup) return res.status(404).json({ message: 'Child group not found' });
+    const childGroup = await Group.findOne({ _id: childId, collegeId: req.user.collegeId });
+    if (!childGroup) return res.status(404).json({ message: 'Child group not found or unauthorized' });
 
     if (!childGroup.parentGroups) {
       childGroup.parentGroups = [];
@@ -284,15 +287,16 @@ const assignFeeToUser = async (req, res) => {
        return res.status(400).json({ message: 'Title, amount, feeType, and userId are required' });
     }
 
-    const user = await User.findById(userId).populate('scholarship');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findOne({ _id: userId, collegeId: req.user.collegeId }).populate('scholarship');
+    if (!user) return res.status(404).json({ message: 'User not found or unauthorized' });
 
     const fee = await Fee.create({
       title,
       amount,
       feeType,
       assignedToUser: userId,
-      assignedToGroup: groupId || null
+      assignedToGroup: groupId || null,
+      collegeId: req.user.collegeId
     });
 
     const { baseAmount, discountAmount, finalAmount } = await applyFeeRules(user, fee);
@@ -303,7 +307,8 @@ const assignFeeToUser = async (req, res) => {
       baseAmount,
       discountAmount,
       finalAmount,
-      status: 'PENDING'
+      status: 'PENDING',
+      collegeId: req.user.collegeId
     });
 
     res.status(201).json({ message: 'Fee assigned to user successfully' });
@@ -321,7 +326,7 @@ const assignFeeToGroup = async (req, res) => {
        return res.status(400).json({ message: 'Title, amount, feeType, and groupId are required' });
     }
 
-    const group = await Group.findById(groupId);
+    const group = await Group.findOne({ _id: groupId, collegeId: req.user.collegeId });
     if (!group) {
       return res.status(404).json({ message: 'Group not found' });
     }
@@ -330,7 +335,8 @@ const assignFeeToGroup = async (req, res) => {
       title,
       amount,
       feeType,
-      assignedToGroup: groupId
+      assignedToGroup: groupId,
+      collegeId: req.user.collegeId
     });
 
     // Generate StudentFee records for all students in this group
@@ -346,7 +352,8 @@ const assignFeeToGroup = async (req, res) => {
         baseAmount,
         discountAmount,
         finalAmount,
-        status: 'PENDING'
+        status: 'PENDING',
+        collegeId: req.user.collegeId
       });
     }
     
@@ -363,7 +370,7 @@ const assignFeeToGroup = async (req, res) => {
 // Get All Users (excluding passwords)
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').populate('groups', 'name');
+    const users = await User.find({ collegeId: req.user.collegeId }).select('-password').populate('groups', 'name');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -373,7 +380,7 @@ const getUsers = async (req, res) => {
 // Get All Fees
 const getAllFees = async (req, res) => {
   try {
-    const fees = await Fee.find().populate('assignedToGroup', 'name').populate('feeType', 'name');
+    const fees = await Fee.find({ collegeId: req.user.collegeId }).populate('assignedToGroup', 'name').populate('feeType', 'name');
     res.json(fees);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -413,8 +420,8 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const { scholarship, academicScore } = req.body;
     
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findOne({ _id: id, collegeId: req.user.collegeId });
+    if (!user) return res.status(404).json({ message: 'User not found or unauthorized' });
     
     if (scholarship !== undefined) {
        user.scholarship = scholarship === 'NONE' ? null : scholarship;
@@ -437,8 +444,8 @@ const getGroupDashboardData = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const group = await Group.findById(id).populate('parentGroups', 'name');
-    if (!group) return res.status(404).json({ message: 'Group not found' });
+    const group = await Group.findOne({ _id: id, collegeId: req.user.collegeId }).populate('parentGroups', 'name');
+    if (!group) return res.status(404).json({ message: 'Group not found or unauthorized' });
     
     const users = await User.find({ groups: id }).select('-password').populate('scholarship', 'name');
     const fees = await Fee.find({ assignedToGroup: id }).populate('feeType', 'name');
@@ -532,7 +539,7 @@ const getGroupDashboardData = async (req, res) => {
 const createFeeType = async (req, res) => {
   try {
     const { name, description } = req.body;
-    const feeType = await FeeType.create({ name, description });
+    const feeType = await FeeType.create({ name, description, collegeId: req.user.collegeId });
     res.status(201).json(feeType);
   } catch (err) {
     res.status(500).json({ message: 'Failed to create fee type' });
@@ -541,7 +548,7 @@ const createFeeType = async (req, res) => {
 
 const getFeeTypes = async (req, res) => {
   try {
-    const types = await FeeType.find();
+    const types = await FeeType.find({ collegeId: req.user.collegeId });
     res.json(types);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch fee types' });
@@ -550,7 +557,7 @@ const getFeeTypes = async (req, res) => {
 
 const deleteFeeType = async (req, res) => {
   try {
-    await FeeType.findByIdAndDelete(req.params.id);
+    await FeeType.findOneAndDelete({ _id: req.params.id, collegeId: req.user.collegeId });
     res.json({ message: 'Fee type deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete fee type' });
@@ -563,7 +570,7 @@ const createScholarship = async (req, res) => {
   try {
     const { name, description, discountPercentage, applicableFeeTypes, minAcademicScore } = req.body;
     const scholarship = await Scholarship.create({
-      name, description, discountPercentage, applicableFeeTypes, minAcademicScore
+      name, description, discountPercentage, applicableFeeTypes, minAcademicScore, collegeId: req.user.collegeId
     });
     res.status(201).json(scholarship);
   } catch (error) {
@@ -573,7 +580,7 @@ const createScholarship = async (req, res) => {
 
 const getScholarships = async (req, res) => {
   try {
-    const scholarships = await Scholarship.find().populate('applicableFeeTypes', 'name');
+    const scholarships = await Scholarship.find({ collegeId: req.user.collegeId }).populate('applicableFeeTypes', 'name');
     res.json(scholarships);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -582,7 +589,7 @@ const getScholarships = async (req, res) => {
 
 const deleteScholarship = async (req, res) => {
   try {
-    await Scholarship.findByIdAndDelete(req.params.id);
+    await Scholarship.findOneAndDelete({ _id: req.params.id, collegeId: req.user.collegeId });
     res.json({ message: 'Scholarship deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -594,8 +601,8 @@ const deleteFee = async (req, res) => {
   try {
     const feeId = req.params.id;
 
-    const fee = await Fee.findById(feeId);
-    if (!fee) return res.status(404).json({ message: 'Fee not found' });
+    const fee = await Fee.findOne({ _id: feeId, collegeId: req.user.collegeId });
+    if (!fee) return res.status(404).json({ message: 'Fee not found or unauthorized' });
 
     const paidStudentFees = await StudentFee.find({ feeId, status: 'PAID' });
     if (paidStudentFees.length > 0) {
@@ -613,7 +620,7 @@ const deleteFee = async (req, res) => {
 
 const getFeeRequests = async (req, res) => {
   try {
-    const requests = await FeeRequest.find()
+    const requests = await FeeRequest.find({ collegeId: req.user.collegeId })
       .populate('studentId', 'name username registerNumber studentClass section year')
       .populate('feeType', 'name')
       .sort({ createdAt: -1 });
@@ -626,13 +633,176 @@ const getFeeRequests = async (req, res) => {
 const updateFeeRequestStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const request = await FeeRequest.findById(req.params.id);
+    const request = await FeeRequest.findOne({ _id: req.params.id, collegeId: req.user.collegeId });
     if (!request) {
-      return res.status(404).json({ message: 'Fee request not found' });
+      return res.status(404).json({ message: 'Fee request not found or unauthorized' });
     }
     request.status = status;
     await request.save();
     res.json(request);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getPaymentReports = async (req, res) => {
+  try {
+    const { startDate, endDate, collegeId } = req.query;
+    
+    // Default to viewing current college if admin, or requested college if superadmin
+    let targetCollegeId = null;
+    if (req.user.role === 'admin' || req.user.role === 'cashier' || req.user.role === 'mentor') {
+      targetCollegeId = req.user.collegeId;
+    } else if (req.user.role === 'superadmin' && collegeId) {
+      targetCollegeId = collegeId;
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: 'Please provide both startDate and endDate' });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // Using aggregation to filter payments by the user's college
+    const pipeline = [
+      {
+        $match: {
+          paidAt: { $gte: start, $lte: end },
+          status: 'SUCCESS'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'userDetails'
+        }
+      },
+      { $unwind: '$userDetails' }
+    ];
+
+    if (targetCollegeId) {
+      const mongoose = require('mongoose');
+      pipeline.push({
+        $match: {
+          'userDetails.collegeId': new mongoose.Types.ObjectId(targetCollegeId)
+        }
+      });
+    }
+
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'fees',
+          localField: 'fee',
+          foreignField: '_id',
+          as: 'feeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$feeDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          amount: 1,
+          status: 1,
+          paymentMethod: 1,
+          paidAt: 1,
+          'userDetails.name': 1,
+          'userDetails.registerNumber': 1,
+          'feeDetails.title': 1
+        }
+      },
+      {
+        $sort: { paidAt: -1 }
+      }
+    );
+
+    const Payment = require('../models/Payment');
+    const payments = await Payment.aggregate(pipeline);
+    
+    const totalCollected = payments.reduce((acc, curr) => acc + curr.amount, 0);
+
+    res.json({
+      payments,
+      totalCollected,
+      count: payments.length
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getPaymentSettings = async (req, res) => {
+  try {
+    const College = require('../models/College');
+    const college = await College.findById(req.user.collegeId);
+    if (!college) return res.status(404).json({ message: 'College not found' });
+    
+    res.json({
+      paymentType: college.paymentType || 'CENTRALIZED',
+      paymentCredentials: {
+        merchantId: college.paymentCredentials?.merchantId || '',
+        saltIndex: college.paymentCredentials?.saltIndex || 1,
+        env: college.paymentCredentials?.env || 'SANDBOX',
+        hasSaltKey: !!college.paymentCredentials?.saltKey?.encryptedData
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updatePaymentSettings = async (req, res) => {
+  try {
+    const { paymentType, paymentCredentials } = req.body;
+    const { encrypt } = require('../utils/encryption');
+    
+    // Only Admin (or SuperAdmin acting as Admin) can change this
+    if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Only admins can update payment settings' });
+    }
+
+    const College = require('../models/College');
+    const collegeId = req.user.collegeId || req.body.collegeId;
+
+    if (!collegeId) {
+      return res.status(400).json({ message: 'College ID not found' });
+    }
+
+    const college = await College.findById(collegeId);
+    if (!college) {
+      return res.status(404).json({ message: 'College not found' });
+    }
+
+    college.paymentType = paymentType;
+    if (paymentType === 'DECENTRALIZED' && paymentCredentials) {
+      college.paymentCredentials = {
+        merchantId: paymentCredentials.merchantId,
+        saltIndex: paymentCredentials.saltIndex || 1,
+        env: paymentCredentials.env || 'SANDBOX'
+      };
+      // Only update saltKey if it's provided and not the dummy mask
+      if (paymentCredentials.saltKey && paymentCredentials.saltKey !== '********') {
+        college.paymentCredentials.saltKey = encrypt(paymentCredentials.saltKey);
+      } else {
+        // preserve old salt key
+        const oldCollege = await College.findById(req.user.collegeId);
+        if (oldCollege && oldCollege.paymentCredentials && oldCollege.paymentCredentials.saltKey) {
+          college.paymentCredentials.saltKey = oldCollege.paymentCredentials.saltKey;
+        }
+      }
+    }
+
+    await college.save();
+    res.json({ message: 'Payment settings updated successfully', paymentType: college.paymentType });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -662,5 +832,8 @@ module.exports = {
   deleteScholarship,
   deleteFee,
   getFeeRequests,
-  updateFeeRequestStatus
+  updateFeeRequestStatus,
+  getPaymentReports,
+  updatePaymentSettings,
+  getPaymentSettings
 };
