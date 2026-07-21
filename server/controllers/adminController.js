@@ -972,6 +972,63 @@ const getCashierLogs = async (req, res) => {
   }
 };
 
+const getLedger = async (req, res) => {
+  try {
+    const College = require('../models/College');
+    const Settlement = require('../models/Settlement');
+    
+    const college = await College.findById(req.user.collegeId);
+    const isCentralized = (college.paymentType || 'CENTRALIZED') === 'CENTRALIZED';
+    
+    const onlinePayments = await Payment.find({
+      collegeId: req.user.collegeId,
+      status: 'SUCCESS',
+      paymentMethod: { $ne: 'CASH' }
+    });
+    
+    const totalOnlineCollected = isCentralized ? onlinePayments.reduce((sum, p) => sum + p.amount, 0) : 0;
+    
+    const settlements = await Settlement.find({ collegeId: req.user.collegeId }).sort({ initiatedAt: -1 });
+    
+    const totalSettled = settlements.filter(s => s.status === 'COMPLETED').reduce((sum, s) => sum + s.amount, 0);
+    const pendingSettlement = settlements.filter(s => s.status === 'PENDING_ADMIN_CONFIRMATION').reduce((sum, s) => sum + s.amount, 0);
+    const balanceOwed = totalOnlineCollected - totalSettled - pendingSettlement;
+
+    res.json({
+      totalOnlineCollected,
+      totalSettled,
+      pendingSettlement,
+      balanceOwed,
+      settlements
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const confirmSettlement = async (req, res) => {
+  try {
+    const Settlement = require('../models/Settlement');
+    const settlement = await Settlement.findOne({ _id: req.params.id, collegeId: req.user.collegeId });
+    
+    if (!settlement) {
+      return res.status(404).json({ message: 'Settlement not found' });
+    }
+    
+    if (settlement.status === 'COMPLETED') {
+      return res.status(400).json({ message: 'Settlement already confirmed' });
+    }
+    
+    settlement.status = 'COMPLETED';
+    settlement.completedAt = new Date();
+    await settlement.save();
+    
+    res.json(settlement);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   bulkCreateUsers,
   uploadBulkUsers,
@@ -1002,5 +1059,7 @@ module.exports = {
   updatePaymentSettings,
   getPaymentSettings,
   getCashiers,
-  getCashierLogs
+  getCashierLogs,
+  getLedger,
+  confirmSettlement
 };
