@@ -6,7 +6,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard, TrendingUp, UserCog } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DashboardOverview from '../../components/admin/DashboardOverview';
 import UserManagement from '../../components/admin/UserManagement';
@@ -18,7 +18,7 @@ import ScholarshipsManagement from '../../components/admin/ScholarshipsManagemen
 import ReportsManagement from '../../components/admin/ReportsManagement';
 import PaymentSettings from '../../components/admin/PaymentSettings';
 import CashierManagement from '../../components/admin/CashierManagement';
-import { TrendingUp, UserCog } from 'lucide-react';
+import FinanceManagement from '../../components/admin/FinanceManagement';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -29,6 +29,20 @@ const AdminDashboard = () => {
   const isReadOnly = user?.role === 'superadmin';
   const navigate = useNavigate();
   const { collegeId } = useParams();
+
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users', label: 'Students', icon: Users },
+    { id: 'groups', label: 'Groups', icon: Layers },
+    { id: 'finance', label: 'Finance', icon: IndianRupee },
+    { id: 'fees', label: 'Fees Mgmt', icon: FileText },
+    { id: 'fee_types', label: 'Fee Types', icon: Settings },
+    { id: 'fee_requests', label: 'Fee Requests', icon: Activity },
+    { id: 'scholarships', label: 'Scholarships', icon: GraduationCap },
+    { id: 'cashiers', label: 'Cashiers', icon: UserCog },
+    { id: 'reports', label: 'Reports', icon: TrendingUp },
+    { id: 'payment_settings', label: 'Gateway Settings', icon: CreditCard }
+  ];
 
   // Global Data State
   const [users, setUsers] = useState([]);
@@ -90,14 +104,7 @@ const AdminDashboard = () => {
   const [newScholarship, setNewScholarship] = useState({ name: '', description: '', discountPercentage: '', minAcademicScore: '', applicableFeeTypes: [] });
   const [masterMessage, setMasterMessage] = useState('');
 
-    // ========================================================================
-    // FETCH ALL ADMIN DATA FROM THE BACKEND
-    // ========================================================================
-    // Because of our "Data Separation" rules on the backend, 
-    // these API calls will ONLY return data (users, groups, fees, etc.) 
-    // that belong to the college of the currently logged-in Admin.
-    // The SuperAdmin users or other colleges' data will not be included.
-  const fetchData = async () => {
+    const fetchData = async () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       if (collegeId) {
@@ -126,7 +133,6 @@ const AdminDashboard = () => {
         setPaymentStatus(paymentData.paymentType);
       }
 
-      // Fetch this month's payments
       const date = new Date();
       const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
       const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
@@ -150,7 +156,6 @@ const AdminDashboard = () => {
     navigate('/login');
   };
 
-  // Handlers
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -165,7 +170,6 @@ const AdminDashboard = () => {
       if (res.ok) {
         fetchData();
         
-        // Generate and download CSV
         if (data.users && data.users.length > 0) {
           const headers = ['Name', 'Username', 'Password', 'Role'];
           const rows = data.users.map(u => [u.name, u.username, bulkData.initialPassword, u.role]);
@@ -524,36 +528,11 @@ const AdminDashboard = () => {
            </button>
         </div>
         
-        <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-          <LayoutDashboard size={20} /> <span className="nav-text">Dashboard</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
-          <Users size={20} /> <span className="nav-text">User Mgmt</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'groups' ? 'active' : ''}`} onClick={() => setActiveTab('groups')}>
-          <Activity size={20} /> <span className="nav-text">Student Groups</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'fees' ? 'active' : ''}`} onClick={() => setActiveTab('fees')}>
-          <IndianRupee size={20} /> <span className="nav-text">Fees</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => setActiveTab('fee-requests')}>
-          <FileText size={20} /> <span className="nav-text">Fee Requests</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'masters' ? 'active' : ''}`} onClick={() => setActiveTab('masters')}>
-          <Layers size={20} /> <span className="nav-text">Fee Group Management</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-          <GraduationCap size={20} /> <span className="nav-text">Scholarship Control</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'cashiers' ? 'active' : ''}`} onClick={() => setActiveTab('cashiers')}>
-          <UserCog size={20} /> <span className="nav-text">Cashier Management</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
-          <TrendingUp size={20} /> <span className="nav-text">Reports</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'payment-settings' ? 'active' : ''}`} onClick={() => setActiveTab('payment-settings')}>
-          <CreditCard size={20} /> <span className="nav-text">Payment Settings</span>
-        </div>
+        {navItems.map(item => (
+          <div key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => setActiveTab(item.id)}>
+            <item.icon size={20} /> <span className="nav-text">{item.label}</span>
+          </div>
+        ))}
 
         <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
@@ -572,16 +551,7 @@ const AdminDashboard = () => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
             <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-              {activeTab === 'dashboard' && 'Admin Dashboard Overview'}
-              {activeTab === 'users' && 'Manage Users'}
-              {activeTab === 'groups' && 'Manage Groups'}
-              {activeTab === 'fees' && 'Manage Fees'}
-              {activeTab === 'fee-requests' && 'Fee Requests'}
-              {activeTab === 'payment-settings' && 'Payment Settings'}
-              {activeTab === 'masters' && 'Fee Group Management'}
-              {activeTab === 'settings' && 'Scholarship Control'}
-              {activeTab === 'cashiers' && 'Cashier Management'}
-              {activeTab === 'reports' && 'Reports & Auditing'}
+              {navItems.find(n => n.id === activeTab)?.label || 'Dashboard'}
             </h2>
             {isReadOnly && (
               <div style={{ 
@@ -636,10 +606,10 @@ const AdminDashboard = () => {
               {activeTab === 'users' && 'This page is for managing students. You can add new students, edit their details, or give them a scholarship.'}
               {activeTab === 'groups' && 'This page is for grouping students (like classes or batches). Grouping students makes it very easy to assign the same fee to many students at once.'}
               {activeTab === 'fees' && 'This page is for managing all the actual fees assigned to students or groups. You can see who was assigned what fee and if they paid it.'}
-              {activeTab === 'fee-requests' && 'Here you can view and approve or reject special requests from students (like asking for a fee concession or extra time to pay).'}
-              {activeTab === 'payment-settings' && 'Here you can set up how your college collects money. You can use Centralized (company bank) or Decentralized (your own bank account) payments.'}
-              {activeTab === 'masters' && 'This page is for creating standard "Fee Types" (like Tuition Fee, Exam Fee). You must create a Fee Type here before you can assign a fee.'}
-              {activeTab === 'settings' && 'This page is for creating standard "Scholarships". You can define rules like "50% off if the student has a high academic score".'}
+              {activeTab === 'fee_requests' && 'Here you can view and approve or reject special requests from students (like asking for a fee concession or extra time to pay).'}
+              {activeTab === 'payment_settings' && 'Here you can set up how your college collects money. You can use Centralized (company bank) or Decentralized (your own bank account) payments.'}
+              {activeTab === 'fee_types' && 'This page is for creating standard "Fee Types" (like Tuition Fee, Exam Fee). You must create a Fee Type here before you can assign a fee.'}
+              {activeTab === 'scholarships' && 'This page is for creating standard "Scholarships". You can define rules like "50% off if the student has a high academic score".'}
               {activeTab === 'cashiers' && 'This page helps you track your Cashiers. You can see who is assigned, view their daily collected cash logs, and download reports.'}
               {activeTab === 'reports' && 'This page helps you generate detailed financial reports. You can select dates and see all successful payments made by students.'}
             </p>
@@ -650,11 +620,12 @@ const AdminDashboard = () => {
         {activeTab === 'dashboard' && <DashboardOverview users={users} groups={groups} fees={fees} feeRequests={feeRequests} paymentStatus={paymentStatus} monthlyPayments={monthlyPayments} />}
         {activeTab === 'users' && <UserManagement users={users} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} isReadOnly={isReadOnly} />}
         {activeTab === 'groups' && <GroupManagement groups={groups} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />}
+        {activeTab === 'finance' && <FinanceManagement />}
         {activeTab === 'fees' && <FeeManagement fees={fees} setFeeModalOpen={setFeeModalOpen} handleDeleteFee={handleDeleteFee} isReadOnly={isReadOnly} />}
-        {activeTab === 'fee-requests' && <FeeRequests feeRequests={feeRequests} handleUpdateFeeRequestStatus={handleUpdateFeeRequestStatus} isReadOnly={isReadOnly} />}
-        {activeTab === 'payment-settings' && <PaymentSettings isReadOnly={isReadOnly} />}
-        {activeTab === 'masters' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} isReadOnly={isReadOnly} /></div>}
-        {activeTab === 'settings' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} isReadOnly={isReadOnly} /></div>}
+        {activeTab === 'fee_requests' && <FeeRequests feeRequests={feeRequests} handleUpdateFeeRequestStatus={handleUpdateFeeRequestStatus} isReadOnly={isReadOnly} />}
+        {activeTab === 'payment_settings' && <PaymentSettings isReadOnly={isReadOnly} />}
+        {activeTab === 'fee_types' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} isReadOnly={isReadOnly} /></div>}
+        {activeTab === 'scholarships' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} isReadOnly={isReadOnly} /></div>}
         {activeTab === 'cashiers' && <CashierManagement isReadOnly={isReadOnly} collegeId={collegeId} />}
         {activeTab === 'reports' && <ReportsManagement />}
       </div>

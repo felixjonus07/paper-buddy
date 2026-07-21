@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, Globe, Building2, TrendingUp, RefreshCw, Download, CreditCard, Banknote, Landmark } from 'lucide-react';
+import { IndianRupee, Globe, Building2, TrendingUp, RefreshCw, Download, CreditCard, Banknote, Landmark, ArrowRightCircle } from 'lucide-react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
+import NeoModal from '../UI/NeoModal';
+import NeoInput from '../UI/NeoInput';
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -27,6 +29,9 @@ const BillingOverview = ({ token }) => {
   const [error, setError] = useState(null);
   const [sortKey, setSortKey] = useState('totalCollected');
   const [sortDir, setSortDir] = useState(-1);
+  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+  const [selectedCollege, setSelectedCollege] = useState(null);
+  const [payoutForm, setPayoutForm] = useState({ amount: '', reference: '' });
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,6 +76,33 @@ const BillingOverview = ({ token }) => {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = 'billing_overview.csv';
     a.click();
+  };
+
+  const handleInitiatePayout = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/superadmin/settlements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          collegeId: selectedCollege._id,
+          amount: Number(payoutForm.amount),
+          reference: payoutForm.reference
+        })
+      });
+      if (res.ok) {
+        setPayoutModalOpen(false);
+        fetchData();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Failed to initiate payout');
+      }
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const SortTh = ({ label, k }) => (
@@ -189,8 +221,8 @@ const BillingOverview = ({ token }) => {
                 <SortTh label="🟣 Own Gateway" k="ownGatewayAmount" />
                 <SortTh label="🟡 Cash" k="cashAmount" />
                 <SortTh label="Total" k="totalCollected" />
-                <SortTh label="Txns" k="transactionCount" />
-                <th style={{ padding: '0.9rem 1rem', borderBottom: '2px solid var(--border)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', minWidth: 130 }}>Split</th>
+                <SortTh label="Balance Owed" k="balanceOwed" />
+                <th style={{ padding: '0.9rem 1rem', borderBottom: '2px solid var(--border)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -232,22 +264,22 @@ const BillingOverview = ({ token }) => {
                   <td style={{ padding: '1rem' }}>
                     <p style={{ margin: 0, fontWeight: 800, fontSize: '1.05rem', color: 'var(--primary)' }}>{fmt(college.totalCollected)}</p>
                   </td>
-                  <td style={{ padding: '1rem', color: 'var(--text-color)', fontWeight: 600 }}>{college.transactionCount}</td>
-                  <td style={{ padding: '1rem', minWidth: 140 }}>
-                    <SplitBar
-                      platformAmount={college.platformAmount}
-                      ownGatewayAmount={college.ownGatewayAmount}
-                      cashAmount={college.cashAmount}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
-                      {college.totalCollected > 0 ? (
-                        <>
-                          {college.platformAmount > 0 && <span style={{ color: '#16a34a' }}>{Math.round((college.platformAmount / college.totalCollected) * 100)}%P</span>}
-                          {college.ownGatewayAmount > 0 && <span style={{ color: '#6366f1' }}>{Math.round((college.ownGatewayAmount / college.totalCollected) * 100)}%G</span>}
-                          {college.cashAmount > 0 && <span style={{ color: '#d97706' }}>{Math.round((college.cashAmount / college.totalCollected) * 100)}%C</span>}
-                        </>
-                      ) : <span>No txns</span>}
-                    </div>
+                  <td style={{ padding: '1rem' }}>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: '1.05rem', color: college.balanceOwed > 0 ? '#f59e0b' : '#16a34a' }}>{fmt(college.balanceOwed)}</p>
+                    {college.pendingSettlement > 0 && (
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: '#f59e0b' }}>Pending: {fmt(college.pendingSettlement)}</p>
+                    )}
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    {college.paymentType === 'CENTRALIZED' && college.balanceOwed > 0 && (
+                      <NeoButton variant="primary" onClick={() => {
+                        setSelectedCollege(college);
+                        setPayoutForm({ amount: college.balanceOwed, reference: '' });
+                        setPayoutModalOpen(true);
+                      }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ArrowRightCircle size={14} /> Payout
+                      </NeoButton>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -272,6 +304,42 @@ const BillingOverview = ({ token }) => {
           </table>
         </div>
       </NeoCard>
+
+      <NeoModal isOpen={payoutModalOpen} onClose={() => setPayoutModalOpen(false)} title="Initiate Payout">
+        {selectedCollege && (
+          <form onSubmit={handleInitiatePayout} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: 'rgba(248,116,16,0.06)', padding: '1rem', borderRadius: '8px' }}>
+              <p style={{ margin: '0 0 0.5rem', color: 'var(--text-color)' }}>Paying out to: <strong>{selectedCollege.name}</strong></p>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Outstanding Balance: <strong>{fmt(selectedCollege.balanceOwed)}</strong></p>
+            </div>
+            
+            <NeoInput
+              label="Payout Amount (₹)"
+              type="number"
+              value={payoutForm.amount}
+              onChange={(e) => setPayoutForm({ ...payoutForm, amount: e.target.value })}
+              required
+              min="1"
+              max={selectedCollege.balanceOwed}
+            />
+            <NeoInput
+              label="Transaction Reference (Optional)"
+              value={payoutForm.reference}
+              onChange={(e) => setPayoutForm({ ...payoutForm, reference: e.target.value })}
+              placeholder="e.g. UTR Number"
+            />
+            
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <NeoButton type="button" variant="secondary" onClick={() => setPayoutModalOpen(false)} style={{ flex: 1 }}>
+                Cancel
+              </NeoButton>
+              <NeoButton type="submit" variant="primary" style={{ flex: 1 }}>
+                Confirm Payout
+              </NeoButton>
+            </div>
+          </form>
+        )}
+      </NeoModal>
     </div>
   );
 };
