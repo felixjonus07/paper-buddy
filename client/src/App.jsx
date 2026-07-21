@@ -7,6 +7,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import GroupDashboard from './pages/admin/GroupDashboard';
 import CashierDashboard from './pages/cashier/CashierDashboard';
 import MentorDashboard from './pages/mentor/MentorDashboard';
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
+import CollegeDetail from './pages/superadmin/CollegeDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatBot from './components/UI/ChatBot';
 
@@ -30,6 +32,22 @@ function App() {
               path="/admin/dashboard" 
               element={
                 <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/superadmin/dashboard" 
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/superadmin/colleges/:collegeId" 
+              element={
+                <ProtectedRoute requiredRole="superadmin">
                   <AdminDashboard />
                 </ProtectedRoute>
               } 

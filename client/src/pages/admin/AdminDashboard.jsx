@@ -6,7 +6,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardOverview from '../../components/admin/DashboardOverview';
 import UserManagement from '../../components/admin/UserManagement';
@@ -15,11 +15,17 @@ import FeeManagement from '../../components/admin/FeeManagement';
 import FeeRequests from '../../components/admin/FeeRequests';
 import FeeTypesManagement from '../../components/admin/FeeTypesManagement';
 import ScholarshipsManagement from '../../components/admin/ScholarshipsManagement';
+import ReportsManagement from '../../components/admin/ReportsManagement';
+import PaymentSettings from '../../components/admin/PaymentSettings';
+import { TrendingUp } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const token = localStorage.getItem('token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isReadOnly = user?.role === 'superadmin';
   const navigate = useNavigate();
 
   // Global Data State
@@ -29,6 +35,8 @@ const AdminDashboard = () => {
   const [feeTypes, setFeeTypes] = useState([]);
   const [scholarships, setScholarships] = useState([]);
   const [feeRequests, setFeeRequests] = useState([]);
+  const [paymentStatus, setPaymentStatus] = useState('CENTRALIZED');
+  const [monthlyPayments, setMonthlyPayments] = useState([]);
 
   // Modal States
   const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -95,6 +103,22 @@ const AdminDashboard = () => {
       if (catsRes.ok) setFeeTypes(await catsRes.json());
       if (schRes.ok) setScholarships(await schRes.json());
       if (feeReqRes.ok) setFeeRequests(await feeReqRes.json());
+
+      const paymentRes = await fetch('/api/admin/college/payment-settings', { headers });
+      if (paymentRes.ok) {
+        const paymentData = await paymentRes.json();
+        setPaymentStatus(paymentData.paymentType);
+      }
+
+      // Fetch this month's payments
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
+      const monthlyRes = await fetch(`/api/admin/reports/payments?startDate=${firstDay}&endDate=${lastDay}`, { headers });
+      if (monthlyRes.ok) {
+        const monthlyData = await monthlyRes.json();
+        setMonthlyPayments(monthlyData.payments || []);
+      }
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
@@ -397,8 +421,8 @@ const AdminDashboard = () => {
              <Settings size={28} color="var(--primary)" />
            </div>
            <div className="header-text">
-             <h3 style={{ margin: 0, color: 'var(--text-color)' }}>Admin</h3>
-             <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Portal</span>
+             <h3 style={{ margin: 0, color: 'var(--text-color)' }}>{isReadOnly ? 'Super Admin' : 'Admin'}</h3>
+             <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{isReadOnly ? 'Viewer Mode' : 'Portal'}</span>
            </div>
            {/* Sidebar Toggle Button */}
            <button 
@@ -439,6 +463,12 @@ const AdminDashboard = () => {
         <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
           <GraduationCap size={20} /> <span className="nav-text">Scholarship Control</span>
         </div>
+        <div className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+          <TrendingUp size={20} /> <span className="nav-text">Reports</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'payment-settings' ? 'active' : ''}`} onClick={() => setActiveTab('payment-settings')}>
+          <CreditCard size={20} /> <span className="nav-text">Payment Settings</span>
+        </div>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
@@ -455,16 +485,42 @@ const AdminDashboard = () => {
           borderRadius: '50px', 
           boxShadow: 'var(--clay-outer)' 
         }}>
-          <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-            {activeTab === 'dashboard' && 'Admin Dashboard Overview'}
-            {activeTab === 'users' && 'Manage Users'}
-            {activeTab === 'groups' && 'Manage Groups'}
-            {activeTab === 'fees' && 'Manage Fees'}
-            {activeTab === 'fee-requests' && 'Fee Requests'}
-            {activeTab === 'masters' && 'Fee Group Management'}
-            {activeTab === 'settings' && 'Scholarship Control'}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
+              {activeTab === 'dashboard' && 'Admin Dashboard Overview'}
+              {activeTab === 'users' && 'Manage Users'}
+              {activeTab === 'groups' && 'Manage Groups'}
+              {activeTab === 'fees' && 'Manage Fees'}
+              {activeTab === 'fee-requests' && 'Fee Requests'}
+              {activeTab === 'payment-settings' && 'Payment Settings'}
+              {activeTab === 'masters' && 'Fee Group Management'}
+              {activeTab === 'settings' && 'Scholarship Control'}
+              {activeTab === 'reports' && 'Reports & Auditing'}
+            </h2>
+            {isReadOnly && (
+              <div style={{ 
+                background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)', 
+                color: 'white', 
+                padding: '0.4rem 1rem', 
+                borderRadius: '20px', 
+                fontSize: '0.85rem', 
+                fontWeight: 'bold', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                boxShadow: '0 4px 10px rgba(255, 107, 107, 0.3)',
+                animation: 'slideDown 0.3s ease-out'
+              }}>
+                <Settings size={16} /> Super Admin Viewer
+              </div>
+            )}
+          </div>
           <div className="header-actions">
+            {isReadOnly && (
+              <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/superadmin/dashboard')}>
+                &larr; Back
+              </NeoButton>
+            )}
             <div className="search-box">
               <NeoInput type="text" placeholder="Search..." Icon={FileText} />
             </div>
@@ -472,13 +528,15 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {activeTab === 'dashboard' && <DashboardOverview users={users} groups={groups} fees={fees} />}
-        {activeTab === 'users' && <UserManagement users={users} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} />}
-        {activeTab === 'groups' && <GroupManagement groups={groups} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} />}
-        {activeTab === 'fees' && <FeeManagement fees={fees} setFeeModalOpen={setFeeModalOpen} handleDeleteFee={handleDeleteFee} />}
-        {activeTab === 'fee-requests' && <FeeRequests feeRequests={feeRequests} handleUpdateFeeRequestStatus={handleUpdateFeeRequestStatus} />}
-        {activeTab === 'masters' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} /></div>}
-        {activeTab === 'settings' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} /></div>}
+        {activeTab === 'dashboard' && <DashboardOverview users={users} groups={groups} fees={fees} feeRequests={feeRequests} paymentStatus={paymentStatus} monthlyPayments={monthlyPayments} />}
+        {activeTab === 'users' && <UserManagement users={users} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} isReadOnly={isReadOnly} />}
+        {activeTab === 'groups' && <GroupManagement groups={groups} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />}
+        {activeTab === 'fees' && <FeeManagement fees={fees} setFeeModalOpen={setFeeModalOpen} handleDeleteFee={handleDeleteFee} isReadOnly={isReadOnly} />}
+        {activeTab === 'fee-requests' && <FeeRequests feeRequests={feeRequests} handleUpdateFeeRequestStatus={handleUpdateFeeRequestStatus} isReadOnly={isReadOnly} />}
+        {activeTab === 'payment-settings' && <PaymentSettings isReadOnly={isReadOnly} />}
+        {activeTab === 'masters' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} isReadOnly={isReadOnly} /></div>}
+        {activeTab === 'settings' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} isReadOnly={isReadOnly} /></div>}
+        {activeTab === 'reports' && <ReportsManagement />}
       </div>
 
       {/* Modals */}

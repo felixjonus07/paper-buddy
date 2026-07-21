@@ -26,7 +26,7 @@ const protect = async (req, res, next) => {
 };
 
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'superadmin')) {
     next();
   } else {
     res.status(401).json({ message: 'Not authorized as an admin' });
@@ -34,7 +34,7 @@ const admin = (req, res, next) => {
 };
 
 const cashier = (req, res, next) => {
-  if (req.user && (req.user.role === 'cashier' || req.user.role === 'admin')) {
+  if (req.user && (req.user.role === 'cashier' || req.user.role === 'admin' || req.user.role === 'superadmin')) {
     next();
   } else {
     res.status(401).json({ message: 'Not authorized as a cashier' });
@@ -42,7 +42,7 @@ const cashier = (req, res, next) => {
 };
 
 const mentor = (req, res, next) => {
-  if (req.user && (req.user.role === 'mentor' || req.user.role === 'admin')) {
+  if (req.user && (req.user.role === 'mentor' || req.user.role === 'admin' || req.user.role === 'superadmin')) {
     next();
   } else {
     res.status(401).json({ message: 'Not authorized as a mentor' });
