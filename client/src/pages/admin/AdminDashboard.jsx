@@ -7,7 +7,7 @@ import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
 import { Users, FileText, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import DashboardOverview from '../../components/admin/DashboardOverview';
 import UserManagement from '../../components/admin/UserManagement';
 import GroupManagement from '../../components/admin/GroupManagement';
@@ -17,7 +17,8 @@ import FeeTypesManagement from '../../components/admin/FeeTypesManagement';
 import ScholarshipsManagement from '../../components/admin/ScholarshipsManagement';
 import ReportsManagement from '../../components/admin/ReportsManagement';
 import PaymentSettings from '../../components/admin/PaymentSettings';
-import { TrendingUp } from 'lucide-react';
+import CashierManagement from '../../components/admin/CashierManagement';
+import { TrendingUp, UserCog } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -27,6 +28,7 @@ const AdminDashboard = () => {
   const user = userStr ? JSON.parse(userStr) : null;
   const isReadOnly = user?.role === 'superadmin';
   const navigate = useNavigate();
+  const { collegeId } = useParams();
 
   // Global Data State
   const [users, setUsers] = useState([]);
@@ -50,6 +52,10 @@ const AdminDashboard = () => {
   // Form States
   const [bulkData, setBulkData] = useState({ prefix: '', startRange: '', endRange: '', suffix: '', initialPassword: '' });
   const [bulkMessage, setBulkMessage] = useState('');
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadCommonPassword, setUploadCommonPassword] = useState('');
+  const [uploadGroupId, setUploadGroupId] = useState('');
+  const [bulkMethod, setBulkMethod] = useState('upload'); // 'upload' or 'pattern'
   
   const [groupData, setGroupData] = useState({ name: '', description: '', studentIds: [], isGlobal: false });
   const [groupMessage, setGroupMessage] = useState('');
@@ -84,9 +90,19 @@ const AdminDashboard = () => {
   const [newScholarship, setNewScholarship] = useState({ name: '', description: '', discountPercentage: '', minAcademicScore: '', applicableFeeTypes: [] });
   const [masterMessage, setMasterMessage] = useState('');
 
+    // ========================================================================
+    // FETCH ALL ADMIN DATA FROM THE BACKEND
+    // ========================================================================
+    // Because of our "Data Separation" rules on the backend, 
+    // these API calls will ONLY return data (users, groups, fees, etc.) 
+    // that belong to the college of the currently logged-in Admin.
+    // The SuperAdmin users or other colleges' data will not be included.
   const fetchData = async () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
+      if (collegeId) {
+        headers['x-college-id'] = collegeId;
+      }
       
       const [usersRes, groupsRes, feesRes, catsRes, schRes, feeReqRes] = await Promise.all([
         fetch('/api/admin/users', { headers }),
@@ -138,18 +154,84 @@ const AdminDashboard = () => {
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = { ...bulkData, groupId: uploadGroupId };
       const res = await fetch('/api/admin/bulk-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(bulkData)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       setBulkMessage(data.message || (res.ok ? 'Success' : 'Failed'));
       if (res.ok) {
         fetchData();
+        
+        // Generate and download CSV
+        if (data.users && data.users.length > 0) {
+          const headers = ['Name', 'Username', 'Password', 'Role'];
+          const rows = data.users.map(u => [u.name, u.username, bulkData.initialPassword, u.role]);
+          const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+          
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", `Generated_Users_${new Date().getTime()}.csv`);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
         setTimeout(() => setUserModalOpen(false), 1500);
       }
     } catch (err) { setBulkMessage('Server error'); }
+  };
+
+  const handleDownloadSampleCSV = () => {
+    const headers = ['Name', 'Regno(Username)', 'Password', 'Phone Number', 'Class', 'Section', 'Year', 'Personal Email', 'Academic Score'];
+    const sampleData = ['John Doe', '2023CS01', '', '9876543210', 'B.Tech', 'A', '1st Year', 'john@example.com', '85'];
+    
+    const csvContent = [headers.join(','), sampleData.join(',')].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'student_bulk_upload_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileUpload = async (e) => {
+    e.preventDefault();
+    if (!uploadFile) {
+      setBulkMessage('Please select a file first.');
+      return;
+    }
+    
+    setBulkMessage('Uploading...');
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    if (uploadCommonPassword) formData.append('commonPassword', uploadCommonPassword);
+    if (uploadGroupId) formData.append('groupId', uploadGroupId);
+
+    try {
+      const res = await fetch('/api/admin/bulk-upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      setBulkMessage(data.message || (res.ok ? 'Success' : 'Failed'));
+      if (res.ok) {
+        fetchData();
+        setUploadFile(null);
+        setTimeout(() => setUserModalOpen(false), 2000);
+      }
+    } catch (err) {
+      setBulkMessage('Server error during upload');
+    }
   };
 
   const handleGroupSubmit = async (e) => {
@@ -463,6 +545,9 @@ const AdminDashboard = () => {
         <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
           <GraduationCap size={20} /> <span className="nav-text">Scholarship Control</span>
         </div>
+        <div className={`nav-item ${activeTab === 'cashiers' ? 'active' : ''}`} onClick={() => setActiveTab('cashiers')}>
+          <UserCog size={20} /> <span className="nav-text">Cashier Management</span>
+        </div>
         <div className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
           <TrendingUp size={20} /> <span className="nav-text">Reports</span>
         </div>
@@ -495,6 +580,7 @@ const AdminDashboard = () => {
               {activeTab === 'payment-settings' && 'Payment Settings'}
               {activeTab === 'masters' && 'Fee Group Management'}
               {activeTab === 'settings' && 'Scholarship Control'}
+              {activeTab === 'cashiers' && 'Cashier Management'}
               {activeTab === 'reports' && 'Reports & Auditing'}
             </h2>
             {isReadOnly && (
@@ -528,6 +614,39 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* --- SIMPLE TAB DESCRIPTION FOR NEW ADMINS --- */}
+        <div style={{
+          background: 'var(--clay-base)',
+          borderRadius: '15px',
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem',
+          boxShadow: 'inset 5px 5px 10px rgba(0, 0, 0, 0.05), inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          borderLeft: '4px solid var(--primary)'
+        }}>
+          <div style={{ color: 'var(--primary)', marginTop: '0.2rem' }}>
+            <FileText size={20} />
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--text-color)', fontSize: '1rem' }}>What is this page for?</h4>
+            <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+              {activeTab === 'dashboard' && 'This is your main dashboard. It gives you a quick overview of total fees collected, pending amounts, and basic stats about your college.'}
+              {activeTab === 'users' && 'This page is for managing students. You can add new students, edit their details, or give them a scholarship.'}
+              {activeTab === 'groups' && 'This page is for grouping students (like classes or batches). Grouping students makes it very easy to assign the same fee to many students at once.'}
+              {activeTab === 'fees' && 'This page is for managing all the actual fees assigned to students or groups. You can see who was assigned what fee and if they paid it.'}
+              {activeTab === 'fee-requests' && 'Here you can view and approve or reject special requests from students (like asking for a fee concession or extra time to pay).'}
+              {activeTab === 'payment-settings' && 'Here you can set up how your college collects money. You can use Centralized (company bank) or Decentralized (your own bank account) payments.'}
+              {activeTab === 'masters' && 'This page is for creating standard "Fee Types" (like Tuition Fee, Exam Fee). You must create a Fee Type here before you can assign a fee.'}
+              {activeTab === 'settings' && 'This page is for creating standard "Scholarships". You can define rules like "50% off if the student has a high academic score".'}
+              {activeTab === 'cashiers' && 'This page helps you track your Cashiers. You can see who is assigned, view their daily collected cash logs, and download reports.'}
+              {activeTab === 'reports' && 'This page helps you generate detailed financial reports. You can select dates and see all successful payments made by students.'}
+            </p>
+          </div>
+        </div>
+        {/* --------------------------------------------- */}
+
         {activeTab === 'dashboard' && <DashboardOverview users={users} groups={groups} fees={fees} feeRequests={feeRequests} paymentStatus={paymentStatus} monthlyPayments={monthlyPayments} />}
         {activeTab === 'users' && <UserManagement users={users} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} isReadOnly={isReadOnly} />}
         {activeTab === 'groups' && <GroupManagement groups={groups} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />}
@@ -536,25 +655,115 @@ const AdminDashboard = () => {
         {activeTab === 'payment-settings' && <PaymentSettings isReadOnly={isReadOnly} />}
         {activeTab === 'masters' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><FeeTypesManagement masterMessage={masterMessage} handleCreateFeeType={handleCreateFeeType} newFeeType={newFeeType} setNewFeeType={setNewFeeType} feeTypes={feeTypes} handleDeleteFeeType={handleDeleteFeeType} isReadOnly={isReadOnly} /></div>}
         {activeTab === 'settings' && <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}><ScholarshipsManagement masterMessage={masterMessage} handleCreateScholarship={handleCreateScholarship} newScholarship={newScholarship} setNewScholarship={setNewScholarship} feeTypes={feeTypes} scholarships={scholarships} handleDeleteScholarship={handleDeleteScholarship} isReadOnly={isReadOnly} /></div>}
+        {activeTab === 'cashiers' && <CashierManagement isReadOnly={isReadOnly} collegeId={collegeId} />}
         {activeTab === 'reports' && <ReportsManagement />}
       </div>
 
       {/* Modals */}
       <NeoModal isOpen={isUserModalOpen} onClose={() => { setUserModalOpen(false); setBulkMessage(''); }} title="Bulk Create Users">
-        <form onSubmit={handleBulkSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <NeoInput type="text" placeholder="Prefix (e.g. 711524BAD)" value={bulkData.prefix} onChange={e => setBulkData({...bulkData, prefix: e.target.value})} required />
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <NeoInput type="number" placeholder="Start (e.g. 1)" value={bulkData.startRange} onChange={e => setBulkData({...bulkData, startRange: e.target.value})} required />
-            <NeoInput type="number" placeholder="End (e.g. 175)" value={bulkData.endRange} onChange={e => setBulkData({...bulkData, endRange: e.target.value})} required />
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Create multiple student accounts at once either by uploading an Excel/CSV file or by generating a pattern.
+        </p>
+        
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <NeoButton 
+            variant={bulkMethod === 'upload' ? 'primary' : 'secondary'} 
+            onClick={() => setBulkMethod('upload')} 
+            style={{ flex: 1 }}
+          >
+            Upload Excel/CSV
+          </NeoButton>
+          <NeoButton 
+            variant={bulkMethod === 'pattern' ? 'primary' : 'secondary'} 
+            onClick={() => setBulkMethod('pattern')} 
+            style={{ flex: 1 }}
+          >
+            Generate Pattern
+          </NeoButton>
+        </div>
+        
+        {bulkMethod === 'upload' ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+              <NeoButton variant="secondary" onClick={handleDownloadSampleCSV} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                Download Template
+              </NeoButton>
+            </div>
+            <form onSubmit={handleFileUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                Your file must contain a column named <strong>Username</strong>. Optionally include: <strong>Name, Password, Phone Number, Class, Section, Year, Personal Email, Academic Score</strong>.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <input 
+                  type="file" 
+                  accept=".xlsx,.xls,.csv" 
+                  onChange={e => setUploadFile(e.target.files[0])} 
+                  style={{ padding: '0.8rem', backgroundColor: 'var(--clay-base)', borderRadius: '15px' }} 
+                  required 
+                />
+              </div>
+
+              <NeoInput 
+                type="text" 
+                placeholder="Common Password (Optional)" 
+                value={uploadCommonPassword} 
+                onChange={e => setUploadCommonPassword(e.target.value)} 
+              />
+              <p style={{ margin: '-0.5rem 0 0 0.5rem', fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                Applied to all users in the file if they don't have a password specified.
+              </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <NeoSelect 
+                    value={uploadGroupId}
+                    onChange={val => setUploadGroupId(val)}
+                    placeholder="Assign to Group (Optional)"
+                    options={groups.map(g => ({ value: g._id, label: g.name }))}
+                  />
+                </div>
+                <NeoButton variant="secondary" type="button" onClick={() => setGroupModalOpen(true)}>
+                  + Create Group
+                </NeoButton>
+              </div>
+              <NeoButton variant="primary" type="submit" style={{ width: '100%', marginTop: '0.5rem' }}>Upload & Create</NeoButton>
+              {bulkMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{bulkMessage}</p>}
+            </form>
           </div>
-          <NeoInput type="text" placeholder="Suffix (e.g. A) - Optional" value={bulkData.suffix} onChange={e => setBulkData({...bulkData, suffix: e.target.value})} />
-          <NeoInput type="text" placeholder="Initial Password" value={bulkData.initialPassword} onChange={e => setBulkData({...bulkData, initialPassword: e.target.value})} required />
-          <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Generate Users</NeoButton>
-          {bulkMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{bulkMessage}</p>}
-        </form>
+        ) : (
+          <form onSubmit={handleBulkSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <NeoInput type="text" placeholder="Prefix (e.g. 711524BAD)" value={bulkData.prefix} onChange={e => setBulkData({...bulkData, prefix: e.target.value})} required />
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <NeoInput type="number" placeholder="Start (e.g. 1)" value={bulkData.startRange} onChange={e => setBulkData({...bulkData, startRange: e.target.value})} required />
+              <NeoInput type="number" placeholder="End (e.g. 175)" value={bulkData.endRange} onChange={e => setBulkData({...bulkData, endRange: e.target.value})} required />
+            </div>
+            <NeoInput type="text" placeholder="Suffix (e.g. A) - Optional" value={bulkData.suffix} onChange={e => setBulkData({...bulkData, suffix: e.target.value})} />
+            <NeoInput type="text" placeholder="Initial Password" value={bulkData.initialPassword} onChange={e => setBulkData({...bulkData, initialPassword: e.target.value})} required />
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <NeoSelect 
+                  value={uploadGroupId}
+                  onChange={val => setUploadGroupId(val)}
+                  placeholder="Assign to Group (Optional)"
+                  options={groups.map(g => ({ value: g._id, label: g.name }))}
+                />
+              </div>
+              <NeoButton variant="secondary" type="button" onClick={() => setGroupModalOpen(true)}>
+                + Create Group
+              </NeoButton>
+            </div>
+            
+            <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Generate Pattern</NeoButton>
+            {bulkMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{bulkMessage}</p>}
+          </form>
+        )}
       </NeoModal>
 
       <NeoModal isOpen={isGroupModalOpen} onClose={() => { setGroupModalOpen(false); setGroupMessage(''); }} title="Create Group">
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Create a new group (like a class or a batch). You can also assign students to it immediately. This makes it easy to assign fees to everyone in this group later.
+        </p>
         <form onSubmit={handleGroupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoInput type="text" placeholder="Group Name (e.g. Batch A)" value={groupData.name} onChange={e => setGroupData({...groupData, name: e.target.value})} required />
           <NeoInput type="text" placeholder="Description" value={groupData.description} onChange={e => setGroupData({...groupData, description: e.target.value})} />
@@ -605,6 +814,9 @@ const AdminDashboard = () => {
       </NeoModal>
 
       <NeoModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditGroupMessage(''); }} title="Edit Group">
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Change the name or description of this group.
+        </p>
         <form onSubmit={handleEditGroupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoInput type="text" placeholder="Group Name" value={editGroupData.name} onChange={e => setEditGroupData({...editGroupData, name: e.target.value})} required />
           <NeoInput type="text" placeholder="Description" value={editGroupData.description} onChange={e => setEditGroupData({...editGroupData, description: e.target.value})} />
@@ -628,6 +840,9 @@ const AdminDashboard = () => {
       </NeoModal>
 
       <NeoModal isOpen={isCreateMentorModalOpen} onClose={() => { setCreateMentorModalOpen(false); setMentorMessage(''); }} title="Create Group Mentor">
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Mentors (like class teachers) can manage their specific group and view reports for their students.
+        </p>
         <form onSubmit={handleCreateMentorSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoInput type="text" placeholder="Mentor Name (e.g. John Doe)" value={mentorData.name} onChange={e => setMentorData({...mentorData, name: e.target.value})} required />
           <NeoInput type="text" placeholder="Username" value={mentorData.username} onChange={e => setMentorData({...mentorData, username: e.target.value})} required />
@@ -639,6 +854,9 @@ const AdminDashboard = () => {
       </NeoModal>
 
       <NeoModal isOpen={isFeeModalOpen} onClose={() => { setFeeModalOpen(false); setFeeMessage(''); }} title="Assign Fee">
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Assign a specific fee to an entire group. You must select the Fee Type (like Tuition) and the target Group.
+        </p>
         <form onSubmit={handleFeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoInput type="text" placeholder="Fee Title (e.g. Fall Tuition)" value={feeData.title} onChange={e => setFeeData({...feeData, title: e.target.value})} required />
           <NeoInput type="number" placeholder="Amount (₹)" value={feeData.amount} onChange={e => setFeeData({...feeData, amount: e.target.value})} required />
@@ -670,7 +888,11 @@ const AdminDashboard = () => {
       </NeoModal>
       
       {/* Assign Student Modal */}
+      {/* Assign Student Modal */}
       <NeoModal isOpen={isAssignStudentModalOpen} onClose={() => setAssignStudentModalOpen(false)} title={`Assign ${selectedUserForGroup?.name} to Group`}>
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Select the group (like a class or batch) you want this student to be a part of.
+        </p>
         <form onSubmit={handleAssignStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoSelect 
             value={assignStudentData.groupId}
@@ -684,7 +906,11 @@ const AdminDashboard = () => {
       </NeoModal>
 
       {/* Assign Subgroup Modal */}
+      {/* Assign Subgroup Modal */}
       <NeoModal isOpen={isAssignSubgroupModalOpen} onClose={() => setAssignSubgroupModalOpen(false)} title={`Set Parent for ${selectedGroupForSub?.name}`}>
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Make this group a "child" of another group. For example, "Section A" can be a child of "Computer Science Department".
+        </p>
         <form onSubmit={handleAssignSubgroup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoSelect 
             value={assignSubgroupData.parentId}
@@ -698,7 +924,11 @@ const AdminDashboard = () => {
       </NeoModal>
 
       {/* Edit User Modal */}
+      {/* Edit User Modal */}
       <NeoModal isOpen={isEditUserModalOpen} onClose={() => setEditUserModalOpen(false)} title="Edit Student Profile">
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Update the student's academic score and assign them a scholarship. If they meet the scholarship's score requirement, they get a discount on their fees!
+        </p>
         <form onSubmit={handleEditUserSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <NeoInput type="number" placeholder="Academic Score (0-100)" value={editUserData.academicScore} onChange={e => setEditUserData({...editUserData, academicScore: e.target.value})} required />
           <NeoSelect 

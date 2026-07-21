@@ -3,13 +3,16 @@ import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoInput from '../../components/UI/NeoInput';
 import ThemeToggle from '../../components/UI/ThemeToggle';
-import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCircle } from 'lucide-react';
+import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, LogOut, Bot, CreditCard } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
+import AgentManagement from '../../components/superadmin/AgentManagement';
+import BillingOverview from '../../components/superadmin/BillingOverview';
 
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('analytics');
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [analytics, setAnalytics] = useState(null);
   const [colleges, setColleges] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -103,32 +106,85 @@ const SuperAdminDashboard = () => {
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading SuperAdmin Data...</div>;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ color: 'var(--primary)' }}>EduFin Nexus (Super Admin)</h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <ThemeToggle />
-          <NeoButton onClick={() => {
-            localStorage.clear();
-            window.location.href = '/login';
-          }}>Logout</NeoButton>
+    <div className="app-container dashboard-layout">
+      
+      {/* Fluffy Sidebar Navigation */}
+      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)', position: 'relative'}}>
+           <div style={{ width: '50px', height: '50px', background: 'var(--overlay-bg)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid var(--border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.4)' }}>
+             <Settings size={28} color="var(--primary)" />
+           </div>
+           <div className="header-text">
+             <h3 style={{ margin: 0, color: 'var(--text-color)' }}>Super Admin</h3>
+             <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>EduFin Nexus</span>
+           </div>
+           {/* Sidebar Toggle Button */}
+           <button 
+             onClick={() => setSidebarOpen(!isSidebarOpen)}
+             style={{
+               position: 'absolute', right: '-12px', top: '24px',
+               width: '24px', height: '24px', borderRadius: '50%',
+               background: 'rgba(248,116,16,0.15)',
+               backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+               border: '1px solid rgba(248,116,16,0.35)', color: 'var(--primary)',
+               display: 'flex', alignItems: 'center', justifyContent: 'center',
+               cursor: 'pointer', zIndex: 10, boxShadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.4)',
+               transform: isSidebarOpen ? 'none' : 'translateX(10px)'
+             }}
+           >
+             {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+           </button>
+        </div>
+        
+        <div className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+          <Activity size={20} /> <span className="nav-text">Global Analytics</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'colleges' ? 'active' : ''}`} onClick={() => setActiveTab('colleges')}>
+          <Building size={20} /> <span className="nav-text">Manage Colleges</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`} onClick={() => setActiveTab('admins')}>
+          <Users size={20} /> <span className="nav-text">Manage Admins</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>
+          <Database size={20} /> <span className="nav-text">Audit Logs</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'agent' ? 'active' : ''}`} onClick={() => setActiveTab('agent')}>
+          <Bot size={20} /> <span className="nav-text">Agent Management</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => setActiveTab('billing')}>
+          <CreditCard size={20} /> <span className="nav-text">Payments</span>
+        </div>
+
+        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+          <NeoButton variant="secondary" onClick={() => { localStorage.clear(); window.location.href = '/login'; }} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
+            <LogOut size={18} /> {isSidebarOpen && 'Logout'}
+          </NeoButton>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-        <NeoButton variant={activeTab === 'analytics' ? 'primary' : 'secondary'} onClick={() => setActiveTab('analytics')}>
-          <Activity size={18} style={{ marginRight: '0.5rem' }} /> Global Analytics
-        </NeoButton>
-        <NeoButton variant={activeTab === 'colleges' ? 'primary' : 'secondary'} onClick={() => setActiveTab('colleges')}>
-          <Building size={18} style={{ marginRight: '0.5rem' }} /> Manage Colleges
-        </NeoButton>
-        <NeoButton variant={activeTab === 'admins' ? 'primary' : 'secondary'} onClick={() => setActiveTab('admins')}>
-          <Users size={18} style={{ marginRight: '0.5rem' }} /> Manage Admins
-        </NeoButton>
-        <NeoButton variant={activeTab === 'logs' ? 'primary' : 'secondary'} onClick={() => setActiveTab('logs')}>
-          <Database size={18} style={{ marginRight: '0.5rem' }} /> Audit Logs
-        </NeoButton>
-      </div>
+      <div className="dashboard-content">
+        <div className="dashboard-header" style={{ 
+          backgroundColor: 'var(--clay-base)', 
+          padding: '1rem 2rem', 
+          borderRadius: '50px', 
+          boxShadow: 'var(--clay-outer)' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
+              {activeTab === 'analytics' && 'Global Analytics'}
+              {activeTab === 'colleges' && 'Manage Colleges'}
+              {activeTab === 'admins' && 'Manage Admins'}
+              {activeTab === 'logs' && 'Audit Logs'}
+              {activeTab === 'agent' && 'Agent Management'}
+              {activeTab === 'billing' && 'Payments'}
+            </h2>
+          </div>
+          <div className="header-actions">
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <div style={{ padding: '2rem 0' }}>
 
       {activeTab === 'analytics' && analytics && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
@@ -279,6 +335,16 @@ const SuperAdminDashboard = () => {
         </NeoCard>
       )}
 
+      {activeTab === 'agent' && (
+        <AgentManagement token={token} />
+      )}
+
+      {activeTab === 'billing' && (
+        <BillingOverview token={token} />
+      )}
+
+        </div>
+      </div>
     </div>
   );
 };

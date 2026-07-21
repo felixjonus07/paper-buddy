@@ -397,9 +397,7 @@ const UserDashboard = () => {
         <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => setActiveTab('fee-requests')}>
           <PlusCircle size={20} /> <span className="nav-text">Fee Requests</span>
         </div>
-        <div className={`nav-item ${activeTab === 'loan' ? 'active' : ''}`} onClick={() => setActiveTab('loan')}>
-          <FileText size={20} /> <span className="nav-text">Financial Aid</span>
-        </div>
+  
         <div className={`nav-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => setActiveTab('paid-fees')}>
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>

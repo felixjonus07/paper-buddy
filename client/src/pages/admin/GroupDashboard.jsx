@@ -232,6 +232,30 @@ const GroupDashboard = () => {
         </NeoButton>
       </div>
 
+      {/* --- SIMPLE DESCRIPTION FOR NEW USERS --- */}
+      <div style={{
+        background: 'var(--clay-base)',
+        borderRadius: '15px',
+        padding: '1rem 1.5rem',
+        marginBottom: '2rem',
+        boxShadow: 'inset 5px 5px 10px rgba(0, 0, 0, 0.05), inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '1rem',
+        borderLeft: '4px solid var(--primary)'
+      }}>
+        <div style={{ color: 'var(--primary)', marginTop: '0.2rem' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+        </div>
+        <div>
+          <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--text-color)', fontSize: '1rem' }}>What is this page for?</h4>
+          <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+            This page shows all details for a specific group of students. Here you can easily assign a fee to the entire group at once, add new students to the group, or view the overall payment progress for the students in this group.
+          </p>
+        </div>
+      </div>
+      {/* --------------------------------------------- */}
+
       <GroupStats users={users} totalAssignedValue={totalAssignedValue} amountCollected={amountCollected} amountPending={amountPending} />
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         <SubgroupList subgroups={subgroups} navigate={navigate} />

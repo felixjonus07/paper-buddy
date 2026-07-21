@@ -19,8 +19,8 @@ const AddFeeModal = ({
   return (
     <NeoModal isOpen={isAddFeeModalOpen} onClose={() => setIsAddFeeModalOpen(false)} title={selectedUserIdForFee ? "Assign Fee to User" : "Assign Fee to Group"}>
       <form onSubmit={handleAddFeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
-          {selectedUserIdForFee ? "Assigning a fee will apply it specifically to this user." : "Assigning a fee will apply it to all current students in this group."}
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          {selectedUserIdForFee ? "Assigning a fee here will apply it specifically to this user only." : "Assigning a fee here will apply it to everyone currently in this group."}
         </p>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>

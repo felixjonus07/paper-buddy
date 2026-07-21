@@ -18,8 +18,10 @@ const AddStudentModal = ({
 
   return (
     <NeoModal isOpen={isAddStudentsModalOpen} onClose={() => setIsAddStudentsModalOpen(false)} title="Add Students to Group">
+      <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+        Select students to enroll in this group. Once added, any fee assigned to this group will automatically apply to them.
+      </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <p>Select students to enroll in this group. Students already in the group are hidden.</p>
         
         <input 
           type="text" 
