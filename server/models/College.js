@@ -15,6 +15,9 @@ const collegeSchema = new mongoose.Schema({
     saltIndex: { type: Number, default: 1 },
     env: { type: String, enum: ['SANDBOX', 'PRODUCTION'], default: 'SANDBOX' }
   },
+  aiAccess: { type: Boolean, default: true },
+  promptCount: { type: Number, default: 0 },
+  tokenCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

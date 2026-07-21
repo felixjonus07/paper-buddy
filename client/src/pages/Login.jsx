@@ -18,38 +18,8 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    
-    if (needsReset) {
-      // Handle Reset Password Flow
-      try {
-        const response = await fetch(`/api/auth/reset-password`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${resetToken}`
-          },
-          body: JSON.stringify({ newPassword: formData.newPassword })
-        });
-        const data = await response.json();
-        if (response.ok) {
-           alert('Password reset successful! Please log in again.');
-           setNeedsReset(false);
-           setFormData({ ...formData, password: '', newPassword: '' });
-           setResetToken(null);
-        } else {
-           setError(data.message);
-        }
-      } catch (err) {
-        setError('Failed to connect to server.');
-      }
-      return;
-    }
-
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-    const payload = isLogin ? { username: formData.username, password: formData.password } : formData;
+  const executeLogin = async (payload, isLoginMode) => {
+    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
 
     try {
       const response = await fetch(endpoint, {
@@ -96,6 +66,58 @@ const Login = () => {
       console.error("Login error:", err);
       setError(err.message || 'Failed to connect to server. Ensure backend is running.');
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (needsReset) {
+      // Handle Reset Password Flow
+      try {
+        const response = await fetch(`/api/auth/reset-password`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${resetToken}`
+          },
+          body: JSON.stringify({ newPassword: formData.newPassword })
+        });
+        const data = await response.json();
+        if (response.ok) {
+           alert('Password reset successful! Please log in again.');
+           setNeedsReset(false);
+           setFormData({ ...formData, password: '', newPassword: '' });
+           setResetToken(null);
+        } else {
+           setError(data.message);
+        }
+      } catch (err) {
+        setError('Failed to connect to server.');
+      }
+      return;
+    }
+
+    const payload = isLogin ? { username: formData.username, password: formData.password } : formData;
+    await executeLogin(payload, isLogin);
+  };
+
+  const handleAutoLogin = (u, p) => {
+    setFormData({ ...formData, username: u, password: p });
+    setError(null);
+    executeLogin({ username: u, password: p }, true);
+  };
+
+  const demoBtnStyle = {
+    padding: '0.4rem 0.8rem',
+    fontSize: '0.8rem',
+    borderRadius: '20px',
+    border: '1px solid var(--primary)',
+    background: 'var(--clay-base)',
+    color: 'var(--primary)',
+    cursor: 'pointer',
+    zIndex: 2,
+    position: 'relative'
   };
 
   return (
@@ -178,6 +200,36 @@ const Login = () => {
                 {isLogin ? 'Sign up' : 'Sign in'}
               </span>
             </p>
+          </div>
+        )}
+        
+        {isLogin && !needsReset && (
+          <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.03)', borderRadius: '10px' }}>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: 'bold' }}>Quick Demo Logins</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginTop: '0.5rem' }}>
+              <button onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={demoBtnStyle}>Super Admin</button>
+              <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
+              <button onClick={() => handleAutoLogin('admin', 'admin123')} style={demoBtnStyle}>Admin</button>
+              <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
+              
+              <div style={{ width: '50%', borderTop: '2px solid var(--primary)', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
+                <div style={{ borderRight: '2px solid var(--primary)', height: '15px' }}></div>
+              </div>
+              
+              <div style={{ width: '100%', display: 'flex' }}>
+                <div style={{ width: '50%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                  <button onClick={() => handleAutoLogin('cashier', 'cashier123')} style={demoBtnStyle}>Cashier</button>
+                </div>
+                <div style={{ width: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <button onClick={() => handleAutoLogin('aidsa', 'aidsa123')} style={demoBtnStyle}>Group Admin</button>
+                  <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
+                  <button onClick={() => handleAutoLogin('student', 'student123')} style={demoBtnStyle}>Student</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
       </NeoCard>

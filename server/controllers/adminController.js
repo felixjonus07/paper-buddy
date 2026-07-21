@@ -8,8 +8,29 @@ const FeeType = require('../models/FeeType');
 const Scholarship = require('../models/Scholarship');
 const FeeRequest = require('../models/FeeRequest');
 const bcrypt = require('bcryptjs');
+const xlsx = require('xlsx');
+/**
+ * ============================================================================
+ * ADMIN CONTROLLER - SIMPLE EXPLANATION
+ * ============================================================================
+ * This file handles all the actions that a College Admin can perform.
+ * 
+ * IMPORTANT RULE: DATA SEPARATION (Multi-Tenancy)
+ * ----------------------------------------------------------------------------
+ * This system is used by many colleges. To make sure one college cannot see 
+ * or change another college's data, we use a rule called "Data Separation".
+ * 
+ * How it works:
+ * 1. Every time a new item is created (like a user, group, or fee), we 
+ *    automatically save the admin's `collegeId` with it.
+ * 2. Every time we fetch items from the database, we only ask for items 
+ *    that match the logged-in admin's `collegeId`.
+ * 3. Every time we update or delete an item, we double-check that the item 
+ *    belongs to the admin's college before making the change.
+ * ============================================================================
+ */
 
-// Helper function to apply scholarship rules
+// Helper function to apply scholarship rules and calculate discounts
 const applyFeeRules = async (student, fee) => {
   let discountAmount = 0;
   
@@ -30,10 +51,10 @@ const applyFeeRules = async (student, fee) => {
   };
 };
 
-// Bulk Create Users
+// Create multiple student users at once
 const bulkCreateUsers = async (req, res) => {
   try {
-    const { prefix, startRange, endRange, suffix, initialPassword } = req.body;
+    const { prefix, startRange, endRange, suffix, initialPassword, groupId } = req.body;
     
     if (!prefix || startRange === undefined || endRange === undefined || !initialPassword) {
       return res.status(400).json({ message: 'Missing required fields for bulk creation' });
@@ -61,13 +82,22 @@ const bulkCreateUsers = async (req, res) => {
         username,
         password: hashedPassword,
         role: 'user',
+        // Save the college ID so these students belong to the admin's college
         collegeId: req.user.collegeId,
-        mustChangePassword: true
+        mustChangePassword: true,
+        groups: groupId ? [groupId] : []
       });
     }
 
     // Insert ignoring duplicates (if someone already exists, we can use ordered: false to continue inserting the rest)
     const result = await User.insertMany(newUsers, { ordered: false });
+    
+    if (groupId && result.length > 0) {
+      const createdUserIds = result.map(u => u._id);
+      await Group.findByIdAndUpdate(groupId, {
+        $push: { studentIds: { $each: createdUserIds } }
+      });
+    }
     
     res.status(201).json({ message: `Successfully created ${result.length} users.`, users: result });
   } catch (error) {
@@ -76,6 +106,100 @@ const bulkCreateUsers = async (req, res) => {
        res.status(201).json({ message: `Bulk creation finished, but some users were skipped because they already existed.`, insertedCount: error.insertedDocs?.length || 0 });
     } else {
        res.status(500).json({ message: error.message });
+    }
+  }
+};
+
+// Upload Users via Excel/CSV
+const uploadBulkUsers = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    
+    const { commonPassword, groupId } = req.body;
+
+    // Parse the file buffer
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    
+    // Convert to JSON
+    const rows = xlsx.utils.sheet_to_json(sheet);
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: 'The uploaded file is empty' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const newUsers = [];
+    let skippedCount = 0;
+
+    for (const row of rows) {
+      // Expected columns: Name, Username, Password (or defaults if missing)
+      const name = row['Name'] || row['name'] || row['Full Name'];
+      const username = row['Username'] || row['username'] || row['Register Number'] || row['Reg No'] || row['regno'];
+      let password = row['Password'] || row['password'];
+
+      if (!username) {
+        skippedCount++;
+        continue;
+      }
+
+      // Default password to common password, then username if not provided
+      if (!password) {
+        password = commonPassword || String(username);
+      }
+
+      const hashedPassword = await bcrypt.hash(String(password), salt);
+
+      newUsers.push({
+        name: name || `Student ${username}`,
+        username: String(username),
+        registerNumber: String(username), // usually the same
+        password: hashedPassword,
+        phoneNumber: row['Phone Number'] || row['phone'] || '',
+        studentClass: row['Class'] || row['class'] || '',
+        section: row['Section'] || row['section'] || '',
+        year: row['Year'] || row['year'] || '',
+        personalEmail: row['Personal Email'] || row['email'] || '',
+        collegeEmail: row['College Email'] || '',
+        academicScore: Number(row['Academic Score']) || 0,
+        role: 'user',
+        collegeId: req.user.collegeId,
+        mustChangePassword: true,
+        groups: groupId ? [groupId] : []
+      });
+    }
+
+    if (newUsers.length === 0) {
+      return res.status(400).json({ message: 'No valid users found in the file. Make sure you have a "Username" column.' });
+    }
+
+    // Insert into DB
+    const result = await User.insertMany(newUsers, { ordered: false });
+
+    // If a groupId was provided, add these newly created users to the group
+    if (groupId) {
+      const createdUserIds = result.map(u => u._id);
+      await Group.findByIdAndUpdate(groupId, {
+        $push: { studentIds: { $each: createdUserIds } }
+      });
+    }
+    
+    res.status(201).json({ 
+      message: `Successfully created ${result.length} users. ${skippedCount > 0 ? `Skipped ${skippedCount} invalid rows.` : ''}`, 
+      users: result 
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      res.status(201).json({ 
+        message: `Bulk upload finished. Some users were skipped because they already exist.`, 
+        insertedCount: error.insertedDocs?.length || 0 
+      });
+    } else {
+      console.error('Upload Error:', error);
+      res.status(500).json({ message: error.message });
     }
   }
 };
@@ -367,9 +491,10 @@ const assignFeeToGroup = async (req, res) => {
   }
 };
 
-// Get All Users (excluding passwords)
+// Get all users that belong to the admin's college (passwords are hidden for security)
 const getUsers = async (req, res) => {
   try {
+    // Only find users where collegeId matches the logged-in admin's collegeId
     const users = await User.find({ collegeId: req.user.collegeId }).select('-password').populate('groups', 'name');
     res.json(users);
   } catch (error) {
@@ -650,12 +775,7 @@ const getPaymentReports = async (req, res) => {
     const { startDate, endDate, collegeId } = req.query;
     
     // Default to viewing current college if admin, or requested college if superadmin
-    let targetCollegeId = null;
-    if (req.user.role === 'admin' || req.user.role === 'cashier' || req.user.role === 'mentor') {
-      targetCollegeId = req.user.collegeId;
-    } else if (req.user.role === 'superadmin' && collegeId) {
-      targetCollegeId = collegeId;
-    }
+    const targetCollegeId = req.user.collegeId || collegeId;
 
     if (!startDate || !endDate) {
       return res.status(400).json({ message: 'Please provide both startDate and endDate' });
@@ -808,8 +928,53 @@ const updatePaymentSettings = async (req, res) => {
   }
 };
 
+// Get all cashiers for the college
+const getCashiers = async (req, res) => {
+  try {
+    const cashiers = await User.find({
+      collegeId: req.user.collegeId,
+      role: 'cashier'
+    }).select('name username personalEmail phoneNumber');
+    res.json(cashiers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get payment logs for a specific cashier on a given date
+const getCashierLogs = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.query; // expects YYYY-MM-DD
+    
+    let query = { collegeId: req.user.collegeId, processedBy: id, status: 'SUCCESS' };
+    
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      query.paidAt = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    const logs = await Payment.find(query)
+      .populate('user', 'name username registerNumber')
+      .populate('fee', 'title')
+      .sort({ paidAt: -1 });
+
+    const totalCollected = logs.reduce((sum, p) => sum + p.amount, 0);
+
+    res.json({ logs, totalCollected });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   bulkCreateUsers,
+  uploadBulkUsers,
   createGroup,
   updateGroup,
   createGroupMentor,
@@ -835,5 +1000,7 @@ module.exports = {
   updateFeeRequestStatus,
   getPaymentReports,
   updatePaymentSettings,
-  getPaymentSettings
+  getPaymentSettings,
+  getCashiers,
+  getCashierLogs
 };
