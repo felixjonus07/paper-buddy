@@ -1,4 +1,5 @@
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const College = require('../models/College');
 
 const SYSTEM_PROMPT = `You are EduFin AI, a smart admin assistant for a college fee management system.
 You detect the user's intent and extract relevant field values from their message.
@@ -92,6 +93,17 @@ const chat = async (req, res) => {
       return res.status(400).json({ message: 'messages array is required' });
     }
 
+    // Check AI access for the user's college
+    if (req.user && req.user.collegeId) {
+      const college = await College.findById(req.user.collegeId);
+      if (college && college.aiAccess === false) {
+        return res.json({
+          intent: 'CHAT',
+          message: '🔒 AI Assistant access has been disabled for your institution. Please contact your administrator or the platform support team.'
+        });
+      }
+    }
+
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ message: 'Groq API key not configured on server' });
@@ -124,6 +136,14 @@ const chat = async (req, res) => {
 
     const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content || '';
+
+    // Increment prompt count and token count for the college in the background
+    if (req.user && req.user.collegeId) {
+      const tokensUsed = data.usage?.total_tokens || 0;
+      College.findByIdAndUpdate(req.user.collegeId, {
+        $inc: { promptCount: 1, tokenCount: tokensUsed }
+      }).catch(() => {});
+    }
 
     // Parse JSON response from AI
     let parsed;

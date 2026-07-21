@@ -686,7 +686,10 @@ const ChatBot = () => {
       const contextMessages = newMessages.slice(-10).filter(m => m.role !== 'system');
       const res = await fetch(`${API_BASE}/chatbot/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`
+        },
         body: JSON.stringify({ messages: contextMessages })
       });
 

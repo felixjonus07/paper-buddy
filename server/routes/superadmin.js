@@ -120,6 +120,48 @@ router.put('/colleges/:id', async (req, res) => {
   }
 });
 
+// Toggle AI access for a college
+router.put('/colleges/:id/ai-access', async (req, res) => {
+  try {
+    const { aiAccess } = req.body;
+    const college = await College.findByIdAndUpdate(req.params.id, { aiAccess }, { new: true });
+    
+    if (college) {
+      await AuditLog.create({
+        action: 'UPDATED_AI_ACCESS',
+        details: `AI access ${aiAccess ? 'enabled' : 'disabled'} for college: ${college.name}`,
+        performedBy: req.user._id,
+        collegeId: college._id
+      });
+      res.json(college);
+    } else {
+      res.status(404).json({ message: 'College not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Reset prompt count for a college
+router.put('/colleges/:id/reset-prompts', async (req, res) => {
+  try {
+    const college = await College.findByIdAndUpdate(
+      req.params.id,
+      { promptCount: 0, tokenCount: 0 },
+      { new: true }
+    );
+    if (college) {
+      res.json(college);
+    } else {
+      res.status(404).json({ message: 'College not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
 // Create an Admin for a college
 router.post('/admins', async (req, res) => {
   try {
@@ -166,6 +208,75 @@ router.get('/audit-logs', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
     res.json(logs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Billing Overview — centralized vs decentralized payments per college
+router.get('/billing-overview', async (req, res) => {
+  try {
+    const colleges = await College.find().sort({ createdAt: -1 });
+
+    const overviewData = await Promise.all(colleges.map(async (college) => {
+      const isCentralized = (college.paymentType || 'CENTRALIZED') === 'CENTRALIZED';
+
+      // All SUCCESS payments for this college
+      const allPayments = await Payment.find({
+        collegeId: college._id,
+        status: 'SUCCESS'
+      });
+
+      const onlinePayments = allPayments.filter(p => p.paymentMethod !== 'CASH');
+      const cashPayments = allPayments.filter(p => p.paymentMethod === 'CASH');
+
+      const onlineTotal = onlinePayments.reduce((sum, p) => sum + p.amount, 0);
+      const cashTotal = cashPayments.reduce((sum, p) => sum + p.amount, 0);
+      const total = onlineTotal + cashTotal;
+
+      // If CENTRALIZED college: online payments go to platform account
+      // If DECENTRALIZED college: online payments go to college's own gateway account
+      const platformAmount = isCentralized ? onlineTotal : 0;
+      const ownGatewayAmount = !isCentralized ? onlineTotal : 0;
+
+      return {
+        _id: college._id,
+        name: college.name,
+        code: college.code,
+        paymentType: college.paymentType || 'CENTRALIZED',
+        subscriptionStatus: college.subscriptionStatus,
+        totalCollected: total,
+        // Money credited to PLATFORM account (centralized online)
+        platformAmount,
+        platformCount: isCentralized ? onlinePayments.length : 0,
+        // Money credited to COLLEGE's OWN gateway (decentralized online)
+        ownGatewayAmount,
+        ownGatewayCount: !isCentralized ? onlinePayments.length : 0,
+        // Cash collected directly by college's cashiers
+        cashAmount: cashTotal,
+        cashCount: cashPayments.length,
+        transactionCount: allPayments.length
+      };
+    }));
+
+    const grandTotal = overviewData.reduce((sum, c) => sum + c.totalCollected, 0);
+    const grandPlatform = overviewData.reduce((sum, c) => sum + c.platformAmount, 0);
+    const grandOwnGateway = overviewData.reduce((sum, c) => sum + c.ownGatewayAmount, 0);
+    const grandCash = overviewData.reduce((sum, c) => sum + c.cashAmount, 0);
+
+    console.log('--- BILLING OVERVIEW DEBUG ---');
+    console.log(JSON.stringify(overviewData, null, 2));
+
+    res.json({
+      colleges: overviewData,
+      summary: {
+        grandTotal,
+        grandPlatform,
+        grandOwnGateway,
+        grandCash,
+        totalColleges: colleges.length
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
