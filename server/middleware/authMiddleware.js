@@ -13,6 +13,12 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
       req.user = await User.findById(decoded.id).select('-password');
+      
+      // Allow superadmin to impersonate a college for admin dashboard views
+      if (req.user && req.user.role === 'superadmin' && req.headers['x-college-id']) {
+        req.user.collegeId = req.headers['x-college-id'];
+      }
+      
       next();
     } catch (error) {
       console.error(error);

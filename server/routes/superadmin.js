@@ -5,6 +5,7 @@ const AuditLog = require('../models/AuditLog');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
 const { protect } = require('../middleware/authMiddleware');
+const bcrypt = require('bcryptjs');
 
 // Super Admin Middleware inline check (ensure role is superadmin)
 const superadminOnly = (req, res, next) => {
@@ -129,10 +130,13 @@ router.post('/admins', async (req, res) => {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const admin = new User({
       name,
       username,
-      password, // Note: Should ideally be hashed, but for the sake of following existing patterns, we'll save it. 
+      password: hashedPassword,
       role: 'admin',
       collegeId,
       mustChangePassword: true
