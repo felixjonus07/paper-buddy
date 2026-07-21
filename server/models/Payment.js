@@ -41,6 +41,11 @@ const paymentSchema = new mongoose.Schema({
   paidAt: {
     type: Date,
     default: Date.now,
+  },
+  collegeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'College',
+    required: true
   }
 });
 

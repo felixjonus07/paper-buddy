@@ -24,6 +24,7 @@ const chatbotRoutes = require('./routes/chatbot');
 const cashierRoutes = require('./routes/cashier');
 const aiRoutes = require('./routes/ai.routes');
 const mentorRoutes = require('./routes/mentor');
+const superadminRoutes = require('./routes/superadmin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/loans', loanRoutes);
@@ -33,6 +34,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/cashier', cashierRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/mentor', mentorRoutes);
+app.use('/api/superadmin', superadminRoutes);
 
 // Connect to MongoDB
 const connectDB = async () => {

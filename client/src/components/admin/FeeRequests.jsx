@@ -2,7 +2,7 @@ import React from 'react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
 
-const FeeRequests = ({ feeRequests, handleUpdateFeeRequestStatus }) => {
+const FeeRequests = ({ feeRequests, handleUpdateFeeRequestStatus, isReadOnly }) => {
   return (
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
       <h2 style={{ margin: 0, color: 'var(--primary)', marginBottom: '2rem' }}>Student Fee Requests</h2>
@@ -38,7 +38,7 @@ const FeeRequests = ({ feeRequests, handleUpdateFeeRequestStatus }) => {
               <div><strong>Suggested Type:</strong> {r.feeType?.name || 'Unknown'}</div>
             </div>
             
-            {r.status === 'pending' && (
+            {!isReadOnly && r.status === 'pending' && (
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <NeoButton variant="mint" onClick={() => handleUpdateFeeRequestStatus(r._id, 'approved')}>Approve & Assign Fee</NeoButton>
                 <NeoButton variant="peach" onClick={() => handleUpdateFeeRequestStatus(r._id, 'rejected')}>Reject</NeoButton>
