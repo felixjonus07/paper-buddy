@@ -3,6 +3,7 @@ import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
 import NeoInput from '../UI/NeoInput';
 import { Calendar, Download, TrendingUp, IndianRupee } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -18,6 +19,7 @@ const getDefaultDates = () => {
 };
 
 const ReportsManagement = () => {
+  const { collegeId } = useParams();
   const defaultDates = getDefaultDates();
   const [startDate, setStartDate] = useState(defaultDates.start);
   const [endDate, setEndDate] = useState(defaultDates.end);
@@ -39,12 +41,14 @@ const ReportsManagement = () => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      // If superadmin is viewing this, collegeId might be in the query, but we can just use current token and role
-      const searchParams = new URLSearchParams(window.location.search);
-      const queryStr = `?startDate=${sDate}&endDate=${eDate}${searchParams.has('collegeId') ? `&collegeId=${searchParams.get('collegeId')}` : ''}`;
+      // If superadmin is viewing this, pass collegeId header
+      const headers = { Authorization: `Bearer ${token}` };
+      if (collegeId) {
+        headers['x-college-id'] = collegeId;
+      }
       
-      const res = await fetch(`/api/admin/reports/payments${queryStr}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch(`/api/admin/reports/payments?startDate=${sDate}&endDate=${eDate}`, {
+        headers
       });
       
       if (res.ok) {
