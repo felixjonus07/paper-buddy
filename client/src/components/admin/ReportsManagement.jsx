@@ -4,9 +4,10 @@ import NeoButton from '../UI/NeoButton';
 import NeoInput from '../UI/NeoInput';
 import { Calendar, Download, TrendingUp, IndianRupee } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { useAlert } from '../../context/AlertContext';
 
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const getDefaultDates = () => {
   const now = new Date();
@@ -26,6 +27,7 @@ const ReportsManagement = () => {
   const [reports, setReports] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { showAlert } = useAlert();
 
   const fetchReports = async (e, overrideStart, overrideEnd) => {
     if (e) e.preventDefault();
@@ -33,7 +35,7 @@ const ReportsManagement = () => {
     const eDate = overrideEnd || endDate;
     
     if (!sDate || !eDate) {
-      alert('Please select both start and end dates.');
+      showAlert('Please select both start and end dates.');
       return;
     }
     
@@ -112,7 +114,7 @@ const ReportsManagement = () => {
       p.status
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: headers,
       body: rows,
@@ -242,7 +244,7 @@ const ReportsManagement = () => {
                           fontSize: '0.85rem', 
                           fontWeight: 'bold',
                           backgroundColor: p.status === 'SUCCESS' ? 'var(--clay-mint-light)' : 'var(--clay-peach-light)',
-                          color: p.status === 'SUCCESS' ? '#115e59' : '#9a3412'
+                          color: p.status === 'SUCCESS' ? 'var(--primary)' : 'var(--primary)'
                         }}>
                           {p.status}
                         </span>

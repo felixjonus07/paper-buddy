@@ -1,22 +1,45 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
 const NeoSelect = ({ value, onChange, options, placeholder, required, style }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
+  const [dropdownStyle, setDropdownStyle] = useState({});
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setIsOpen(false);
+        if (!event.target.closest('.neo-select-dropdown')) {
+          setIsOpen(false);
+        }
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 999999,
+      });
+      
+      const handleScroll = (e) => {
+        if (!e.target.closest?.('.neo-select-dropdown')) {
+          setIsOpen(false);
+        }
+      };
+      
+      window.addEventListener('scroll', handleScroll, true);
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isOpen]);
 
   const selectedOption = options.find(opt => opt.value === value);
 
@@ -41,13 +64,11 @@ const NeoSelect = ({ value, onChange, options, placeholder, required, style }) =
           width: '100%',
           padding: '1rem',
           borderRadius: '20px',
-          backgroundColor: 'var(--clay-base)',
+          backgroundColor: 'rgba(128,128,128,0.1)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: isOpen 
-            ? 'var(--clay-pressed)'
-            : 'var(--clay-card)',
+          boxShadow: isOpen ? 'var(--clay-pressed)' : 'var(--clay-card)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -61,36 +82,24 @@ const NeoSelect = ({ value, onChange, options, placeholder, required, style }) =
         <ChevronDown size={18} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
       </div>
 
-      {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          marginTop: '0.5rem',
+      {isOpen && createPortal(
+        <div className="neo-select-dropdown" style={{
+          ...dropdownStyle,
           backgroundColor: 'var(--bg-color)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '15px',
           boxShadow: '0 10px 40px rgba(0,0,0,0.8)',
           maxHeight: '200px',
           overflowY: 'auto',
-          zIndex: 9999,
           display: 'flex',
           flexDirection: 'column',
           padding: '0.5rem'
         }}>
-          {/* Default Option (placeholder) */}
           <div
-            onClick={() => {
-              onChange('');
-              setIsOpen(false);
-            }}
+            onClick={() => { onChange(''); setIsOpen(false); }}
             style={{
-              padding: '0.8rem',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              color: 'var(--text-light)',
-              backgroundColor: value === '' ? 'var(--overlay-bg)' : 'transparent',
+              padding: '0.8rem', borderRadius: '10px', cursor: 'pointer',
+              color: 'var(--text-light)', backgroundColor: value === '' ? 'var(--overlay-bg)' : 'transparent',
               transition: 'background-color 0.2s'
             }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--overlay-bg)'}
@@ -102,16 +111,10 @@ const NeoSelect = ({ value, onChange, options, placeholder, required, style }) =
           {options.map(opt => (
             <div
               key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
+              onClick={() => { onChange(opt.value); setIsOpen(false); }}
               style={{
-                padding: '0.8rem',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                color: 'var(--text-color)',
-                backgroundColor: value === opt.value ? 'var(--overlay-bg)' : 'transparent',
+                padding: '0.8rem', borderRadius: '10px', cursor: 'pointer',
+                color: 'var(--text-color)', backgroundColor: value === opt.value ? 'var(--overlay-bg)' : 'transparent',
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--overlay-bg)'}
@@ -120,7 +123,8 @@ const NeoSelect = ({ value, onChange, options, placeholder, required, style }) =
               {opt.label}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

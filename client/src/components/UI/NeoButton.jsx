@@ -80,7 +80,7 @@ const NeoButton = ({ children, onClick, type = 'button', className = '', style, 
   return (
     <button
       type={type}
-      className={className}
+      className={`glass-btn ${className}`}
       style={baseStyle}
       onClick={disabled ? undefined : onClick}
       onMouseEnter={() => !disabled && setHovered(true)}

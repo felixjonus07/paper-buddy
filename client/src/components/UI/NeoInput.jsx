@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-const NeoInput = ({ type = 'text', placeholder, value, onChange, name, required = false, className = '', Icon }) => {
+const NeoInput = ({ type = 'text', placeholder, value, onChange, name, required = false, className = '', Icon, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -17,7 +17,7 @@ const NeoInput = ({ type = 'text', placeholder, value, onChange, name, required 
     width: '100%',
     background: focused
       ? 'rgba(248,116,16,0.04)'
-      : 'var(--clay-base)',
+      : 'rgba(128,128,128,0.1)',
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
     border: focused
@@ -66,6 +66,8 @@ const NeoInput = ({ type = 'text', placeholder, value, onChange, name, required 
         style={inputStyle}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        min={type === 'number' ? "0" : undefined}
+        {...props}
       />
       {isPassword && (
         <div

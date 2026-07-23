@@ -30,7 +30,7 @@ const FeeTypesManagement = ({
             </form>
           )}
 
-          <h3 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Existing Fee Types</h3>
+          <h3 style={{marginBottom: '1rem' }}>Existing Fee Types</h3>
           <div className="card-grid">
             {feeTypes.map(c => (
               <NeoCard key={c._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)' }}>

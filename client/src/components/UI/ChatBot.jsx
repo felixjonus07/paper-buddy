@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, Bot, User, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 
-// Use relative path so Vite proxy handles it — no hardcoded localhost
+// Use relative path so Vite proxy handles it - no hardcoded localhost
 const API_BASE = '/api';
 const getToken = () => localStorage.getItem('token');
 const getUserRole = () => {
@@ -114,8 +115,8 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
             setColleges(cols);
             setForm(prev => {
               if (prev.collegeQuery && !prev.collegeId) {
-                const match = cols.find(c => 
-                  c.name.toLowerCase().includes(prev.collegeQuery.toLowerCase()) || 
+                const match = cols.find(c =>
+                  c.name.toLowerCase().includes(prev.collegeQuery.toLowerCase()) ||
                   c.code.toLowerCase().includes(prev.collegeQuery.toLowerCase())
                 );
                 if (match) return { ...prev, collegeId: match._id };
@@ -164,7 +165,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
               borderRadius: '12px', padding: '0.75rem 1rem',
               fontSize: '0.82rem', color: 'var(--text-light)', lineHeight: 1.6, marginBottom: '0.25rem'
             }}>
-              📋 Username pattern: <strong style={{color:'var(--text-color)'}}>{form.prefix || 'PREFIX'}{'{001}'}{form.suffix || ''}</strong> → <strong style={{color:'var(--text-color)'}}>{form.prefix || 'PREFIX'}{'{NNN}'}{form.suffix || ''}</strong>
+              Username pattern: <strong style={{ color: 'var(--text-color)' }}>{form.prefix || 'PREFIX'}{'{001}'}{form.suffix || ''}</strong> → <strong style={{ color: 'var(--text-color)' }}>{form.prefix || 'PREFIX'}{'{NNN}'}{form.suffix || ''}</strong>
             </div>
             <label style={labelStyle}>
               <span style={labelTextStyle}>Prefix (letters/numbers before counter)</span>
@@ -195,7 +196,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
                 borderRadius: '10px', padding: '0.6rem 1rem',
                 fontSize: '0.82rem', color: 'var(--text-light)'
               }}>
-                ✅ Will create <strong style={{color:'#22c55e'}}>{Number(form.endRange) - Number(form.startRange) + 1} users</strong>
+                ✅ Will create <strong style={{ color: '#22c55e' }}>{Number(form.endRange) - Number(form.startRange) + 1} users</strong>
               </div>
             )}
           </>
@@ -283,7 +284,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
               borderRadius: '12px', padding: '0.75rem 1rem',
               fontSize: '0.82rem', color: 'var(--text-light)', lineHeight: 1.6
             }}>
-              🔗 <strong style={{color:'var(--text-color)'}}>{form.childGroupName || 'Child Group'}</strong> will be placed under <strong style={{color:'var(--text-color)'}}>{form.parentGroupName || 'Parent Group'}</strong>
+              🔗 <strong style={{ color: 'var(--text-color)' }}>{form.childGroupName || 'Child Group'}</strong> will be placed under <strong style={{ color: 'var(--text-color)' }}>{form.parentGroupName || 'Parent Group'}</strong>
             </div>
             <label style={labelStyle}>
               <span style={labelTextStyle}>Child Group (to be nested)</span>
@@ -350,7 +351,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
               <option value="">Choose a fee...</option>
               {fees.map(f => (
                 <option key={f._id} value={f._id}>
-                  {f.title} — ₹{f.amount}
+                  {f.title} - ₹{f.amount}
                 </option>
               ))}
             </select>
@@ -366,7 +367,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
                 <option value="">Choose a loan...</option>
                 {loans.map(l => (
                   <option key={l._id} value={l._id}>
-                    {l.user?.name || l.user?.username} — ₹{l.amount} ({l.status})
+                    {l.user?.name || l.user?.username} - ₹{l.amount} ({l.status})
                   </option>
                 ))}
               </select>
@@ -401,7 +402,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
                 <option value="">Choose a request...</option>
                 {feeRequests.map(r => (
                   <option key={r._id} value={r._id}>
-                    {r.studentId?.name || r.studentId?.username} — {r.feeType?.name} ({r.status})
+                    {r.studentId?.name || r.studentId?.username} - {r.feeType?.name} ({r.status})
                   </option>
                 ))}
               </select>
@@ -575,23 +576,23 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
   };
 
   const intentTitles = {
-    BULK_CREATE_USERS: '👤 Bulk Create Users',
-    ADD_FEE_TO_GROUP: '➕ Add Fee to Group',
-    ADD_FEE_TO_USER: '➕ Add Fee to Student',
-    CREATE_GROUP: '👥 Create Group',
-    ASSIGN_STUDENT_TO_GROUP: '📋 Assign Student to Group',
-    ASSIGN_SUBGROUP: '🔗 Assign Subgroup / Set Parent',
-    CREATE_FEE_TYPE: '🏷️ Create Fee Type',
-    CREATE_SCHOLARSHIP: '🎓 Create Scholarship',
-    DELETE_FEE: '🗑️ Delete Fee',
-    APPROVE_LOAN: '💰 Approve/Reject Loan',
-    APPROVE_FEE_REQUEST: '📝 Approve/Reject Fee Request',
-    UPDATE_USER_SCHOLARSHIP: '🎓 Assign Scholarship',
-    TOGGLE_AI_ACCESS: '🤖 Toggle AI Access',
-    CREATE_COLLEGE_ADMIN: '🛡️ Create College Admin',
-    CREATE_COLLEGE: '🏢 Create New College',
-    CREATE_FEE_REQUEST: '📝 Create Fee Request',
-    EDIT_PROFILE: '👤 Edit Profile'
+    BULK_CREATE_USERS: 'Bulk Create Users',
+    ADD_FEE_TO_GROUP: 'Add Fee to Group',
+    ADD_FEE_TO_USER: 'Add Fee to Student',
+    CREATE_GROUP: 'Create Group',
+    ASSIGN_STUDENT_TO_GROUP: 'Assign Student to Group',
+    ASSIGN_SUBGROUP: 'Assign Subgroup / Set Parent',
+    CREATE_FEE_TYPE: 'Create Fee Type',
+    CREATE_SCHOLARSHIP: 'Create Scholarship',
+    DELETE_FEE: 'Delete Fee',
+    APPROVE_LOAN: 'Approve/Reject Loan',
+    APPROVE_FEE_REQUEST: 'Approve/Reject Fee Request',
+    UPDATE_USER_SCHOLARSHIP: 'Assign Scholarship',
+    TOGGLE_AI_ACCESS: 'Toggle AI Access',
+    CREATE_COLLEGE_ADMIN: 'Create College Admin',
+    CREATE_COLLEGE: 'Create New College',
+    CREATE_FEE_REQUEST: 'Create Fee Request',
+    EDIT_PROFILE: 'Edit Profile'
   };
 
   return (
@@ -604,24 +605,26 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
       padding: '1rem'
     }}>
       <div style={{
-        background: 'var(--bg-color)',
+        background: 'var(--clay-base)',
+        backdropFilter: 'blur(30px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(30px) saturate(150%)',
         border: '1px solid rgba(248,116,16,0.25)',
         borderRadius: '24px',
         padding: '2rem',
         width: '100%', maxWidth: '460px',
         maxHeight: '90vh',
         overflowY: 'auto',
-        boxShadow: '0 25px 60px rgba(0,0,0,0.35)',
+        boxShadow: '0 25px 60px rgba(248,116,16,0.25)',
         animation: 'popupIn 0.3s cubic-bezier(0.34,1.56,0.64,1)'
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
           <div style={{
-            width: '42px', height: '42px', borderRadius: '12px',
+            width: '42px', height: '42px', borderRadius: '50%',
             background: 'linear-gradient(135deg, #f87410, #ea580c)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
           }}>
-            <AlertTriangle size={20} color="white" />
+            <MessageCircle size={20} color="white" />
           </div>
           <div style={{ flex: 1 }}>
             <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-color)' }}>
@@ -652,7 +655,7 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
               color: 'var(--text-light)',
               lineHeight: '1.5'
             }}>
-              ⚠️ By confirming, you authorize this action to be applied to the database.
+              By confirming, you authorize this action to be applied to the database.
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -821,7 +824,7 @@ const executeAction = async (intent, form) => {
 
 // ─── Success messages per intent ───────────────────────────────────────────────
 const successMessages = {
-  BULK_CREATE_USERS: (f) => `✅ Bulk user creation done! Users **${f.prefix}${String(f.startRange).padStart(3,'0')}** to **${f.prefix}${String(f.endRange).padStart(3,'0')}** have been created.`,
+  BULK_CREATE_USERS: (f) => `✅ Bulk user creation done! Users **${f.prefix}${String(f.startRange).padStart(3, '0')}** to **${f.prefix}${String(f.endRange).padStart(3, '0')}** have been created.`,
   ADD_FEE_TO_GROUP: (f) => `✅ **${f.title}** fee of ₹${Number(f.amount).toLocaleString()} has been added to the group.`,
   ADD_FEE_TO_USER: (f) => `✅ **${f.title}** fee of ₹${Number(f.amount).toLocaleString()} has been assigned to the student.`,
   CREATE_GROUP: (f) => `✅ Group **"${f.name}"** has been created successfully.`,
@@ -844,10 +847,11 @@ const ChatBot = () => {
   const [open, setOpen] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
-  
-  const initialMessage = getUserRole() === 'admin' || getUserRole() === 'superadmin' 
-    ? '👋 Hi! I\'m EduFin AI. I can help you manage fees, groups, scholarships, loans, and more.\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
-    : '👋 Hi! I\'m EduFin AI. How can I help you today?';
+  const location = useLocation();
+
+  const initialMessage = getUserRole() === 'admin' || getUserRole() === 'superadmin'
+    ? ' Hi! I\'m EduFin AI. I can help you manage fees, groups, scholarships, loans, and more.\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
+    : ' Hi! I\'m EduFin AI. How can I help you today?';
 
   const [messages, setMessages] = useState([
     { role: 'assistant', content: initialMessage }
@@ -872,7 +876,10 @@ const ChatBot = () => {
 
   useEffect(() => {
     const token = getToken();
-    if (!token) return;
+    if (!token) {
+      setCheckingStatus(false);
+      return;
+    }
     fetch(`${API_BASE}/chatbot/status`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
@@ -909,7 +916,7 @@ const ChatBot = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Error: ${data.message}` }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${data.message}` }]);
         return;
       }
 
@@ -928,7 +935,7 @@ const ChatBot = () => {
         setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Could not connect to server. Please make sure the backend is running.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Could not connect to server. Please make sure the backend is running.' }]);
     } finally {
       setLoading(false);
     }
@@ -955,6 +962,7 @@ const ChatBot = () => {
     }
   };
 
+  if (!getToken() || location.pathname === '/login') return null;
   if (checkingStatus) return null;
   if (!isVisible && getUserRole() !== 'superadmin') return null;
 
@@ -1021,11 +1029,12 @@ const ChatBot = () => {
       {/* Chat Window */}
       {open && (
         <div className="chatbot-sidebar" style={{
-          position: 'sticky', top: '1.25rem',
-          margin: '1.25rem 1.25rem 1.25rem 0',
-          height: 'calc(100vh - 2.5rem)',
+          position: 'sticky', top: '100px',
+          alignSelf: 'flex-start',
+          margin: '100px 1.25rem 1.25rem 0',
+          height: '600px', maxHeight: 'calc(100vh - 120px)',
           width: '340px',
-          background: 'rgba(12, 12, 24, 0.15)',
+          background: 'var(--clay-base)',
           backdropFilter: 'blur(40px) saturate(200%)',
           WebkitBackdropFilter: 'blur(40px) saturate(200%)',
           border: '1px solid rgba(255,255,255,0.07)',
@@ -1033,7 +1042,6 @@ const ChatBot = () => {
           boxShadow: '0 0 0 1px rgba(248,116,16,0.08), 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'chatSlideIn 0.3s cubic-bezier(0.34,1.56,0.64,1)',
           flexShrink: 0
         }}>
           {/* Header */}
@@ -1053,10 +1061,6 @@ const ChatBot = () => {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-color)' }}>EduFin AI</div>
-              <div style={{ fontSize: '0.72rem', color: '#22c55e', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span style={{ width: 6, height: 6, background: '#22c55e', borderRadius: '50%', display: 'inline-block' }} />
-                Online
-              </div>
             </div>
             <button onClick={() => setOpen(false)} style={{
               background: 'none', border: 'none', cursor: 'pointer',

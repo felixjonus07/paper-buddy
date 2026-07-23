@@ -11,7 +11,11 @@ const SubgroupList = ({ subgroups, navigate }) => {
         {subgroups.map(sub => (
           <div 
             key={sub._id}
-            onClick={() => navigate(`/admin/groups/${sub._id}`)}
+            onClick={() => {
+              const user = JSON.parse(localStorage.getItem('user') || '{}');
+              const basePath = user.role === 'mentor' ? '/mentor' : '/admin';
+              navigate(`${basePath}/groups/${sub._id}`);
+            }}
             style={{
               padding: '1rem',
               backgroundColor: 'var(--clay-base)',

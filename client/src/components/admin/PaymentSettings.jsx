@@ -47,10 +47,10 @@ const PaymentSettings = ({ isReadOnly }) => {
   const handleSave = async (e) => {
     e.preventDefault();
     if (isReadOnly) {
-       setMessage({ type: 'error', text: 'You are in read-only mode. Cannot save settings.' });
-       return;
+      setMessage({ type: 'error', text: 'You are in read-only mode. Cannot save settings.' });
+      return;
     }
-    
+
     setLoading(true);
     setMessage({ type: '', text: '' });
 
@@ -99,13 +99,13 @@ const PaymentSettings = ({ isReadOnly }) => {
           </p>
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div 
+            <div
               onClick={() => !isReadOnly && setPaymentType('CENTRALIZED')}
-              style={{ 
-                flex: 1, 
+              style={{
+                flex: 1,
                 minWidth: '250px',
-                padding: '1.5rem', 
-                borderRadius: '15px', 
+                padding: '1.5rem',
+                borderRadius: '15px',
                 cursor: isReadOnly ? 'not-allowed' : 'pointer',
                 border: paymentType === 'CENTRALIZED' ? '2px solid var(--primary)' : '2px solid var(--border)',
                 backgroundColor: paymentType === 'CENTRALIZED' ? 'rgba(99, 102, 241, 0.05)' : 'var(--clay-base)',
@@ -116,13 +116,13 @@ const PaymentSettings = ({ isReadOnly }) => {
               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>Payments will be processed via the platform's central merchant account.</p>
             </div>
 
-            <div 
+            <div
               onClick={() => !isReadOnly && setPaymentType('DECENTRALIZED')}
-              style={{ 
-                flex: 1, 
+              style={{
+                flex: 1,
                 minWidth: '250px',
-                padding: '1.5rem', 
-                borderRadius: '15px', 
+                padding: '1.5rem',
+                borderRadius: '15px',
                 cursor: isReadOnly ? 'not-allowed' : 'pointer',
                 border: paymentType === 'DECENTRALIZED' ? '2px solid var(--clay-mint)' : '2px solid var(--border)',
                 backgroundColor: paymentType === 'DECENTRALIZED' ? 'rgba(45, 212, 191, 0.05)' : 'var(--clay-base)',
@@ -141,7 +141,7 @@ const PaymentSettings = ({ isReadOnly }) => {
               <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Lock size={18} /> PhonePe API Credentials
               </h3>
-              <a href="https://www.phonepe.com/pulse/data-api/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 'bold' }}>
+              <a href="https://business.phonepe.com/register" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 'bold' }}>
                 Get Credentials &rarr;
               </a>
             </div>
@@ -149,42 +149,42 @@ const PaymentSettings = ({ isReadOnly }) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Merchant ID</label>
-                  <NeoInput 
-                    type="text" 
-                    placeholder="e.g. PGTESTPAYUAT" 
-                    value={credentials.merchantId} 
-                    onChange={(e) => setCredentials({...credentials, merchantId: e.target.value})}
+                  <NeoInput
+                    type="text"
+                    placeholder="e.g. PGTESTPAYUAT"
+                    value={credentials.merchantId}
+                    onChange={(e) => setCredentials({ ...credentials, merchantId: e.target.value })}
                     required
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Salt Key</label>
-                  <NeoInput 
-                    type="password" 
-                    placeholder="Your Salt Key" 
-                    value={credentials.saltKey} 
-                    onChange={(e) => setCredentials({...credentials, saltKey: e.target.value})}
+                  <NeoInput
+                    type="password"
+                    placeholder="Your Salt Key"
+                    value={credentials.saltKey}
+                    onChange={(e) => setCredentials({ ...credentials, saltKey: e.target.value })}
                     required
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Salt Index</label>
-                  <NeoInput 
-                    type="number" 
-                    value={credentials.saltIndex} 
-                    onChange={(e) => setCredentials({...credentials, saltIndex: parseInt(e.target.value) || 1})}
+                  <NeoInput
+                    type="number"
+                    value={credentials.saltIndex}
+                    onChange={(e) => setCredentials({ ...credentials, saltIndex: parseInt(e.target.value) || 1 })}
                     required
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold' }}>Environment</label>
-                  <select 
+                  <select
                     style={{ width: '100%', padding: '0.8rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--clay-base)', boxShadow: 'inset 2px 2px 5px rgba(255, 255, 255, 0.5), inset -3px -3px 7px rgba(0, 0, 0, 0.05)', color: 'var(--text-color)', outline: 'none' }}
                     value={credentials.env}
-                    onChange={(e) => setCredentials({...credentials, env: e.target.value})}
+                    onChange={(e) => setCredentials({ ...credentials, env: e.target.value })}
                     disabled={isReadOnly}
                   >
                     <option value="SANDBOX">SANDBOX (Testing)</option>
@@ -192,9 +192,9 @@ const PaymentSettings = ({ isReadOnly }) => {
                   </select>
                 </div>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--clay-peach)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                <AlertCircle size={16} /> 
+                <AlertCircle size={16} />
                 Ensure your credentials are correct. Invalid credentials will prevent users from making payments.
               </div>
 
@@ -209,9 +209,9 @@ const PaymentSettings = ({ isReadOnly }) => {
 
         {paymentType === 'CENTRALIZED' && (
           <div style={{ marginTop: '2rem', textAlign: 'right' }}>
-             <NeoButton onClick={handleSave} variant="primary" disabled={loading || isReadOnly}>
-               {loading ? 'Saving...' : <><Save size={18} style={{ marginRight: '0.5rem' }} /> Save Centralized Mode</>}
-             </NeoButton>
+            <NeoButton onClick={handleSave} variant="primary" disabled={loading || isReadOnly}>
+              {loading ? 'Saving...' : <><Save size={18} style={{ marginRight: '0.5rem' }} /> Save Centralized Mode</>}
+            </NeoButton>
           </div>
         )}
 

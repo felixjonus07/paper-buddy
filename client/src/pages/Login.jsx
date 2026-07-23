@@ -5,6 +5,7 @@ import NeoCard from '../components/UI/NeoCard';
 import NeoInput from '../components/UI/NeoInput';
 import NeoButton from '../components/UI/NeoButton';
 import ThemeToggle from '../components/UI/ThemeToggle';
+import { useAlert } from '../context/AlertContext';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +14,7 @@ const Login = () => {
   const [needsReset, setNeedsReset] = useState(false);
   const [resetToken, setResetToken] = useState(null);
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -85,7 +87,7 @@ const Login = () => {
         });
         const data = await response.json();
         if (response.ok) {
-           alert('Password reset successful! Please log in again.');
+           showAlert('Password reset successful! Please log in again.');
            setNeedsReset(false);
            setFormData({ ...formData, password: '', newPassword: '' });
            setResetToken(null);
@@ -96,6 +98,18 @@ const Login = () => {
         setError('Failed to connect to server.');
       }
       return;
+    }
+
+    if (!isLogin) {
+      const nameRegex = /^[A-Za-z\s]+$/;
+      const usernameRegex = /^[A-Za-z0-9_]+$/;
+      
+      if (!nameRegex.test(formData.name)) {
+        return setError('Full name can only contain letters and spaces.');
+      }
+      if (!usernameRegex.test(formData.username)) {
+        return setError('Username can only contain letters, numbers, and underscores.');
+      }
     }
 
     const payload = isLogin ? { username: formData.username, password: formData.password } : formData;
@@ -122,12 +136,9 @@ const Login = () => {
 
   return (
     <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '90vh', position: 'relative' }}>
-      <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
-        <ThemeToggle />
-      </div>
       <NeoCard style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
         <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>
-          {isLogin ? 'Welcome Back' : 'Create Account'}
+          Welcome Back
         </h2>
 
         {error && <p style={{ color: 'red', marginBottom: '1rem' }}>{error}</p>}
@@ -188,20 +199,6 @@ const Login = () => {
             </>
           )}
         </form>
-
-        {!needsReset && (
-          <div style={{ marginTop: '2rem' }}>
-            <p>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <span 
-                style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 'bold' }}
-                onClick={() => setIsLogin(!isLogin)}
-              >
-                {isLogin ? 'Sign up' : 'Sign in'}
-              </span>
-            </p>
-          </div>
-        )}
         
         {isLogin && !needsReset && (
           <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.03)', borderRadius: '10px' }}>

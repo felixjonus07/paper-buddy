@@ -96,7 +96,6 @@ export default function AIChatWindow({ isOpen, onClose }) {
           <div className="ai-chat-messages pb-4">
             {messages.length === 0 ? (
               <div className="ai-chat-empty">
-                <div className="ai-chat-welcome-icon">✨</div>
                 <h4>How can I help you today?</h4>
                 <p>I can execute multi-step workflows like managing users and fees.</p>
               </div>

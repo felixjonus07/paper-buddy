@@ -4,7 +4,7 @@ const NeoCard = ({ children, className = '', style, onClick, ...props }) => {
   const [hovered, setHovered] = useState(false);
 
   const baseStyle = {
-    /* Core glass surface — very low opacity so bg glows bleed through */
+    /* Core glass surface - very low opacity so bg glows bleed through */
     background: 'var(--clay-base)',
     backdropFilter: 'blur(32px) saturate(180%)',
     WebkitBackdropFilter: 'blur(32px) saturate(180%)',

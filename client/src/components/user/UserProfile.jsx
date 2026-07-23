@@ -12,21 +12,8 @@ const UserProfile = ({ profile, openProfileEdit }) => {
         <div style={{ width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'var(--clay-peach)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--clay-outer)', marginBottom: '1rem' }}>
           <User size={50} color="white" />
         </div>
-        <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '2rem' }}>{profile.name}</h2>
+        <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '2rem' }}>{profile.name} <span style={{  marginBottom: '1.5rem', padding: '0.2rem 0.5rem', borderRadius: '20px', backgroundColor: profile.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',color: profile.role === 'admin' ? '#831843' : 'var(--primary)', fontSize: '15px',textTransform: 'uppercase'}}>{profile.role}</span></h2>
         <span style={{ fontSize: '1.2rem', color: 'var(--text-light)' }}>@{profile.username}</span>
-        
-        <div style={{ 
-          marginTop: '1.5rem', 
-          padding: '0.5rem 1.5rem', 
-          borderRadius: '20px', 
-          backgroundColor: profile.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-          color: profile.role === 'admin' ? '#831843' : '#115e59',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          {profile.role}
-        </div>
-        
         <NeoButton variant="mint" style={{ marginTop: '1rem', padding: '0.4rem 1.2rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={openProfileEdit}>
           <Edit size={16} /> Edit Details
         </NeoButton>
@@ -75,7 +62,7 @@ const UserProfile = ({ profile, openProfileEdit }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Scholarship:</span>
               {profile.scholarship ? (
-                 <span style={{ backgroundColor: 'var(--clay-mint-light)', color: '#115e59', padding: '0.3rem 0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                 <span style={{ backgroundColor: 'var(--clay-mint-light)', color: 'var(--primary)', padding: '0.3rem 0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>
                    {profile.scholarship.name} ({profile.scholarship.discountPercentage}%)
                  </span>
               ) : (
