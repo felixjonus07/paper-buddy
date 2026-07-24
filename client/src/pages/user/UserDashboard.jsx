@@ -64,8 +64,8 @@ const UserDashboard = () => {
 
     if (!merchantTransactionId || !feeId) return;
 
-    // Clear URL params immediately so refresh doesn't re-trigger
-    navigate('/user/dashboard', { replace: true });
+    // Clear URL params immediately so refresh doesn't re-trigger, but stay on pay-fees tab
+    navigate('/user/dashboard?tab=pay-fees', { replace: true });
 
     const verifyPhonePePayment = async () => {
       setPaymentVerifying(true);
@@ -355,17 +355,14 @@ const UserDashboard = () => {
         <div style={{
           position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
           zIndex: 9998, minWidth: 340, maxWidth: 480,
-          background: paymentResult === 'success' ? 'linear-gradient(135deg, #1a8a4a, #22c55e)' :
-            paymentResult === 'pending' ? 'linear-gradient(135deg, #b45309, #f59e0b)' :
-              'linear-gradient(135deg, #991b1b, #ef4444)',
+          background: paymentResult === 'success' ? '#1a8a4a' :
+            paymentResult === 'pending' ? '#b45309' :
+              '#991b1b',
           borderRadius: '16px', padding: '1.2rem 1.5rem',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', alignItems: 'center', gap: '1rem',
           animation: 'slideDown 0.4s ease-out'
         }}>
-          <span style={{ fontSize: '2rem' }}>
-            {paymentResult === 'success' ? '✅' : paymentResult === 'pending' ? '⏳' : '❌'}
-          </span>
           <div style={{ flex: 1 }}>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>
               {paymentResult === 'success' ? 'Payment Successful!' :
@@ -382,7 +379,7 @@ const UserDashboard = () => {
             background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
             borderRadius: '50%', width: 28, height: 28, cursor: 'pointer',
             fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>×</button>
+          }}>X</button>
         </div>
       )}
 
