@@ -10,22 +10,25 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
         <div style={{ 
           display: 'flex', 
           backgroundColor: 'var(--clay-base)', 
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid var(--border)',
           borderRadius: '20px', 
-          padding: '0.4rem', 
-          boxShadow: 'inset 5px 5px 10px rgba(163, 177, 198, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.8)', 
+          padding: '0.3rem',
+          boxShadow: 'var(--clay-card)',
           width: 'fit-content' 
         }}>
           <div 
             onClick={() => setShowAllUsers(false)}
             style={{
-              padding: '0.6rem 2rem',
+              padding: '0.6rem 1.5rem',
               borderRadius: '15px',
               cursor: 'pointer',
               backgroundColor: !showAllUsers ? 'var(--primary)' : 'transparent',
-              color: !showAllUsers ? 'white' : 'var(--text-color)',
+              color: !showAllUsers ? 'white' : 'var(--text-light)',
               transition: 'all 0.3s ease',
-              fontWeight: !showAllUsers ? 'bold' : 'normal',
-              boxShadow: !showAllUsers ? '5px 5px 10px rgba(163, 177, 198, 0.4)' : 'none'
+              fontWeight: 600,
+              boxShadow: !showAllUsers ? '0 4px 12px rgba(248,116,16,0.3)' : 'none'
             }}
           >
             Enrolled Students
@@ -33,14 +36,14 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
           <div 
             onClick={() => setShowAllUsers(true)}
             style={{
-              padding: '0.6rem 2rem',
+              padding: '0.6rem 1.5rem',
               borderRadius: '15px',
               cursor: 'pointer',
               backgroundColor: showAllUsers ? 'var(--primary)' : 'transparent',
-              color: showAllUsers ? 'white' : 'var(--text-color)',
+              color: showAllUsers ? 'white' : 'var(--text-light)',
               transition: 'all 0.3s ease',
-              fontWeight: showAllUsers ? 'bold' : 'normal',
-              boxShadow: showAllUsers ? '5px 5px 10px rgba(163, 177, 198, 0.4)' : 'none'
+              fontWeight: 600,
+              boxShadow: showAllUsers ? '0 4px 12px rgba(248,116,16,0.3)' : 'none'
             }}
           >
             View All Students

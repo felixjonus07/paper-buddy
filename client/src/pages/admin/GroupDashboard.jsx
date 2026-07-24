@@ -5,17 +5,20 @@ import NeoButton from '../../components/UI/NeoButton';
 import NeoModal from '../../components/UI/NeoModal';
 import NeoInput from '../../components/UI/NeoInput';
 import NeoSelect from '../../components/UI/NeoSelect';
+import { useAlert } from '../../context/AlertContext';
 import GlowChart from '../../components/UI/GlowChart';
 import GroupStats from '../../components/group/GroupStats';
 import SubgroupList from '../../components/group/SubgroupList';
 import StudentList from '../../components/group/StudentList';
 import AddStudentModal from '../../components/group/AddStudentModal';
 import AddFeeModal from '../../components/group/AddFeeModal';
+import FeeRequests from '../../components/admin/FeeRequests';
 import { Users, IndianRupee, Activity, ArrowLeft, UserPlus, Network, PlusCircle } from 'lucide-react';
 
 const GroupDashboard = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
   const token = localStorage.getItem('token');
 
   const [data, setData] = useState(null);
@@ -39,6 +42,62 @@ const GroupDashboard = () => {
 
   // Toggle State
   const [showAllUsers, setShowAllUsers] = useState(true);
+
+  // Fee Requests State
+  const [isFeeRequestsModalOpen, setIsFeeRequestsModalOpen] = useState(false);
+  const [feeRequests, setFeeRequests] = useState([]);
+
+  const fetchFeeRequests = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/fee-requests`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        // Filter fee requests to only include students in THIS group
+        if (data && data.users) {
+          const userIds = new Set(data.users.map(u => u._id));
+          setFeeRequests(json.filter(r => userIds.has(r.studentId?._id)));
+        } else {
+          setFeeRequests([]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch fee requests', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isFeeRequestsModalOpen) {
+      fetchFeeRequests();
+    }
+  }, [isFeeRequestsModalOpen, data]);
+
+  const handleUpdateFeeRequestStatus = async (id, status) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const basePath = user.role === 'mentor' ? '/api/mentor' : '/api/admin';
+      const res = await fetch(`${basePath}/fee-requests/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        fetchFeeRequests();
+        showAlert(`Fee request ${status} successfully!`);
+      } else {
+        const errData = await res.json();
+        showAlert(errData.message || 'Failed to update fee request');
+      }
+    } catch (err) {
+      showAlert('Error updating fee request');
+    }
+  };
 
   // Fetch all users for the modal
   const fetchAllUsers = async () => {
@@ -84,7 +143,7 @@ const GroupDashboard = () => {
       // Reload dashboard data
       window.location.reload();
     } catch (err) {
-      alert(err.message);
+      showAlert(err.message);
     } finally {
       setIsAddingStudents(false);
     }
@@ -116,7 +175,7 @@ const GroupDashboard = () => {
   const handleAddFeeSubmit = async (e) => {
     e.preventDefault();
     if (!newFee.title || !newFee.amount || !newFee.feeType) {
-      alert("Please fill all fields");
+      showAlert("Please fill all fields");
       return;
     }
     setIsAddingFee(true);
@@ -143,7 +202,7 @@ const GroupDashboard = () => {
       setIsAddFeeModalOpen(false);
       window.location.reload();
     } catch (err) {
-      alert(err.message);
+      showAlert(err.message);
     } finally {
       setIsAddingFee(false);
     }
@@ -204,17 +263,6 @@ const GroupDashboard = () => {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h1 style={{ margin: 0, color: 'var(--primary)' }}>{group?.name || 'Unknown'} Dashboard</h1>
-            <span style={{ 
-              padding: '0.3rem 0.8rem', 
-              borderRadius: '20px', 
-              fontSize: '0.75rem', 
-              fontWeight: 'bold',
-              backgroundColor: group?.isGlobal ? 'var(--clay-peach-light)' : 'var(--clay-mint-light)',
-              color: group?.isGlobal ? 'var(--clay-peach)' : 'var(--clay-mint)',
-              border: `1px solid ${group?.isGlobal ? 'rgba(255, 180, 162, 0.5)' : 'rgba(181, 228, 140, 0.5)'}`
-            }}>
-              {group?.isGlobal ? 'GLOBAL GROUP' : 'LOCAL GROUP'}
-            </span>
           </div>
           {group?.description && <p style={{ margin: 0, marginTop: '0.3rem', color: 'var(--text-light)' }}>{group.description}</p>}
         </div>
@@ -225,6 +273,10 @@ const GroupDashboard = () => {
         <NeoButton variant="primary" onClick={() => openAddFeeModal(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <PlusCircle size={18} />
           Add Fee
+        </NeoButton>
+        <NeoButton variant="mint" onClick={() => setIsFeeRequestsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Activity size={18} />
+          Fee Requests
         </NeoButton>
         <NeoButton variant="primary" onClick={openAddStudentsModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <UserPlus size={18} />
@@ -275,6 +327,23 @@ const GroupDashboard = () => {
         >
           <div style={{ width: '100%', overflowX: 'auto', padding: '1rem 0' }}>
             <GlowChart groups={allGroups || []} rootGroupId={group?._id} />
+          </div>
+        </NeoModal>
+      )}
+
+      {/* Fee Requests Modal */}
+      {isFeeRequestsModalOpen && (
+        <NeoModal 
+          isOpen={isFeeRequestsModalOpen} 
+          onClose={() => setIsFeeRequestsModalOpen(false)} 
+          title={`Fee Requests for ${group?.name || 'Group'}`}
+          width="80%"
+          maxWidth="1000px"
+          height="80vh"
+        >
+          <div style={{ padding: '1rem 0', maxHeight: '100%', overflowY: 'auto' }}>
+            <FeeRequests feeRequests={feeRequests} handleUpdateFeeRequestStatus={handleUpdateFeeRequestStatus} isReadOnly={false} />
+            {feeRequests.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No fee requests from students in this group.</p>}
           </div>
         </NeoModal>
       )}

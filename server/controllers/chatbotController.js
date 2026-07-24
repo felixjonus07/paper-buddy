@@ -10,64 +10,64 @@ You detect the user's intent and extract relevant field values from their messag
 
   if (role === 'admin') {
     prompt += `
-1. BULK_CREATE_USERS — Create multiple student accounts with a username pattern.
+1. BULK_CREATE_USERS - Create multiple student accounts with a username pattern.
    Examples: "create 10 users from CS001 to CS010 with password test123"
    Extract: prefix, startRange, endRange, suffix, initialPassword
 
-2. ADD_FEE_TO_GROUP — Add a fee assigned to a group/batch.
+2. ADD_FEE_TO_GROUP - Add a fee assigned to a group/batch.
    Examples: "add tuition fee of 5000 to group"
    Extract: title, amount
 
-3. ADD_FEE_TO_USER — Add a fee assigned to a specific student.
+3. ADD_FEE_TO_USER - Add a fee assigned to a specific student.
    Examples: "add library fee 500 to student john"
    Extract: title, amount
 
-4. CREATE_GROUP — Create a new group or batch.
+4. CREATE_GROUP - Create a new group or batch.
    Examples: "create a group named CSE"
    Extract: name, description
 
-5. ASSIGN_STUDENT_TO_GROUP — Assign a student/user to a group.
+5. ASSIGN_STUDENT_TO_GROUP - Assign a student/user to a group.
    Examples: "assign student to CS-A group"
    Extract: (user will select from dropdowns)
 
-6. ASSIGN_SUBGROUP — Assign a group as a child/subgroup of another group.
+6. ASSIGN_SUBGROUP - Assign a group as a child/subgroup of another group.
    Examples: "assign CSE as subgroup of AI&DS"
    Extract: childGroupName, parentGroupName
 
-7. CREATE_FEE_TYPE — Create a fee category/type.
+7. CREATE_FEE_TYPE - Create a fee category/type.
    Examples: "create fee type Tuition"
    Extract: name, description
 
-8. CREATE_SCHOLARSHIP — Create a scholarship with discount.
+8. CREATE_SCHOLARSHIP - Create a scholarship with discount.
    Examples: "create merit scholarship 20% discount"
    Extract: name, discountPercentage, minAcademicScore
 
-9. DELETE_FEE — Delete an existing fee.
+9. DELETE_FEE - Delete an existing fee.
    Examples: "delete fee"
    Extract: (dropdown)
 
-10. APPROVE_LOAN — Approve or reject a loan request.
+10. APPROVE_LOAN - Approve or reject a loan request.
     Examples: "approve loan"
     Extract: (dropdown)
 
-11. APPROVE_FEE_REQUEST — Approve or reject a fee waiver/adjustment request.
+11. APPROVE_FEE_REQUEST - Approve or reject a fee waiver/adjustment request.
     Examples: "approve fee request"
     Extract: (dropdown)
 
-12. UPDATE_USER_SCHOLARSHIP — Assign a scholarship to a student.
+12. UPDATE_USER_SCHOLARSHIP - Assign a scholarship to a student.
     Examples: "assign merit scholarship to student"
     Extract: (dropdown)\n`;
   } else if (role === 'superadmin') {
     prompt += `
-13. TOGGLE_AI_ACCESS — Enable or disable the AI agent for a specific college.
+13. TOGGLE_AI_ACCESS - Enable or disable the AI agent for a specific college.
     Examples: "disable agent for kit", "turn off ai for default college", "enable chatbot for kitcbe"
     Extract: collegeQuery (the name or code of the college), action (either "enable" or "disable")
 
-14. CREATE_COLLEGE_ADMIN — Create an admin account for a specific college.
+14. CREATE_COLLEGE_ADMIN - Create an admin account for a specific college.
     Examples: "create admin john for kit with username johnkit and password pass123"
     Extract: collegeQuery, name, username, password
 
-15. CREATE_COLLEGE — Create a new college/tenant.
+15. CREATE_COLLEGE - Create a new college/tenant.
     Examples: "add a new college named XYZ College with code XYZ01 located in Mumbai"
     Extract: name, code, address
 
@@ -75,11 +75,11 @@ You detect the user's intent and extract relevant field values from their messag
 If the user asks to manage users, fees, groups, scholarships, loans, or perform ANY administrative action other than toggling AI access, you MUST politely refuse and state: "This action can only be done through the college Admin portal." Do NOT pretend that you have performed the action.\n`;
   } else {
     prompt += `
-1. CREATE_FEE_REQUEST — Request a fee waiver, reduction, or custom fee.
+1. CREATE_FEE_REQUEST - Request a fee waiver, reduction, or custom fee.
    Examples: "request fee waiver of 2000 for medical reasons"
    Extract: requestedFeeTitle (e.g. 'Medical Waiver'), amount, reason
 
-2. EDIT_PROFILE — Update student profile information.
+2. EDIT_PROFILE - Update student profile information.
    Examples: "change my phone number to 9876543210"
    Extract: phoneNumber, personalEmail
 
@@ -173,7 +173,7 @@ const chat = async (req, res) => {
             status: 'SUCCESS',
             paidAt: { $gte: startOfDay, $lte: endOfDay }
           });
-          
+
           const totalToday = payments.reduce((sum, p) => sum + p.amount, 0);
           userContextStr += `\n\n=== CASHIER DASHBOARD DATA ===\n`;
           userContextStr += `Total Cash Collected Today: ₹${totalToday}\n`;
@@ -182,7 +182,7 @@ const chat = async (req, res) => {
           const pendingFees = await StudentFee.find({ studentId: req.user._id, status: 'PENDING' }).populate('feeId');
           if (pendingFees.length > 0) {
             const totalPending = pendingFees.reduce((sum, f) => sum + f.finalAmount, 0);
-            userContextStr += `\nTotal Pending Fees: ₹${totalPending}\nPending Fee Details:\n` + 
+            userContextStr += `\nTotal Pending Fees: ₹${totalPending}\nPending Fee Details:\n` +
               pendingFees.map(f => `- ${f.feeId?.title || 'Unknown Fee'}: ₹${f.finalAmount}`).join('\n');
           } else {
             userContextStr += `\nPending Fees: ₹0 (No pending fees)`;
@@ -227,7 +227,7 @@ const chat = async (req, res) => {
       const tokensUsed = data.usage?.total_tokens || 0;
       College.findByIdAndUpdate(req.user.collegeId, {
         $inc: { promptCount: 1, tokenCount: tokensUsed }
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     // Parse JSON response from AI
@@ -244,9 +244,9 @@ const chat = async (req, res) => {
     const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'superadmin');
     if (!isAdmin && !['CHAT', 'PAYMENT_RESTRICTED', 'CREATE_FEE_REQUEST', 'EDIT_PROFILE'].includes(parsed.intent)) {
       console.warn(`Blocked restricted intent '${parsed.intent}' for user role '${req.user?.role}'`);
-      parsed = { 
-        intent: 'CHAT', 
-        message: '🚫 You do not have administrative permission to perform this action.' 
+      parsed = {
+        intent: 'CHAT',
+        message: '🚫 You do not have administrative permission to perform this action.'
       };
     }
 

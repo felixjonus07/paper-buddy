@@ -5,8 +5,8 @@ import NeoInput from '../../components/UI/NeoInput';
 import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
-import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle, MessageCircle, Home, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import UserOverview from '../../components/user/UserOverview';
 import UserProfile from '../../components/user/UserProfile';
 import UserPayFees from '../../components/user/UserPayFees';
@@ -16,28 +16,34 @@ import UserPaidFees from '../../components/user/UserPaidFees';
 import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAlert } from '../../context/AlertContext';
 
-// PhonePe uses redirect-based checkout — no SDK script loading needed
+// PhonePe uses redirect-based checkout - no SDK script loading needed
 
 const UserDashboard = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
+  const [searchQuery, setSearchQuery] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useAlert();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [fees, setFees] = useState([]);
   const [loans, setLoans] = useState([]);
   const [profile, setProfile] = useState(null);
   const [studentFees, setStudentFees] = useState([]);
-  
+
   const [loanData, setLoanData] = useState({ amount: '', purpose: '' });
   const [loanMessage, setLoanMessage] = useState('');
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
   const [passwordMessage, setPasswordMessage] = useState('');
-  
+
   const [editProfileModalOpen, setEditProfileModalOpen] = useState(false);
   const [profileFormData, setProfileFormData] = useState({});
-  
+
   const [feeRequests, setFeeRequests] = useState([]);
   const [feeTypes, setFeeTypes] = useState([]);
   const [requestFeeModalOpen, setRequestFeeModalOpen] = useState(false);
@@ -48,12 +54,13 @@ const UserDashboard = () => {
 
   const location = useLocation();
 
-  // Handle PhonePe redirect return — runs on mount only
+  // Handle PhonePe redirect return - runs on mount only
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const merchantTransactionId = params.get('merchantOrderId') || params.get('merchantTransactionId');
     const feeId = params.get('feeId');
     const isMissing = params.get('isMissing');
+    const simulated = params.get('simulated');
 
     if (!merchantTransactionId || !feeId) return;
 
@@ -70,7 +77,7 @@ const UserDashboard = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ merchantTransactionId, feeId, isMissing })
+          body: JSON.stringify({ merchantTransactionId, feeId, isMissing, simulated })
         });
         const verifyData = await verifyRes.json();
 
@@ -112,7 +119,7 @@ const UserDashboard = () => {
   const fetchData = async () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
-      
+
       const [feesRes, loansRes, profileRes, studentFeesRes, requestsRes, feeTypesRes] = await Promise.all([
         fetch('/api/user/fees', { headers }),
         fetch('/api/user/loans', { headers }),
@@ -187,10 +194,10 @@ const UserDashboard = () => {
         setProfile(updatedProfile);
         setEditProfileModalOpen(false);
       } else {
-        alert('Failed to update profile');
+        showAlert('Failed to update profile');
       }
     } catch (err) {
-      alert('Error updating profile');
+      showAlert('Error updating profile');
     }
   };
 
@@ -219,12 +226,12 @@ const UserDashboard = () => {
         setFeeRequestData({ requestedFeeTitle: '', amount: '', feeType: '', reason: '' });
         setRequestFeeModalOpen(false);
         fetchData();
-        alert('Fee request submitted successfully!');
+        showAlert('Fee request submitted successfully!');
       } else {
-        alert('Failed to submit request');
+        showAlert('Failed to submit request');
       }
     } catch (err) {
-      alert('Error submitting request');
+      showAlert('Error submitting request');
     }
   };
 
@@ -233,17 +240,17 @@ const UserDashboard = () => {
     try {
       const res = await fetch(`/api/user/create-payment-order`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ id, isMissing })
+        body: JSON.stringify({ id, isMissing, collegeId: profile?.collegeId?._id || profile?.collegeId })
       });
-      
+
       const orderData = await res.json();
-      
+
       if (!res.ok) {
-        alert(`Failed to initiate payment: ${orderData.message || 'Unknown error'}`);
+        showAlert(`Failed to initiate payment: ${orderData.message || 'Unknown error'}`);
         return;
       }
 
@@ -251,34 +258,34 @@ const UserDashboard = () => {
         // Redirect user to PhonePe payment page
         window.location.href = orderData.redirectUrl;
       } else {
-        alert('Failed to get payment redirect URL. Please try again.');
+        showAlert('Failed to get payment redirect URL. Please try again.');
       }
 
     } catch (err) {
       console.error(err);
-      alert(`Error occurred while processing payment: ${err.message}`);
+      showAlert(`Error occurred while processing payment: ${err.message}`);
     }
   };
 
   const handleDownloadReceipt = (f) => {
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFontSize(22);
     doc.setTextColor(20, 184, 166); // Mint color
     doc.text("Paper Buddy", 14, 20);
-    
+
     doc.setFontSize(14);
     doc.setTextColor(50, 50, 50);
     doc.text("Official Fee Receipt", 14, 30);
-    
+
     // User Details
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
     doc.text(`Student Name: ${user.name}`, 14, 42);
     doc.text(`Username: @${user.username}`, 14, 48);
     doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 54);
-    
+
     // Receipt Details
     const tableColumn = ["Description", "Details"];
     const tableRows = [
@@ -288,7 +295,7 @@ const UserDashboard = () => {
       ["Amount Paid", `Rs ${f.finalAmount.toFixed(2)}`],
       ["Date of Payment", new Date(f.updatedAt).toLocaleDateString()]
     ];
-    
+
     autoTable(doc, {
       startY: 65,
       head: [tableColumn],
@@ -316,6 +323,12 @@ const UserDashboard = () => {
 
     doc.save(`Receipt_${(f.feeId?.title || 'Fee').replace(/\s+/g, '_')}_${user.name.replace(/\s+/g, '_')}.pdf`);
   };
+
+  const filteredFees = fees.filter(f => f.title?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredStudentFees = studentFees.filter(f => f.feeId?.title?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredRequests = feeRequests.filter(r => r.requestedFeeTitle?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredLoans = loans.filter(l => l.purpose?.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
     <div className="app-container dashboard-layout">
       {/* PhonePe Payment Verifying Overlay */}
@@ -343,8 +356,8 @@ const UserDashboard = () => {
           position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
           zIndex: 9998, minWidth: 340, maxWidth: 480,
           background: paymentResult === 'success' ? 'linear-gradient(135deg, #1a8a4a, #22c55e)' :
-                       paymentResult === 'pending'  ? 'linear-gradient(135deg, #b45309, #f59e0b)' :
-                                                      'linear-gradient(135deg, #991b1b, #ef4444)',
+            paymentResult === 'pending' ? 'linear-gradient(135deg, #b45309, #f59e0b)' :
+              'linear-gradient(135deg, #991b1b, #ef4444)',
           borderRadius: '16px', padding: '1.2rem 1.5rem',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', alignItems: 'center', gap: '1rem',
@@ -356,13 +369,13 @@ const UserDashboard = () => {
           <div style={{ flex: 1 }}>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>
               {paymentResult === 'success' ? 'Payment Successful!' :
-               paymentResult === 'pending'  ? 'Payment Pending' :
-                                              'Payment Failed'}
+                paymentResult === 'pending' ? 'Payment Pending' :
+                  'Payment Failed'}
             </div>
             <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
               {paymentResult === 'success' ? 'Your fee has been marked as paid.' :
-               paymentResult === 'pending'  ? 'Your payment is being processed. Please check back shortly.' :
-                                              'Your payment could not be completed. Please try again.'}
+                paymentResult === 'pending' ? 'Your payment is being processed. Please check back shortly.' :
+                  'Your payment could not be completed. Please try again.'}
             </div>
           </div>
           <button onClick={() => setPaymentResult(null)} style={{
@@ -374,22 +387,32 @@ const UserDashboard = () => {
       )}
 
       {/* Fluffy Sidebar Navigation */}
-      <div className="sidebar">
-        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)'}}>
-           <div style={{ width: '50px', height: '50px', backgroundColor: 'var(--clay-base)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--clay-outer)' }}>
-             <User size={28} color="var(--primary)" />
-           </div>
-           <div>
-             <h3 style={{ margin: 0, color: 'var(--text-color)' }}>{user.username}</h3>
-             <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Student Portal</span>
-           </div>
+      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)', position: 'relative', minHeight: '60px' }}>
+          <div className="header-text">
+            <h3 style={{ margin: 0, color: 'var(--text-color)' }}>{user.username}</h3>
+          </div>
+          {/* Sidebar Toggle Button */}
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            style={{
+              position: 'absolute', right: isSidebarOpen ? '2px' : '20px', top: isSidebarOpen ? '18px' : '10px',
+              width: '24px', height: '24px', borderRadius: '50%',
+              background: 'rgba(248,116,16,0.15)',
+              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(248,116,16,0.35)', color: 'var(--primary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', zIndex: 10, boxShadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.4)',
+              transition: 'right 0.3s ease',
+              transform: 'none'
+            }}
+          >
+            {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </button>
         </div>
-        
+
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
           <LayoutDashboard size={20} /> <span className="nav-text">Dashboard</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-          <User size={20} /> <span className="nav-text">My Profile</span>
         </div>
         <div className={`nav-item ${activeTab === 'pay-fees' ? 'active' : ''}`} onClick={() => setActiveTab('pay-fees')}>
           <IndianRupee size={20} /> <span className="nav-text">Pay Fees</span>
@@ -397,72 +420,95 @@ const UserDashboard = () => {
         <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => setActiveTab('fee-requests')}>
           <PlusCircle size={20} /> <span className="nav-text">Fee Requests</span>
         </div>
-  
+
         <div className={`nav-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => setActiveTab('paid-fees')}>
           <FileText size={20} /> <span className="nav-text">Payment History</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+          <User size={20} /> <span className="nav-text">My Profile</span>
         </div>
         <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
           <Settings size={20} /> <span className="nav-text">Settings</span>
         </div>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', backgroundColor: 'rgba(128,128,128,0.2)', color: 'var(--text-color)', border: 'none' }}>
-            <LogOut size={18} /> Logout
+          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', backgroundColor: 'rgba(128,128,128,0.2)', color: 'var(--text-color)', border: 'none', display: 'flex', justifyContent: 'center' }}>
+            <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>
         </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        <div className="dashboard-header" style={{ 
-          backgroundColor: 'var(--clay-base)', 
-          padding: '1rem 2rem', 
-          borderRadius: '50px', 
-          boxShadow: 'var(--clay-outer)' 
-        }}>
-          <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-            {activeTab === 'dashboard' && 'Student Dashboard'}
-            {activeTab === 'profile' && 'My Profile'}
-            {activeTab === 'pay-fees' && 'Pay Fees'}
-            {activeTab === 'fee-requests' && 'Fee Requests'}
-            {activeTab === 'loan' && 'Financial Aid'}
-            {activeTab === 'paid-fees' && 'Payment History'}
-            {activeTab === 'settings' && 'Account Settings'}
-          </h2>
-          <div className="header-actions">
-            <div className="search-box">
-              <NeoInput type="text" placeholder="Search activities..." />
+        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
+          <div className="dashboard-header" style={{
+            backgroundColor: 'var(--clay-base)',
+            padding: '1rem 2rem',
+            borderRadius: '50px',
+            boxShadow: 'var(--clay-outer)'
+          }}>
+            <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
+              {activeTab === 'dashboard' && 'Student Dashboard'}
+              {activeTab === 'pay-fees' && 'Pay Fees'}
+              {activeTab === 'fee-requests' && 'Fee Requests'}
+              {activeTab === 'loan' && 'Financial Aid'}
+              {activeTab === 'paid-fees' && 'Payment History'}
+              {activeTab === 'profile' && 'My Profile'}
+              {activeTab === 'settings' && 'Account Settings'}
+            </h2>
+            <div className="header-actions">
+              <NeoButton 
+                variant="secondary" 
+                onClick={() => navigate('/')}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '12px' }}
+              >
+                <span>Back to Home</span>
+              </NeoButton>
             </div>
-            <ThemeToggle />
           </div>
         </div>
 
-        {activeTab === 'dashboard' && <UserOverview user={user} studentFees={studentFees} loans={loans} profile={profile} />}
-        {activeTab === 'profile' && <UserProfile profile={profile} openProfileEdit={openProfileEdit} />}
-        {activeTab === 'pay-fees' && <UserPayFees studentFees={studentFees} fees={fees} handlePayFee={handlePayFee} />}
-        {activeTab === 'fee-requests' && <UserFeeRequests feeRequests={feeRequests} feeTypes={feeTypes} setRequestFeeModalOpen={setRequestFeeModalOpen} />}
-        {activeTab === 'loan' && <UserApplyLoan handleApplyLoan={handleApplyLoan} loanData={loanData} setLoanData={setLoanData} loanMessage={loanMessage} />}
-        {activeTab === 'paid-fees' && <UserPaidFees studentFees={studentFees} handleDownloadReceipt={handleDownloadReceipt} />}
-        {activeTab === 'settings' && <UserSettings handleChangePassword={handleChangePassword} passwordData={passwordData} setPasswordData={setPasswordData} passwordMessage={passwordMessage} />}
+        <div className="dashboard-scroll-area">
+
+          {activeTab === 'dashboard' && <UserOverview user={user} studentFees={filteredStudentFees} loans={filteredLoans} profile={profile} />}
+          {activeTab === 'profile' && <UserProfile profile={profile} openProfileEdit={openProfileEdit} />}
+          {activeTab === 'pay-fees' && (
+            (filteredFees.length === 0 && filteredStudentFees.length === 0 && searchQuery) ?
+              <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
+              <UserPayFees studentFees={filteredStudentFees} fees={filteredFees} handlePayFee={handlePayFee} />
+          )}
+          {activeTab === 'fee-requests' && (
+            (filteredRequests.length === 0 && searchQuery) ?
+              <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
+              <UserFeeRequests feeRequests={filteredRequests} feeTypes={feeTypes} setRequestFeeModalOpen={setRequestFeeModalOpen} />
+          )}
+          {activeTab === 'loan' && <UserApplyLoan handleApplyLoan={handleApplyLoan} loanData={loanData} setLoanData={setLoanData} loanMessage={loanMessage} />}
+          {activeTab === 'paid-fees' && (
+            (filteredStudentFees.length === 0 && searchQuery) ?
+              <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
+              <UserPaidFees studentFees={filteredStudentFees} handleDownloadReceipt={handleDownloadReceipt} />
+          )}
+          {activeTab === 'settings' && <UserSettings handleChangePassword={handleChangePassword} passwordData={passwordData} setPasswordData={setPasswordData} passwordMessage={passwordMessage} />}
+        </div>
       </div>
 
       <NeoModal isOpen={editProfileModalOpen} onClose={() => setEditProfileModalOpen(false)} title="Edit Profile Details">
         <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <NeoInput type="text" placeholder="Register Number" value={profileFormData.registerNumber || ''} onChange={e => setProfileFormData({...profileFormData, registerNumber: e.target.value})} />
-            <NeoInput type="text" placeholder="Phone Number" value={profileFormData.phoneNumber || ''} onChange={e => setProfileFormData({...profileFormData, phoneNumber: e.target.value})} />
+            <NeoInput type="text" placeholder="Register Number" value={profileFormData.registerNumber || ''} onChange={e => setProfileFormData({ ...profileFormData, registerNumber: e.target.value })} />
+            <NeoInput type="text" placeholder="Phone Number" value={profileFormData.phoneNumber || ''} onChange={e => setProfileFormData({ ...profileFormData, phoneNumber: e.target.value })} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <NeoInput type="text" placeholder="Personal Email" value={profileFormData.personalEmail || ''} onChange={e => setProfileFormData({...profileFormData, personalEmail: e.target.value})} />
-            <NeoInput type="text" placeholder="College Email" value={profileFormData.collegeEmail || ''} onChange={e => setProfileFormData({...profileFormData, collegeEmail: e.target.value})} />
+            <NeoInput type="text" placeholder="Personal Email" value={profileFormData.personalEmail || ''} onChange={e => setProfileFormData({ ...profileFormData, personalEmail: e.target.value })} />
+            <NeoInput type="text" placeholder="College Email" value={profileFormData.collegeEmail || ''} onChange={e => setProfileFormData({ ...profileFormData, collegeEmail: e.target.value })} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-            <NeoInput type="text" placeholder="Class" value={profileFormData.studentClass || ''} onChange={e => setProfileFormData({...profileFormData, studentClass: e.target.value})} />
-            <NeoInput type="text" placeholder="Section" value={profileFormData.section || ''} onChange={e => setProfileFormData({...profileFormData, section: e.target.value})} />
-            <NeoInput type="text" placeholder="Year" value={profileFormData.year || ''} onChange={e => setProfileFormData({...profileFormData, year: e.target.value})} />
+            <NeoInput type="text" placeholder="Class" value={profileFormData.studentClass || ''} onChange={e => setProfileFormData({ ...profileFormData, studentClass: e.target.value })} />
+            <NeoInput type="text" placeholder="Section" value={profileFormData.section || ''} onChange={e => setProfileFormData({ ...profileFormData, section: e.target.value })} />
+            <NeoInput type="text" placeholder="Year" value={profileFormData.year || ''} onChange={e => setProfileFormData({ ...profileFormData, year: e.target.value })} />
           </div>
 
           <NeoButton variant="mint" type="submit">Save Details</NeoButton>
@@ -471,32 +517,32 @@ const UserDashboard = () => {
 
       <NeoModal isOpen={requestFeeModalOpen} onClose={() => setRequestFeeModalOpen(false)} title="Request Fee Add-on">
         <form onSubmit={handleRequestFeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-          <NeoInput 
-            type="text" 
-            placeholder="What fee are you missing? (e.g., Library Fine, Transport Fee)" 
-            value={feeRequestData.requestedFeeTitle} 
-            onChange={e => setFeeRequestData({...feeRequestData, requestedFeeTitle: e.target.value})} 
-            required 
+          <NeoInput
+            type="text"
+            placeholder="What fee are you missing? (e.g., Library Fine, Transport Fee)"
+            value={feeRequestData.requestedFeeTitle}
+            onChange={e => setFeeRequestData({ ...feeRequestData, requestedFeeTitle: e.target.value })}
+            required
           />
-          <NeoInput 
-            type="number" 
-            placeholder="Amount (₹)" 
-            value={feeRequestData.amount} 
-            onChange={e => setFeeRequestData({...feeRequestData, amount: e.target.value})} 
-            required 
+          <NeoInput
+            type="number"
+            placeholder="Amount (₹)"
+            value={feeRequestData.amount}
+            onChange={e => setFeeRequestData({ ...feeRequestData, amount: e.target.value })}
+            required
           />
-          <NeoSelect 
-            value={feeRequestData.feeType} 
-            onChange={e => setFeeRequestData({...feeRequestData, feeType: e.target.value})} 
+          <NeoSelect
+            value={feeRequestData.feeType}
+            onChange={e => setFeeRequestData({ ...feeRequestData, feeType: e.target.value })}
             required
           >
             <option value="" disabled>Select Fee Type</option>
             {feeTypes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
           </NeoSelect>
-          <textarea 
-            placeholder="Optional reason or context..." 
-            value={feeRequestData.reason} 
-            onChange={e => setFeeRequestData({...feeRequestData, reason: e.target.value})} 
+          <textarea
+            placeholder="Optional reason or context..."
+            value={feeRequestData.reason}
+            onChange={e => setFeeRequestData({ ...feeRequestData, reason: e.target.value })}
             style={{
               padding: '1rem',
               borderRadius: '15px',

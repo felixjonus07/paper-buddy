@@ -30,7 +30,7 @@
   position: absolute;
   top: 0;
   right: 50%;
-  border-top: 2px solid var(--primary);
+  border-top: 2px solid rgba(248,116,16,0.3);
   width: 50%;
   height: 30px;
   z-index: 1;
@@ -38,7 +38,7 @@
 .tree li::after {
   right: auto; 
   left: 50%;
-  border-left: 2px solid var(--primary);
+  border-left: 2px solid rgba(248,116,16,0.3);
 }
 
 /* Remove left connector from first child and right connector from last child */
@@ -51,7 +51,7 @@
   border-radius: 15px 0 0 0;
 }
 .tree li:last-child::before {
-  border-right: 2px solid var(--primary);
+  border-right: 2px solid rgba(248,116,16,0.3);
   border-radius: 0 15px 0 0;
 }
 
@@ -69,7 +69,7 @@
   position: absolute;
   top: 0;
   left: 50%;
-  border-left: 2px solid var(--primary);
+  border-left: 2px solid rgba(248,116,16,0.3);
   width: 0;
   height: 30px;
   z-index: 1;
@@ -77,11 +77,13 @@
 
 /* The Glowing Nodes */
 .glow-node {
-  background-color: var(--clay-base);
+  background-color: rgba(128,128,128,0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 1rem 1.5rem;
   border-radius: 20px;
-  box-shadow: 0 0 15px var(--primary-light), inset 2px 2px 5px rgba(255,255,255,0.05), inset -2px -2px 5px rgba(0,0,0,0.3);
-  border: 1px solid var(--primary);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+  border: 1px solid rgba(248,116,16,0.2);
   color: var(--text-color);
   min-width: 140px;
   display: inline-block;
