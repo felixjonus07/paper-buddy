@@ -36,7 +36,7 @@ const REPORT_PRESETS = [
 const toISO = (d) => d.toISOString().split('T')[0];
 
 const CashierDashboard = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'pay';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
@@ -348,7 +348,7 @@ const CashierDashboard = () => {
           ))}
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>

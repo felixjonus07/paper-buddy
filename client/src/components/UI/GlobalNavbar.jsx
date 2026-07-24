@@ -48,7 +48,7 @@ const GlobalNavbar = () => {
   }
 
   return (
-    <nav style={{
+    <nav className="global-navbar" style={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -61,7 +61,6 @@ const GlobalNavbar = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '1rem 4rem',
       boxSizing: 'border-box'
     }}>
       
@@ -69,16 +68,12 @@ const GlobalNavbar = () => {
         {/* Logo Section */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-color)', textDecoration: 'none' }}>
           <GraduationCap size={28} color="var(--primary)" strokeWidth={2.5} />
-          <span style={{ fontWeight: '700', fontSize: '1.4rem', letterSpacing: '0.5px' }}>Paper Buddy</span>
+          <span className="logo-text" style={{ fontWeight: '700', fontSize: '1.4rem', letterSpacing: '0.5px' }}>Paper Buddy</span>
         </Link>
       </div>
 
       {/* Center Links Section */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '2rem',
-      }}>
+      <div className="global-navbar-links">
         {navLinks.map((link) => {
           return (
             <Link 
@@ -149,7 +144,7 @@ const GlobalNavbar = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               >
-                <span style={{ fontWeight: '700', color: 'var(--text-color)', fontSize: '0.95rem' }}>
+                <span className="user-name-text" style={{ fontWeight: '700', color: 'var(--text-color)', fontSize: '0.95rem' }}>
                   {user.name || 'User'}
                 </span>
                 <ChevronDown size={16} color="var(--text-color)" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', opacity: 0.7 }} />

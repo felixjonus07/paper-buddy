@@ -26,7 +26,7 @@ const AdminDashboard = () => {
   const activeTab = searchParams.get('tab') || 'dashboard';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -550,7 +550,7 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: '0.8rem', display: 'flex', justifyContent: 'center' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>

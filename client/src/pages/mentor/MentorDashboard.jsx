@@ -10,7 +10,7 @@ const MentorDashboard = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -65,7 +65,7 @@ const MentorDashboard = () => {
           <span className="nav-text">My Groups</span>
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: '0.8rem', display: 'flex', justifyContent: 'center' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>

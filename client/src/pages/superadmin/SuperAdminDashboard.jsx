@@ -15,7 +15,7 @@ const SuperAdminDashboard = () => {
   const activeTab = searchParams.get('tab') || 'analytics';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   const { showAlert, showConfirm } = useAlert();
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [analytics, setAnalytics] = useState(null);
   const [colleges, setColleges] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -155,7 +155,7 @@ const SuperAdminDashboard = () => {
           <CreditCard size={20} /> <span className="nav-text">Payments</span>
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={() => { localStorage.clear(); window.location.href = '/login'; }} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>
@@ -182,7 +182,7 @@ const SuperAdminDashboard = () => {
             </div>
             <div className="header-actions">
               <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
-                Back to Home
+                Back to Desktop
               </NeoButton>
             </div>
           </div>

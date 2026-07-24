@@ -29,7 +29,7 @@ const UserDashboard = () => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useAlert();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
   const [fees, setFees] = useState([]);
   const [loans, setLoans] = useState([]);
@@ -431,7 +431,7 @@ const UserDashboard = () => {
           <Settings size={20} /> <span className="nav-text">Settings</span>
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', backgroundColor: 'rgba(128,128,128,0.2)', color: 'var(--text-color)', border: 'none', display: 'flex', justifyContent: 'center' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>
