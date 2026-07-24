@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
-import { Plus } from 'lucide-react';
+import NeoInput from '../UI/NeoInput';
+import { Plus, Search } from 'lucide-react';
 
 const UserManagement = ({
   users,
@@ -12,22 +13,41 @@ const UserManagement = ({
   setEditUserModalOpen,
   setSelectedUserForGroup,
   setAssignStudentModalOpen,
+  setAssignUserFeeModalOpen,
+  setUserFeeData,
   isReadOnly
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    u.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ margin: 0, color: 'var(--primary)' }}>User Management</h2>
-        {!isReadOnly && (
-          <NeoButton variant="mint" onClick={() => setUserModalOpen(true)}>
-            <Plus size={20} /> Bulk Create
-          </NeoButton>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ width: '280px' }}>
+            <NeoInput 
+              Icon={Search} 
+              placeholder="Search users..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {!isReadOnly && (
+            <NeoButton variant="mint" onClick={() => setUserModalOpen(true)}>
+              <Plus size={20} /> Bulk Create
+            </NeoButton>
+          )}
+        </div>
       </div>
       
       <div className="card-grid">
-        {users.map(u => (
-          <NeoCard key={u._id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.2rem', cursor: 'pointer' }} onClick={() => setExpandedUser(expandedUser === u._id ? null : u._id)}>
+        {filteredUsers.map(u => (
+          <NeoCard key={u._id} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1.2rem', cursor: 'pointer' }} onClick={() => setExpandedUser(expandedUser === u._id ? null : u._id)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h3 style={{ margin: 0 }}>{u.name}</h3>
@@ -61,14 +81,16 @@ const UserManagement = ({
             )}
 
             {u.role === 'user' && !isReadOnly && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem' }}>
-                <NeoButton variant="peach" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0 }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
-                <NeoButton variant="mint" style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setSelectedUserForGroup(u); setAssignStudentModalOpen(true); }}>Assign Group</NeoButton>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem', flexWrap: 'wrap' }}>
+                <NeoButton variant="peach" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0 }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
+                <NeoButton variant="mint" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setSelectedUserForGroup(u); setAssignStudentModalOpen(true); }}>Assign Group</NeoButton>
+                <NeoButton variant="mint" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setUserFeeData({ title: '', amount: '', feeType: '', userId: u._id }); setAssignUserFeeModalOpen(true); }}>Add Fee</NeoButton>
+                {/* <NeoButton variant="secondary" style={{ flex: '1 1 100%', padding: '0.5rem', fontSize: '0.8rem' }}  }}>Add Fee</NeoButton> */}
               </div>
             )}
           </NeoCard>
         ))}
-        {users.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No users found</p>}
+        {filteredUsers.length === 0 && <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-light)' }}>No users found</p>}
       </div>
     </div>
   );
