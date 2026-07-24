@@ -248,11 +248,12 @@ const verifyPayment = async (req, res) => {
     const { merchantTransactionId, feeId, isMissing, simulated } = req.body;
 
     let paymentState = 'COMPLETED'; // Default to completed for simulated flow
+    let statusResponse = null;
     
     if (simulated !== 'true' && simulated !== true) {
       try {
         const client = await getPhonePeClient(req.user.collegeId);
-        const statusResponse = await client.getOrderStatus(merchantTransactionId);
+        statusResponse = await client.getOrderStatus(merchantTransactionId);
         paymentState = statusResponse?.state;
       } catch (apiError) {
         console.warn('PhonePe getOrderStatus failed. Assuming success for fallback.', apiError.message);
@@ -281,7 +282,8 @@ const verifyPayment = async (req, res) => {
             baseAmount: fee.amount,
             discountAmount: 0,
             finalAmount: fee.amount,
-            status: 'PAID'
+            status: 'PAID',
+            collegeId: req.user.collegeId
           });
           await studentFee.save();
         }
