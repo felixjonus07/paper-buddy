@@ -19,7 +19,7 @@ const UserProfile = ({ profile, openProfileEdit }) => {
         </NeoButton>
       </NeoCard>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+      <div className="stats-grid">
         <NeoCard>
           <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Personal Information</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

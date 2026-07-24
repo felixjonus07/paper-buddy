@@ -4,13 +4,13 @@ import { ChevronRight, Mail, MapPin, Phone } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="site-footer" style={{ padding: '4rem 4rem 2rem', background: '#0f172a' }}>
+    <footer className="site-footer footer-wrapper" style={{ background: '#0f172a' }}>
       <div className="footer-inner" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '3rem', marginBottom: '3rem', flexWrap: 'wrap', gap: '2rem' }}>
+        <div className="footer-top-row">
           <div>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', fontWeight: '700' }}>Contact Us</h3>
-            <div style={{ display: 'flex', gap: '2rem', color: 'var(--text-light)', fontSize: '0.9rem' }}>
+            <div className="footer-contact-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Mail size={16} /> info@paperbuddy.in
               </div>
@@ -23,7 +23,7 @@ const Footer = () => {
             </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
               {/* Placeholder for social icons */}
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }}></div>
@@ -37,7 +37,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '3rem', marginBottom: '4rem' }}>
+        <div className="footer-grid">
           <div>
             <h4 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: '700' }}>About PaperBuddy</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'var(--text-light)', fontSize: '0.9rem' }}>
@@ -77,7 +77,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem', flexWrap: 'wrap' }}>
+        <div className="footer-bottom-row">
           <p style={{ margin: 0 }}>
             © 2024 PaperBuddy University India. All Rights Reserved.
           </p>

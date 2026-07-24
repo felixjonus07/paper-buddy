@@ -3,7 +3,7 @@ import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoInput from '../../components/UI/NeoInput';
 import ThemeToggle from '../../components/UI/ThemeToggle';
-import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, LogOut, Bot, CreditCard } from 'lucide-react';
+import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, LogOut, Bot, CreditCard, Menu } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AgentManagement from '../../components/superadmin/AgentManagement';
 import BillingOverview from '../../components/superadmin/BillingOverview';
@@ -15,7 +15,15 @@ const SuperAdminDashboard = () => {
   const activeTab = searchParams.get('tab') || 'analytics';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   const { showAlert, showConfirm } = useAlert();
-  const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [analytics, setAnalytics] = useState(null);
   const [colleges, setColleges] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -111,8 +119,18 @@ const SuperAdminDashboard = () => {
   return (
     <div className="app-container dashboard-layout">
 
+      {/* Mobile sidebar toggle */}
+      {isMobile && !isMobileSidebarOpen && (
+        <button className="mobile-sidebar-toggle" onClick={() => setMobileSidebarOpen(true)}>
+          <Menu size={20} />
+        </button>
+      )}
+
+      {/* Mobile sidebar backdrop */}
+      <div className={`sidebar-backdrop ${isMobile && isMobileSidebarOpen ? 'visible' : ''}`} onClick={() => setMobileSidebarOpen(false)} />
+
       {/* Fluffy Sidebar Navigation */}
-      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
+      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'} ${isMobile && isMobileSidebarOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)', position: 'relative' }}>
           <div className="header-text">
             <h3 style={{ margin: 0, color: 'var(--text-color)' }}>Super Admin</h3>
@@ -136,22 +154,22 @@ const SuperAdminDashboard = () => {
           </button>
         </div>
 
-        <div className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+        <div className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); if (isMobile) setMobileSidebarOpen(false); }}>
           <Activity size={20} /> <span className="nav-text">Global Analytics</span>
         </div>
-        <div className={`nav-item ${activeTab === 'colleges' ? 'active' : ''}`} onClick={() => setActiveTab('colleges')}>
+        <div className={`nav-item ${activeTab === 'colleges' ? 'active' : ''}`} onClick={() => { setActiveTab('colleges'); if (isMobile) setMobileSidebarOpen(false); }}>
           <Building size={20} /> <span className="nav-text">Manage Colleges</span>
         </div>
-        <div className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`} onClick={() => setActiveTab('admins')}>
+        <div className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`} onClick={() => { setActiveTab('admins'); if (isMobile) setMobileSidebarOpen(false); }}>
           <Users size={20} /> <span className="nav-text">Manage Admins</span>
         </div>
-        <div className={`nav-item ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => setActiveTab('logs')}>
+        <div className={`nav-item ${activeTab === 'logs' ? 'active' : ''}`} onClick={() => { setActiveTab('logs'); if (isMobile) setMobileSidebarOpen(false); }}>
           <Database size={20} /> <span className="nav-text">Audit Logs</span>
         </div>
-        <div className={`nav-item ${activeTab === 'agent' ? 'active' : ''}`} onClick={() => setActiveTab('agent')}>
+        <div className={`nav-item ${activeTab === 'agent' ? 'active' : ''}`} onClick={() => { setActiveTab('agent'); if (isMobile) setMobileSidebarOpen(false); }}>
           <Bot size={20} /> <span className="nav-text">Agent Management</span>
         </div>
-        <div className={`nav-item ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => setActiveTab('billing')}>
+        <div className={`nav-item ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => { setActiveTab('billing'); if (isMobile) setMobileSidebarOpen(false); }}>
           <CreditCard size={20} /> <span className="nav-text">Payments</span>
         </div>
 

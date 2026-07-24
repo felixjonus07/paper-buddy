@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoInput from '../../components/UI/NeoInput';
@@ -6,7 +6,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, FileText, MessageCircle, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard, TrendingUp, UserCog } from 'lucide-react';
+import { Users, FileText, MessageCircle, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard, TrendingUp, UserCog, Menu } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import DashboardOverview from '../../components/admin/DashboardOverview';
 import UserManagement from '../../components/admin/UserManagement';
@@ -26,7 +26,20 @@ const AdminDashboard = () => {
   const activeTab = searchParams.get('tab') || 'dashboard';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNavClick = useCallback((tab) => {
+    setActiveTab(tab);
+    if (isMobile) setMobileSidebarOpen(false);
+  }, [isMobile, setActiveTab]);
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -538,13 +551,13 @@ const AdminDashboard = () => {
 
         <div className="sidebar-menu" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
           {mainNavItems.map(item => (
-            <div key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => setActiveTab(item.id)}>
+            <div key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => handleNavClick(item.id)}>
               <item.icon size={20} /> <span className="nav-text">{item.label}</span>
             </div>
           ))}
 
           {managementNavItems.map(item => (
-            <div key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => setActiveTab(item.id)}>
+            <div key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => handleNavClick(item.id)}>
               <item.icon size={20} /> <span className="nav-text">{item.label}</span>
             </div>
           ))}
@@ -559,6 +572,20 @@ const AdminDashboard = () => {
 
       {/* Main Content Area */}
       <div className="dashboard-content">
+        {/* Mobile Dashboard Tabs */}
+        {isMobile && (
+          <div className="mobile-dashboard-tabs">
+            {[...mainNavItems, ...managementNavItems].map(item => (
+              <div 
+                key={item.id} 
+                className={`mobile-tab-item ${activeTab === item.id ? 'active' : ''}`} 
+                onClick={() => handleNavClick(item.id)}
+              >
+                <item.icon size={16} /> {item.label}
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',

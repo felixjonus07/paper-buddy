@@ -91,12 +91,12 @@ const Admission = () => {
             <p className="section-subtitle center">Choose from our wide range of undergraduate and postgraduate programs.</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+          <div className="admission-programs-grid">
             {programs.map((prog, i) => (
               <div key={i} className={`program-card anim-fade-up anim-delay-${(i % 5) + 1}`}>
                 <img src={prog.img} alt={prog.name} />
                 <div className="program-card-overlay">
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: '700', background: 'var(--primary)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>{prog.degree}</span>
                     <span style={{ fontSize: '0.7rem', fontWeight: '600', background: 'rgba(255,255,255,0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>{prog.duration}</span>
                   </div>
@@ -112,12 +112,12 @@ const Admission = () => {
       {/* ════════ ADMISSION INQUIRY FORM ════════ */}
       <div className="section-alt" id="inquiry">
         <div className="section-inner">
-          <div style={{ display: 'flex', gap: '4rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '320px' }} className="anim-fade-left">
+          <div className="admission-inquiry-flex">
+            <div style={{ flex: 1, minWidth: '280px' }} className="anim-fade-left">
               <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.8rem' }}>
                 Get Started
               </p>
-              <h2 className="section-title" style={{ fontSize: '2.4rem' }}>
+              <h2 className="section-title" style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)' }}>
                 Admission Inquiry
               </h2>
               <p style={{ fontSize: '1.05rem', color: 'var(--text-light)', lineHeight: '1.7', marginBottom: '2rem', maxWidth: '480px' }}>
@@ -134,11 +134,11 @@ const Admission = () => {
               }} />
             </div>
 
-            <div className="glass-card anim-fade-right" style={{ flex: 1, padding: '3rem', minWidth: '350px' }}>
+            <div className="glass-card anim-fade-right" style={{ flex: 1, padding: '3rem', minWidth: '280px' }}>
               <h3 style={{ marginBottom: '2rem', fontSize: '1.5rem', fontWeight: '700' }}>Submit Your Inquiry</h3>
               <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', gap: '1.5rem' }}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className="form-row">
+                  <div className="form-col">
                     <label style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '0.9rem' }}>First Name</label>
                     <input type="text" placeholder="John" style={{
                       padding: '0.85rem 1rem', borderRadius: '12px',
@@ -147,7 +147,7 @@ const Admission = () => {
                       fontSize: '0.95rem', transition: 'border-color 0.2s',
                     }} />
                   </div>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div className="form-col">
                     <label style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '0.9rem' }}>Last Name</label>
                     <input type="text" placeholder="Doe" style={{
                       padding: '0.85rem 1rem', borderRadius: '12px',

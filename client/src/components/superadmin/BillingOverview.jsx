@@ -154,7 +154,7 @@ const BillingOverview = ({ token }) => {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
         <NeoCard style={{ textAlign: 'center' }}>
           <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
             <IndianRupee size={22} color="var(--primary)" />
