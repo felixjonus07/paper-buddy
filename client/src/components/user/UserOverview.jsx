@@ -10,16 +10,13 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
   return (
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
       <NeoCard style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
-         <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'var(--clay-peach)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--clay-outer)' }}>
-           <User size={40} color="white" />
-         </div>
          <div>
            <h2 style={{ margin: 0, color: 'var(--primary)' }}>Hello, {user.name}!</h2>
            <p>Welcome to your personal Paper Buddy dashboard.</p>
          </div>
       </NeoCard>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-small">
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
             <div style={{
@@ -81,7 +78,7 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop:'15px' }}>
         <NeoCard style={{ flex: '1', minWidth: '350px' }}>
           <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Loan History</h3>
           <div className="table-container">

@@ -58,7 +58,7 @@ const FinanceManagement = () => {
     <div style={{ padding: '1rem 0' }}>
       <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--text-color)' }}>Finance & Ledger</h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: 'var(--clay-base)', borderRadius: '16px', color: 'var(--primary)', boxShadow: 'inset 2px 2px 5px rgba(255, 255, 255, 0.5), inset -3px -3px 7px rgba(0, 0, 0, 0.05)' }}>

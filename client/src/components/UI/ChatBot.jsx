@@ -993,6 +993,41 @@ const ChatBot = () => {
           from { opacity: 0; transform: translateX(40px); }
           to { opacity: 1; transform: translateX(0); }
         }
+        .chatbot-window {
+          position: sticky;
+          top: 100px;
+          align-self: flex-start;
+          margin: 100px 1.25rem 1.25rem 0;
+          height: 600px;
+          max-height: calc(100vh - 120px);
+          width: 340px;
+          background: var(--clay-base);
+          backdrop-filter: blur(40px) saturate(200%);
+          -webkit-backdrop-filter: blur(40px) saturate(200%);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 28px;
+          box-shadow: 0 0 0 1px rgba(248,116,16,0.08), 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          flex-shrink: 0;
+          z-index: 9999;
+          animation: chatSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @media (max-width: 768px) {
+          .chatbot-window {
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0;
+            width: 100%;
+            height: 85vh;
+            max-height: 85vh;
+            border-radius: 28px 28px 0 0;
+          }
+        }
         .chatbot-input:focus { border-color: rgba(248,116,16,0.5) !important; }
         .send-btn:hover:not(:disabled) { transform: scale(1.08); }
         .send-btn:active:not(:disabled) { transform: scale(0.95); }
@@ -1028,22 +1063,7 @@ const ChatBot = () => {
 
       {/* Chat Window */}
       {open && (
-        <div className="chatbot-sidebar" style={{
-          position: 'sticky', top: '100px',
-          alignSelf: 'flex-start',
-          margin: '100px 1.25rem 1.25rem 0',
-          height: '600px', maxHeight: 'calc(100vh - 120px)',
-          width: '340px',
-          background: 'var(--clay-base)',
-          backdropFilter: 'blur(40px) saturate(200%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '28px',
-          boxShadow: '0 0 0 1px rgba(248,116,16,0.08), 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
-          flexShrink: 0
-        }}>
+        <div className="chatbot-window">
           {/* Header */}
           <div style={{
             padding: '1rem 1.25rem',
@@ -1200,7 +1220,7 @@ const ChatBot = () => {
       {/* FAB (Only visible when chatbot is closed) */}
       {!open && (
         <button
-          className="chatbot-sidebar"
+          className="chatbot-fab"
           onClick={() => setOpen(true)}
           title="Open EduFin AI"
           style={{

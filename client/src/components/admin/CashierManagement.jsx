@@ -117,7 +117,7 @@ const CashierManagement = ({ isReadOnly, collegeId }) => {
         {cashiers.length === 0 ? (
           <p style={{ color: 'var(--text-light)' }}>No cashiers found for this college.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          <div className="stats-grid">
             {cashiers.map(c => (
               <div 
                 key={c._id}

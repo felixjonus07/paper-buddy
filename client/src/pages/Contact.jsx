@@ -32,10 +32,10 @@ const Contact = () => {
         </div>
       </div>
 
-      <div className="section" style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
+      <div className="section contact-section-flex">
         
         {/* ════════ CONTACT INFO ════════ */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: '300px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: '280px' }}>
           {[
             { icon: MapPin, title: 'Visit Us', desc: '123 University Ave\nInnovation District\nTech City, TC 10101', color: '#0ea5e9' },
             { icon: Phone, title: 'Call Us', desc: '+1 (555) 123-4567\nMon-Fri, 9am - 5pm', color: 'var(--primary)' },
@@ -53,7 +53,8 @@ const Contact = () => {
                   background: `${item.color}15`, 
                   padding: '1.2rem', 
                   borderRadius: '16px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0
                 }}>
                   <Icon size={28} color={item.color} />
                 </div>
@@ -70,14 +71,14 @@ const Contact = () => {
         <div className="glass-card anim-fade-left" style={{
           flex: 1.5,
           padding: '3rem',
-          minWidth: '350px'
+          minWidth: '280px'
         }}>
           <h2 style={{ marginBottom: '0.5rem', fontSize: '2rem', fontWeight: '800' }}>Send a Message</h2>
           <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>Fill out the form below and we'll get back to you shortly.</p>
           
           <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', gap: '1.5rem' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="form-row">
+              <div className="form-col">
                 <label style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '0.9rem' }}>Name</label>
                 <input type="text" placeholder="Your Name" style={{ 
                   padding: '0.85rem 1rem', borderRadius: '12px', 
@@ -86,7 +87,7 @@ const Contact = () => {
                   fontSize: '0.95rem'
                 }} />
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div className="form-col">
                 <label style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '0.9rem' }}>Email</label>
                 <input type="email" placeholder="Your Email" style={{ 
                   padding: '0.85rem 1rem', borderRadius: '12px', 

@@ -187,7 +187,7 @@ const ReportsManagement = () => {
 
       {reports && (
         <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
             <NeoCard style={{ backgroundColor: 'var(--clay-mint-light)', borderColor: 'var(--clay-mint)' }}>
               <div style={{ color: 'var(--clay-mint)', marginBottom: '0.5rem' }}><IndianRupee size={24} /></div>
               <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-color)' }}>Total Revenue</h3>

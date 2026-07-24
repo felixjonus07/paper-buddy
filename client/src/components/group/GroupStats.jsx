@@ -4,7 +4,7 @@ import { Users, Activity, IndianRupee } from 'lucide-react';
 
 const GroupStats = ({ users, totalAssignedValue, amountCollected, amountPending }) => {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+    <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
       <NeoCard>
          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
           <div style={{

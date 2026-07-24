@@ -15,7 +15,7 @@ const Home = () => {
             <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '1px' }}>
               Creating a better future for
             </p>
-            <h1 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1.1', color: 'var(--text-color)', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: '900', lineHeight: '1.1', color: 'var(--text-color)', marginBottom: '1rem' }}>
               PaperBuddy<br/>University<br/>India.
             </h1>
             
@@ -32,7 +32,7 @@ const Home = () => {
 
       {/* ════════ UPDATES ════════ */}
       <div className="iiud-updates">
-        <h2 style={{ fontSize: '2.2rem', display: 'flex', alignItems: 'center', gap: '1rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+        <h2 style={{ fontSize: 'clamp(1.2rem, 3vw, 2.2rem)', display: 'flex', alignItems: 'center', gap: '1rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
           <span style={{ color: 'white' }}>• Stay touch with updates •</span>
         </h2>
         
@@ -49,7 +49,7 @@ const Home = () => {
                 onClick={() => setActiveUpdate(item.id)}
               >
                 <div className="update-icon" style={{ 
-                  width: '40px', height: '40px', borderRadius: '8px', 
+                  width: '40px', height: '40px', borderRadius: '8px', flexShrink: 0,
                   background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
                 }}>
                   <FileText size={20} />
@@ -82,8 +82,8 @@ const Home = () => {
       <div className="iiud-admissions">
         <div className="iiud-admissions-pattern"></div>
         <div className="iiud-admissions-content">
-          <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '1rem' }}>Admission</h2>
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', opacity: 0.8, marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: '800', marginBottom: '1rem' }}>Admission</h2>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', opacity: 0.8, marginBottom: '2rem', flexWrap: 'wrap' }}>
             <span>Requirements</span> • <span>Procedures</span> • <span>Tuition & fees</span> • <span>Scholarships</span>
           </div>
           
@@ -112,9 +112,9 @@ const Home = () => {
 
       {/* ════════ FIND YOUR WAY ════════ */}
       <div className="section" style={{ background: 'white' }}>
-        <h2 className="section-title" style={{ margin: '0 0 2rem 4rem' }}>Find your way</h2>
+        <h2 className="section-title" style={{ margin: '0 0 2rem', paddingLeft: '1rem' }}>Find your way</h2>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2rem', padding: '0 4rem' }}>
+        <div className="home-portrait-grid">
           <div className="iiud-portrait-card">
             <div className="iiud-portrait-image" style={{ backgroundImage: 'url(/images/india_highschool_grad_1784867296522.png)' }}></div>
             <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700' }}>High school Graduate</h4>
@@ -136,10 +136,10 @@ const Home = () => {
 
       {/* ════════ COURSES ════════ */}
       <div className="section-alt">
-        <h2 className="section-title" style={{ margin: '0 0 2rem 4rem' }}>Search for a course</h2>
+        <h2 className="section-title" style={{ margin: '0 0 2rem', paddingLeft: '1rem' }}>Search for a course</h2>
         
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', padding: '0 4rem' }}>
+        <div className="home-courses-grid">
           {[
             { tag: 'Medical', title: 'Pharmacy and Nursing preparation', img: '/images/data.png' },
             { tag: 'Engineering', title: 'Bachelor in structural & Civil Engineering', img: '/images/civil.png' },
@@ -163,25 +163,25 @@ const Home = () => {
       <div className="section" style={{ background: 'white' }}>
         <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '3rem' }}>Research and Publication</h2>
         
-        <div style={{ display: 'flex', gap: '2rem', maxWidth: '1100px', margin: '0 auto', flexWrap: 'wrap', padding: '0 2rem' }}>
-          <div style={{ flex: 1, minWidth: '350px', background: '#fef3c7', borderRadius: '20px', overflow: 'hidden' }}>
+        <div className="home-research-flex">
+          <div className="home-research-main" style={{ background: '#fef3c7', borderRadius: '20px', overflow: 'hidden' }}>
             <img src="/images/india_students_1784866265313.png" style={{ width: '100%', height: '250px', objectFit: 'cover' }} alt="Research" />
             <div style={{ padding: '2rem' }}>
               <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700' }}>Article</span>
-              <h3 style={{ margin: '0.5rem 0', fontSize: '1.4rem', fontWeight: '800' }}>The paper on "Tech Innovations" published by Top Journals</h3>
+              <h3 style={{ margin: '0.5rem 0', fontSize: 'clamp(1rem, 2vw, 1.4rem)', fontWeight: '800' }}>The paper on "Tech Innovations" published by Top Journals</h3>
             </div>
           </div>
           
-          <div style={{ flex: 1, minWidth: '350px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', gap: '1.5rem', background: '#f8f9fa', borderRadius: '20px', padding: '1.5rem', alignItems: 'center' }}>
+          <div className="home-research-side">
+            <div style={{ display: 'flex', gap: '1.5rem', background: '#f8f9fa', borderRadius: '20px', padding: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <img src="/images/media__1784726996698.png" style={{ width: '120px', height: '120px', borderRadius: '12px', objectFit: 'cover' }} alt="Publication" />
-              <div>
+              <div style={{ flex: 1, minWidth: '150px' }}>
                 <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: '700' }}>Publication</span>
                 <h4 style={{ margin: '0.5rem 0 0', fontSize: '1.2rem', fontWeight: '700' }}>New research "On Time Data" by financial analytics</h4>
               </div>
             </div>
-            <div style={{ background: '#11141a', color: 'white', borderRadius: '20px', padding: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flex: 1 }}>
-              <h3 style={{ color: '#ffffff', fontSize: '1.8rem', fontWeight: '700', margin: 0, maxWidth: '250px' }}>Explore more Research and publication</h3>
+            <div style={{ background: '#11141a', color: 'white', borderRadius: '20px', padding: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flex: 1, flexWrap: 'wrap', gap: '1rem' }}>
+              <h3 style={{ color: '#ffffff', fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)', fontWeight: '700', margin: 0, maxWidth: '250px' }}>Explore more Research and publication</h3>
               <button style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'white', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 View all <ChevronRight size={16} />
               </button>
@@ -196,7 +196,7 @@ const Home = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', marginBottom: '1rem' }}>
             <Globe size={18} /> About PaperBuddy
           </div>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '0 0 1rem' }}>More about University</h2>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: '900', margin: '0 0 1rem' }}>More about University</h2>
           <p style={{ color: 'var(--text-light)', lineHeight: '1.7', marginBottom: '2rem' }}>
             We are dedicated to preparing students for a rapidly changing world by equipping them with critical thinking skills, a global perspective, and a respect for core values of honesty, loyalty, perseverance, and compassion.
           </p>
@@ -220,9 +220,9 @@ const Home = () => {
         </div>
         
         <div style={{ background: 'white', padding: '3rem', position: 'relative', zIndex: 10, display: 'inline-block', borderRadius: '24px', boxShadow: '0 -20px 60px rgba(255,255,255,0.95)' }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.5rem' }}>Introducing the Graduates</h2>
+          <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: '800', margin: '0 0 0.5rem' }}>Introducing the Graduates</h2>
           <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>We are proud of our successful alumni who have achieved greatly after beginning their journey with us in India.</p>
-          <button style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '8px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto' }}>
+          <button style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '8px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
             View the Graduation Ceremony <ChevronRight size={18} />
           </button>
         </div>
