@@ -622,7 +622,7 @@ const AdminDashboard = () => {
           {activeTab === 'users' && (
             (users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
-              <UserManagement users={users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase()))} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} isReadOnly={isReadOnly} />
+              <UserManagement users={users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase()))} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} setAssignUserFeeModalOpen={setAssignUserFeeModalOpen} setUserFeeData={setUserFeeData} isReadOnly={isReadOnly} />
           )}
           {activeTab === 'groups' && (
             (groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
@@ -884,7 +884,30 @@ const AdminDashboard = () => {
         </form>
       </NeoModal>
 
-      {/* Assign Student Modal */}
+      {/* Assign User Fee Modal */}
+      <NeoModal isOpen={isAssignUserFeeModalOpen} onClose={() => setAssignUserFeeModalOpen(false)} title="Assign Fee to Student">
+        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+          Assign a specific fee to this student directly.
+        </p>
+        <form onSubmit={handleAssignUserFeeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <NeoInput type="text" placeholder="Fee Title (e.g. Lab Fine)" value={userFeeData.title} onChange={e => setUserFeeData({ ...userFeeData, title: e.target.value })} required />
+          <NeoInput type="number" placeholder="Amount" value={userFeeData.amount} onChange={e => setUserFeeData({ ...userFeeData, amount: e.target.value })} required />
+
+          <div style={{ position: 'relative' }}>
+            <NeoSelect
+              value={userFeeData.feeType}
+              onChange={val => setUserFeeData({ ...userFeeData, feeType: val })}
+              required={true}
+              placeholder="Select Fee Type..."
+              options={feeTypes.map(c => ({ value: c._id, label: c.name }))}
+            />
+          </div>
+
+          <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Assign Fee</NeoButton>
+          {feeMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-peach)', textAlign: 'center' }}>{feeMessage}</p>}
+        </form>
+      </NeoModal>
+
       {/* Assign Student Modal */}
       <NeoModal isOpen={isAssignStudentModalOpen} onClose={() => setAssignStudentModalOpen(false)} title={`Assign ${selectedUserForGroup?.name} to Group`}>
         <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
