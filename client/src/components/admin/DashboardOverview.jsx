@@ -30,7 +30,7 @@ const DashboardOverview = ({ users, groups, fees, feeRequests = [], paymentStatu
         </div>
       </NeoCard>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+      <div className="stats-grid">
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
             <div style={bubbleStyle}>

@@ -53,7 +53,7 @@ const CollegeDetail = () => {
 
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
         <NeoCard>
           <h3 style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={18} /> Total Admins</h3>
           <h1 style={{ fontSize: '3rem', color: 'var(--primary)' }}>{admins.length}</h1>

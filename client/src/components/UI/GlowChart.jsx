@@ -1,7 +1,13 @@
 import React from 'react';
 import './GlowChart.css';
 
-const GlowChartNode = ({ node, allNodes, targetLineage = [], isTargetOrDescendant = false, targetGroupId = null }) => {
+const GlowChartNode = ({ node, allNodes, targetLineage = [], isTargetOrDescendant = false, targetGroupId = null, _visited = [] }) => {
+  // Prevent infinite cycles in component rendering
+  if (_visited.includes(node._id)) {
+    return null; // Stop rendering if we've seen this node in the current path
+  }
+  const currentVisited = [..._visited, node._id];
+
   // Find all children where parentGroups includes this node's ID
   let children = allNodes.filter(n => {
     if (!n.parentGroups || !Array.isArray(n.parentGroups)) return false;
@@ -36,6 +42,7 @@ const GlowChartNode = ({ node, allNodes, targetLineage = [], isTargetOrDescendan
               targetLineage={targetLineage}
               isTargetOrDescendant={isTargetOrDescendant || child._id === targetGroupId}
               targetGroupId={targetGroupId}
+              _visited={currentVisited}
             />
           ))}
         </ul>
@@ -50,7 +57,7 @@ const GlowChart = ({ groups, rootGroupId }) => {
 
   // Build the lineage to find the ultimate root and the path to the target
   const buildLineage = (currentId, allGroups, currentLineage = []) => {
-    if (!currentId) return currentLineage;
+    if (!currentId || currentLineage.includes(currentId)) return currentLineage;
     currentLineage.push(currentId);
     const node = allGroups.find(g => g._id === currentId);
     if (node && node.parentGroups && node.parentGroups.length > 0) {

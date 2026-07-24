@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NeoButton from '../../components/UI/NeoButton';
-import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import MentorGroups from '../../components/mentor/MentorGroups';
 
 const MentorDashboard = () => {
@@ -10,7 +10,15 @@ const MentorDashboard = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -35,8 +43,18 @@ const MentorDashboard = () => {
 
   return (
     <div className="dashboard-layout">
+      {/* Mobile sidebar toggle */}
+      {isMobile && !isMobileSidebarOpen && (
+        <button className="mobile-sidebar-toggle" onClick={() => setMobileSidebarOpen(true)}>
+          <Menu size={20} />
+        </button>
+      )}
+
+      {/* Mobile sidebar backdrop */}
+      <div className={`sidebar-backdrop ${isMobile && isMobileSidebarOpen ? 'visible' : ''}`} onClick={() => setMobileSidebarOpen(false)} />
+
       {/* Sidebar */}
-      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
+      <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'} ${isMobile && isMobileSidebarOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)', position: 'relative', minHeight: '60px' }}>
           <div className="header-text">
             <h3 style={{ margin: 0, color: 'var(--text-color)' }}>Group Admin</h3>
@@ -65,7 +83,7 @@ const MentorDashboard = () => {
           <span className="nav-text">My Groups</span>
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: '0.8rem', display: 'flex', justifyContent: 'center' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>

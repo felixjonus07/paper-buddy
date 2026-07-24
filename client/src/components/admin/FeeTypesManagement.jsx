@@ -20,7 +20,7 @@ const FeeTypesManagement = ({
 
       {masterMessage && <p style={{ color: 'var(--clay-mint)', textAlign: 'center', marginBottom: '1rem' }}>{masterMessage}</p>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+      <div className="stats-grid">
         <NeoCard>
           {!isReadOnly && (
             <form onSubmit={handleCreateFeeType} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>

@@ -114,7 +114,7 @@ For general conversation:
 For payment requests:
 {
   "intent": "PAYMENT_RESTRICTED",
-  "message": "💳 Payment processing is handled directly through the dashboard and cannot be initiated via the assistant."
+  "message": "Payment processing is handled directly through the dashboard and cannot be initiated via the assistant."
 }
 
 CRITICAL: Always extract field values from the user message into the data object. Never return an empty data object if the user mentioned a name, amount, or other value.
@@ -140,7 +140,7 @@ const chat = async (req, res) => {
       if (college && college.aiAccess === false) {
         return res.json({
           intent: 'CHAT',
-          message: '🔒 AI Assistant access has been disabled for your institution. Please contact your administrator or the platform support team.'
+          message: 'AI Assistant access has been disabled for your institution. Please contact your administrator or the platform support team.'
         });
       }
     }
@@ -221,8 +221,6 @@ const chat = async (req, res) => {
 
     const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content || '';
-
-    // Increment prompt count and token count for the college in the background
     if (req.user && req.user.collegeId) {
       const tokensUsed = data.usage?.total_tokens || 0;
       College.findByIdAndUpdate(req.user.collegeId, {
@@ -246,7 +244,7 @@ const chat = async (req, res) => {
       console.warn(`Blocked restricted intent '${parsed.intent}' for user role '${req.user?.role}'`);
       parsed = {
         intent: 'CHAT',
-        message: '🚫 You do not have administrative permission to perform this action.'
+        message: 'You do not have administrative permission to perform this action.'
       };
     }
 

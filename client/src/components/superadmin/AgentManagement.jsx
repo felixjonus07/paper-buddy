@@ -137,7 +137,7 @@ const AgentManagement = ({ token }) => {
       )}
 
       {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
         <NeoCard style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
             <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

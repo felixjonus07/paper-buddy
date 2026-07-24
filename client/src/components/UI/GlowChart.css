@@ -107,3 +107,13 @@
   transform: scale(1.05);
   box-shadow: 0 0 25px var(--primary), inset 2px 2px 5px rgba(255,255,255,0.1), inset -2px -2px 5px rgba(0,0,0,0.4);
 }
+
+/* Responsive adjustment for small screens */
+@media (max-width: 768px) {
+  .tree {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 1rem;
+    padding-bottom: 2rem;
+  }
+}

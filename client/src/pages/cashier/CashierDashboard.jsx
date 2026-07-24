@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, LogOut, IndianRupee, Clock, Download, TrendingUp, PlusCircle, X, CheckCircle, AlertCircle, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, LogOut, IndianRupee, Clock, Download, TrendingUp, PlusCircle, X, CheckCircle, AlertCircle, FileText, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NeoCard from '../../components/UI/NeoCard';
 import NeoInput from '../../components/UI/NeoInput';
@@ -37,6 +37,14 @@ const toISO = (d) => d.toISOString().split('T')[0];
 
 const CashierDashboard = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'pay';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
@@ -342,13 +350,13 @@ const CashierDashboard = () => {
 
         <div className="sidebar-menu" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
           {TABS.map(item => (
-            <div key={item.key} className={`nav-item ${activeTab === item.key ? 'active' : ''}`} onClick={() => setActiveTab(item.key)}>
+            <div key={item.key} className={`nav-item ${activeTab === item.key ? 'active' : ''}`} onClick={() => { setActiveTab(item.key); if (isMobile) setMobileSidebarOpen(false); }}>
               <item.icon size={20} /> <span className="nav-text">{item.label}</span>
             </div>
           ))}
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.8rem' : '0.8rem 0' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>
@@ -357,6 +365,20 @@ const CashierDashboard = () => {
 
       {/* Main Content Area */}
       <div className="dashboard-content">
+        {/* Mobile Dashboard Tabs */}
+        {isMobile && (
+          <div className="mobile-dashboard-tabs">
+            {TABS.map(item => (
+              <div 
+                key={item.key} 
+                className={`mobile-tab-item ${activeTab === item.key ? 'active' : ''}`} 
+                onClick={() => setActiveTab(item.key)}
+              >
+                <item.icon size={16} /> {item.label}
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',

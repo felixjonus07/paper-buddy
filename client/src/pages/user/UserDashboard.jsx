@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NeoCard from '../../components/UI/NeoCard';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoInput from '../../components/UI/NeoInput';
 import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
-import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle, MessageCircle, Home, ChevronLeft, ChevronRight } from 'lucide-react';
+import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle, MessageCircle, Home, ChevronLeft, ChevronRight, Menu, Landmark } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import UserOverview from '../../components/user/UserOverview';
 import UserProfile from '../../components/user/UserProfile';
@@ -30,6 +30,19 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useAlert();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNavClick = useCallback((tab) => {
+    setActiveTab(tab);
+    if (isMobile) setMobileSidebarOpen(false);
+  }, [isMobile, setActiveTab]);
 
   const [fees, setFees] = useState([]);
   const [loans, setLoans] = useState([]);
@@ -64,8 +77,8 @@ const UserDashboard = () => {
 
     if (!merchantTransactionId || !feeId) return;
 
-    // Clear URL params immediately so refresh doesn't re-trigger
-    navigate('/user/dashboard', { replace: true });
+    // Clear URL params immediately so refresh doesn't re-trigger, but stay on pay-fees tab
+    navigate('/user/dashboard?tab=pay-fees', { replace: true });
 
     const verifyPhonePePayment = async () => {
       setPaymentVerifying(true);
@@ -120,9 +133,8 @@ const UserDashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      const [feesRes, loansRes, profileRes, studentFeesRes, requestsRes, feeTypesRes] = await Promise.all([
+      const [feesRes, profileRes, studentFeesRes, requestsRes, feeTypesRes] = await Promise.all([
         fetch('/api/user/fees', { headers }),
-        fetch('/api/user/loans', { headers }),
         fetch('/api/user/profile', { headers }),
         fetch('/api/user/student-fees', { headers }),
         fetch('/api/user/fee-requests', { headers }),
@@ -130,7 +142,6 @@ const UserDashboard = () => {
       ]);
 
       if (feesRes.ok) setFees(await feesRes.json());
-      if (loansRes.ok) setLoans(await loansRes.json());
       if (profileRes.ok) setProfile(await profileRes.json());
       if (studentFeesRes.ok) setStudentFees(await studentFeesRes.json());
       if (requestsRes.ok) setFeeRequests(await requestsRes.json());
@@ -355,17 +366,14 @@ const UserDashboard = () => {
         <div style={{
           position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)',
           zIndex: 9998, minWidth: 340, maxWidth: 480,
-          background: paymentResult === 'success' ? 'linear-gradient(135deg, #1a8a4a, #22c55e)' :
-            paymentResult === 'pending' ? 'linear-gradient(135deg, #b45309, #f59e0b)' :
-              'linear-gradient(135deg, #991b1b, #ef4444)',
+          background: paymentResult === 'success' ? '#1a8a4a' :
+            paymentResult === 'pending' ? '#b45309' :
+              '#991b1b',
           borderRadius: '16px', padding: '1.2rem 1.5rem',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           display: 'flex', alignItems: 'center', gap: '1rem',
           animation: 'slideDown 0.4s ease-out'
         }}>
-          <span style={{ fontSize: '2rem' }}>
-            {paymentResult === 'success' ? '✅' : paymentResult === 'pending' ? '⏳' : '❌'}
-          </span>
           <div style={{ flex: 1 }}>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>
               {paymentResult === 'success' ? 'Payment Successful!' :
@@ -382,7 +390,7 @@ const UserDashboard = () => {
             background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
             borderRadius: '50%', width: 28, height: 28, cursor: 'pointer',
             fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>×</button>
+          }}>X</button>
         </div>
       )}
 
@@ -411,27 +419,27 @@ const UserDashboard = () => {
           </button>
         </div>
 
-        <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+        <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
           <LayoutDashboard size={20} /> <span className="nav-text">Dashboard</span>
         </div>
-        <div className={`nav-item ${activeTab === 'pay-fees' ? 'active' : ''}`} onClick={() => setActiveTab('pay-fees')}>
+        <div className={`nav-item ${activeTab === 'pay-fees' ? 'active' : ''}`} onClick={() => handleNavClick('pay-fees')}>
           <IndianRupee size={20} /> <span className="nav-text">Pay Fees</span>
         </div>
-        <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => setActiveTab('fee-requests')}>
+        <div className={`nav-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => handleNavClick('fee-requests')}>
           <PlusCircle size={20} /> <span className="nav-text">Fee Requests</span>
         </div>
 
-        <div className={`nav-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => setActiveTab('paid-fees')}>
+        <div className={`nav-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => handleNavClick('paid-fees')}>
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>
-        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => handleNavClick('profile')}>
           <User size={20} /> <span className="nav-text">My Profile</span>
         </div>
-        <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+        <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => handleNavClick('settings')}>
           <Settings size={20} /> <span className="nav-text">Settings</span>
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
+        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', backgroundColor: 'rgba(128,128,128,0.2)', color: 'var(--text-color)', border: 'none', display: 'flex', justifyContent: 'center' }}>
             <LogOut size={18} /> {isSidebarOpen && 'Logout'}
           </NeoButton>
@@ -440,6 +448,32 @@ const UserDashboard = () => {
 
       {/* Main Content Area */}
       <div className="dashboard-content">
+        {/* Mobile Dashboard Tabs (Only visible on mobile via flex/display setup) */}
+        {isMobile && (
+          <div className="mobile-dashboard-tabs">
+            <div className={`mobile-tab-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
+              <LayoutDashboard size={16} /> Dashboard
+            </div>
+            <div className={`mobile-tab-item ${activeTab === 'pay-fees' ? 'active' : ''}`} onClick={() => handleNavClick('pay-fees')}>
+              <IndianRupee size={16} /> Pay Fees
+            </div>
+            <div className={`mobile-tab-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => handleNavClick('fee-requests')}>
+              <PlusCircle size={16} /> Fee Requests
+            </div>
+            <div className={`mobile-tab-item ${activeTab === 'loan' ? 'active' : ''}`} onClick={() => handleNavClick('loan')}>
+              <Landmark size={16} /> Financial Aid
+            </div>
+            <div className={`mobile-tab-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => handleNavClick('paid-fees')}>
+              <FileText size={16} /> Payment History
+            </div>
+            <div className={`mobile-tab-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => handleNavClick('profile')}>
+              <User size={16} /> My Profile
+            </div>
+            <div className={`mobile-tab-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => handleNavClick('settings')}>
+              <Settings size={16} /> Settings
+            </div>
+          </div>
+        )}
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
@@ -447,8 +481,8 @@ const UserDashboard = () => {
             borderRadius: '50px',
             boxShadow: 'var(--clay-outer)'
           }}>
-            <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-              {activeTab === 'dashboard' && 'Student Dashboard'}
+            <h2 style={{ margin: 0, color: 'var(--text-color)', lineHeight: '1.2' }}>
+              {activeTab === 'dashboard' && <>Student <br /> Dashboard</>}
               {activeTab === 'pay-fees' && 'Pay Fees'}
               {activeTab === 'fee-requests' && 'Fee Requests'}
               {activeTab === 'loan' && 'Financial Aid'}
