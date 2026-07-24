@@ -1318,3 +1318,296 @@ select:focus {
   font-weight: 700;
 }
 
+/* ═══════════════════════════════════════════════════════
+   IIUD REDESIGN CUSTOM STYLES
+═══════════════════════════════════════════════════════ */
+.iiud-hero {
+  position: relative;
+  width: 100%;
+  min-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+  padding-bottom: 80px;
+}
+.iiud-hero-content {
+  flex: 1;
+  display: flex;
+  padding: 4rem 4rem 10rem;
+  gap: 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+.iiud-hero-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.iiud-hero-right {
+  flex: 1.2;
+  position: relative;
+  background-image: url('/images/india_hero_campus_1784866253101.png');
+  background-size: cover;
+  background-position: center;
+  border-radius: 40px 40px 40px 0;
+  min-height: 500px;
+}
+.iiud-search-bar {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 600px;
+  margin-top: 2rem;
+  align-items: center;
+  border: 1px solid var(--border);
+}
+.iiud-search-bar select, .iiud-search-bar input {
+  border: none;
+  background: transparent;
+  padding: 12px;
+  font-size: 1rem;
+  outline: none;
+}
+.iiud-search-bar select {
+  border-right: 1px solid var(--border);
+  color: var(--text-color);
+  font-weight: 600;
+}
+.iiud-search-bar input {
+  flex: 1;
+}
+.iiud-search-bar button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iiud-stats-banner {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 3rem;
+  width: 85%;
+  max-width: 1100px;
+  z-index: 10;
+  gap: 2rem;
+}
+.iiud-stats-banner h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.iiud-updates {
+  background: #11141a; /* Dark navy */
+  color: white;
+  padding: 10rem 4rem 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.iiud-updates-container {
+  display: flex;
+  gap: 3rem;
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 3rem;
+}
+.iiud-updates-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.iiud-update-item {
+  padding: 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+.iiud-update-item.active {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+}
+.iiud-update-item.active .update-icon {
+  background: rgba(242,92,5,0.2);
+  color: var(--primary);
+}
+.iiud-updates-preview {
+  flex: 1.5;
+  background: #1a1e28;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.iiud-admissions {
+  background-color: #4a4eed; /* Distinctive purple */
+  background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 20%),
+                    radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 0%, transparent 20%);
+  color: white;
+  padding: 6rem 4rem;
+  display: flex;
+  gap: 4rem;
+  align-items: center;
+}
+.iiud-admissions-pattern {
+  flex: 0.6;
+  height: 100%;
+  min-height: 400px;
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 0 L100 50 L50 100 L0 50 Z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/></svg>');
+  background-size: 50px 50px;
+  background-repeat: repeat;
+  opacity: 0.5;
+}
+.iiud-admissions-content {
+  flex: 1;
+}
+.iiud-admissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+.iiud-admissions-card {
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+}
+.iiud-admissions-card:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: white;
+}
+
+.iiud-roles {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+.iiud-role-tab {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-color);
+  transition: all 0.3s;
+}
+.iiud-role-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.iiud-portrait-card {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  position: relative;
+  overflow: hidden;
+}
+.iiud-portrait-image {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 1.5rem;
+  background: #f0f0f0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: top center;
+}
+
+.iiud-course-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+}
+.iiud-course-image {
+  width: 100%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+}
+
+.iiud-about {
+  position: relative;
+  padding: 8rem 4rem;
+  background-image: url('/images/india_library_1784866287591.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+}
+.iiud-about-card {
+  background: white;
+  padding: 4rem;
+  border-radius: 20px;
+  max-width: 600px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+.iiud-about-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 2rem;
+}
+.iiud-about-list li {
+  padding: 1.2rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-color);
+}
+.iiud-about-list li.active {
+  color: var(--primary);
+}
+
+.iiud-graduates-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+  margin-bottom: -5rem;
+  position: relative;
+  z-index: 1;
+}
+.iiud-graduate-pic {
+  width: 100%;
+  aspect-ratio: 3/4;
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+}

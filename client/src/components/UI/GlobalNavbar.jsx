@@ -77,7 +77,7 @@ const GlobalNavbar = () => {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '2.5rem',
+        gap: '2rem',
       }}>
         {navLinks.map((link) => {
           return (
@@ -85,15 +85,14 @@ const GlobalNavbar = () => {
               key={link.name} 
               to={link.path}
               style={{
-                fontSize: '0.95rem',
-                fontWeight: '500',
+                fontSize: '0.9rem',
+                fontWeight: '600',
                 textDecoration: 'none',
                 color: 'var(--text-color)',
-                opacity: 0.8,
-                transition: 'color 0.2s ease, opacity 0.2s ease',
+                transition: 'color 0.2s ease',
               }}
-              onMouseEnter={(e) => { e.target.style.opacity = 1; e.target.style.color = 'var(--primary)'; }}
-              onMouseLeave={(e) => { e.target.style.opacity = 0.8; e.target.style.color = 'var(--text-color)'; }}
+              onMouseEnter={(e) => { e.target.style.color = 'var(--primary)'; }}
+              onMouseLeave={(e) => { e.target.style.color = 'var(--text-color)'; }}
             >
               {link.name}
             </Link>
@@ -209,17 +208,17 @@ const GlobalNavbar = () => {
           <Link 
             to="/login"
             style={{
-              background: 'var(--text-color)',
-              color: 'var(--bg-color)',
+              background: 'var(--primary)',
+              color: 'white',
               textDecoration: 'none',
-              borderRadius: '50px',
-              padding: '0.6rem 1.5rem',
+              borderRadius: '8px',
+              padding: '0.6rem 1.8rem',
               fontSize: '0.9rem',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: 'pointer',
               transition: 'transform 0.2s',
             }}
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+            onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
             onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
           >
             Login

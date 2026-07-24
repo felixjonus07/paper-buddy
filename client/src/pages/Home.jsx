@@ -1,373 +1,233 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Users, BookOpen, Award, GraduationCap, Building, Beaker, Palette, Calculator, Globe, ChevronRight } from 'lucide-react';
-
-/* ── animated counter hook ── */
-const useCounter = (end, duration = 2000) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const started = useRef(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !started.current) {
-        started.current = true;
-        let start = 0;
-        const step = end / (duration / 16);
-        const timer = setInterval(() => {
-          start += step;
-          if (start >= end) { setCount(end); clearInterval(timer); }
-          else setCount(Math.floor(start));
-        }, 16);
-      }
-    }, { threshold: 0.3 });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [end, duration]);
-
-  return [count, ref];
-};
+import { ChevronRight, Search, Play, FileText, Globe, MapPin, GraduationCap, Users } from 'lucide-react';
 
 const Home = () => {
-  const [students, studentsRef] = useCounter(10000);
-  const [faculty, facultyRef] = useCounter(420);
-  const [programs, programsRef] = useCounter(56);
-  const [placement, placementRef] = useCounter(95);
-
-  const departments = [
-    { icon: Calculator, name: 'Computer Science', desc: 'AI, ML & Full-Stack Development', color: '#0ea5e9' },
-    { icon: Building, name: 'Business Admin', desc: 'MBA & Entrepreneurship', color: '#f59e0b' },
-    { icon: Beaker, name: 'Engineering', desc: 'Mechanical, Civil & Electrical', color: '#10b981' },
-    { icon: Palette, name: 'Arts & Design', desc: 'Visual Arts & Communication', color: '#ec4899' },
-    { icon: Globe, name: 'Sciences', desc: 'Physics, Chemistry & Biology', color: '#8b5cf6' },
-    { icon: BookOpen, name: 'Humanities', desc: 'Literature, History & Philosophy', color: '#ef4444' },
-  ];
-
-  const news = [
-    'Applications open for Fall 2027 intake',
-    'New AI Research Lab inaugurated on campus',
-    'PaperBuddy wins Best EduTech Platform award',
-    'International student exchange with MIT announced',
-    'Annual Tech Fest Registrations now open',
-  ];
+  const [activeUpdate, setActiveUpdate] = useState(1);
+  const [activeRole, setActiveRole] = useState('High school Graduate');
 
   return (
-    <div className="public-page">
-
+    <div className="public-page" style={{ paddingTop: 0 }}>
       {/* ════════ HERO ════════ */}
-      <div className="section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3rem', paddingTop: '4rem', paddingBottom: '2rem' }}>
-        <div style={{ flex: 1 }} className="anim-fade-left">
-          <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.95rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '1rem' }}>
-            Welcome to PaperBuddy
-          </p>
-          <h1 style={{
-            fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-            fontWeight: '900',
-            lineHeight: '1.1',
-            letterSpacing: '1px',
-            fontFamily: "'Montserrat', sans-serif",
-            marginBottom: '1.5rem',
-          }}>
-            <span style={{ color: 'var(--text-color)' }}>Discover</span><br/>
-            <span style={{ color: 'var(--text-color)' }}>Knowledge,</span><br/>
-            <span style={{ color: 'var(--text-color)' }}>Shape The </span>
-            <span style={{ color: 'var(--primary)' }}>Future.</span>
-          </h1>
-
-          <p style={{
-            fontSize: '1.1rem',
-            color: 'var(--text-light)',
-            maxWidth: '500px',
-            lineHeight: '1.7',
-            marginBottom: '2.5rem',
-            fontWeight: '500'
-          }}>
-            Experience world-class education at our premier Tamil Nadu campus. Smart fee management, seamless payments, and AI-powered financial insights — all in one platform.
-          </p>
-
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '3rem' }}>
-            <Link to="/admission" className="glass-btn">
-              Apply Now <ArrowRight size={18} />
-            </Link>
-            <Link to="/contact" className="glass-btn-outline">
-              Explore Programs
-            </Link>
+      <div className="iiud-hero">
+        <div className="iiud-hero-content">
+          <div className="iiud-hero-left anim-fade-right">
+            <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '1px' }}>
+              Creating a better future for
+            </p>
+            <h1 style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: '1.1', color: 'var(--text-color)', marginBottom: '1rem' }}>
+              PaperBuddy<br/>University<br/>India.
+            </h1>
+            
+            <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-light)' }}>
+              <MapPin size={16} /> <span>Coimbatore, India</span>
+            </div>
           </div>
+          <div className="iiud-hero-right anim-fade-left">
+            {/* Background image set in CSS (india_hero_campus) */}
+          </div>
+        </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {[1, 2, 3].map((item, i) => (
-              <div key={i} style={{
-                width: '70px', height: '80px',
-                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                background: `linear-gradient(135deg, var(--primary) ${i * 20}%, #8b5cf6)`,
-                marginLeft: i > 0 ? '-15px' : 0,
-                border: '3px solid var(--bg-color)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-              }} />
+      </div>
+
+      {/* ════════ UPDATES ════════ */}
+      <div className="iiud-updates">
+        <h2 style={{ fontSize: '2.2rem', display: 'flex', alignItems: 'center', gap: '1rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          <span style={{ color: 'white' }}>• Stay touch with updates •</span>
+        </h2>
+        
+        <div className="iiud-updates-container">
+          <div className="iiud-updates-list">
+            {[
+              { id: 1, title: 'National AI Conference hosted at Campus 2024' },
+              { id: 2, title: 'Regional Tech Symposium Registration Open' },
+              { id: 3, title: 'New Entrepreneurship Incubation Cell Launched' }
+            ].map((item) => (
+              <div 
+                key={item.id} 
+                className={`iiud-update-item ${activeUpdate === item.id ? 'active' : ''}`}
+                onClick={() => setActiveUpdate(item.id)}
+              >
+                <div className="update-icon" style={{ 
+                  width: '40px', height: '40px', borderRadius: '8px', 
+                  background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                }}>
+                  <FileText size={20} />
+                </div>
+                <div style={{ flex: 1, fontWeight: '600' }}>{item.title}</div>
+                {activeUpdate === item.id && <ChevronRight size={20} color="var(--primary)" />}
+              </div>
             ))}
-            <span style={{ marginLeft: '0.8rem', fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-light)' }}>10K+ Students</span>
+            <div style={{ marginTop: '2rem', fontSize: '0.9rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: '600' }}>
+              View all updates <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
+            </div>
           </div>
-        </div>
-
-        {/* Hero Image Block */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }} className="anim-fade-right">
-          <div style={{
-            width: '100%',
-            maxWidth: '560px',
-            aspectRatio: '1',
-            backgroundImage: 'url(/images/cs.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            borderRadius: '30% 70% 40% 60% / 55% 30% 70% 45%',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.12), 0 0 0 8px rgba(242,92,5,0.08)',
-          }} />
+          
+          <div className="iiud-updates-preview">
+            <div style={{ position: 'relative', width: '100%', height: '300px' }}>
+              <img src="/images/india_students_1784866265313.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Update" />
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '60px', height: '60px', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <Play fill="white" color="white" size={24} />
+              </div>
+            </div>
+            <div style={{ padding: '2rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>Campus News</div>
+              <h3 style={{color: '#ffffff', fontSize: '1.2rem', margin: 0, fontWeight: '700' }}>PaperBuddy Partners with Leading Tech Firms to Co-organize National AI Conference</h3>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ════════ STATS BAR ════════ */}
+      {/* ════════ ADMISSIONS ════════ */}
+      <div className="iiud-admissions">
+        <div className="iiud-admissions-pattern"></div>
+        <div className="iiud-admissions-content">
+          <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '1rem' }}>Admission</h2>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', opacity: 0.8, marginBottom: '2rem' }}>
+            <span>Requirements</span> • <span>Procedures</span> • <span>Tuition & fees</span> • <span>Scholarships</span>
+          </div>
+          
+          <div className="iiud-admissions-grid">
+            <div className="iiud-admissions-card">
+              <span style={{ fontWeight: '600' }}>Undergraduate</span>
+            </div>
+            <div className="iiud-admissions-card">
+              <span style={{ fontWeight: '600' }}>Postgraduate (Master Degree)</span>
+            </div>
+            <div className="iiud-admissions-card">
+              <span style={{ fontWeight: '600' }}>International students</span>
+            </div>
+            <div className="iiud-admissions-card">
+              <span style={{ fontWeight: '600' }}>Scholarships and Aids</span>
+            </div>
+            <div className="iiud-admissions-card">
+              <span style={{ fontWeight: '600' }}>Online Admission Portal</span>
+            </div>
+            <div className="iiud-admissions-card">
+              <span style={{ fontWeight: '600' }}>Payment of Application fees</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ════════ FIND YOUR WAY ════════ */}
+      <div className="section" style={{ background: 'white' }}>
+        <h2 className="section-title" style={{ margin: '0 0 2rem 4rem' }}>Find your way</h2>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2rem', padding: '0 4rem' }}>
+          <div className="iiud-portrait-card">
+            <div className="iiud-portrait-image" style={{ backgroundImage: 'url(/images/india_highschool_grad_1784867296522.png)' }}></div>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700' }}>High school Graduate</h4>
+          </div>
+          <div className="iiud-portrait-card">
+            <div className="iiud-portrait-image" style={{ backgroundImage: 'url(/images/india_sponsor_1784867308000.png)' }}></div>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700' }}>Sponsor</h4>
+          </div>
+          <div className="iiud-portrait-card">
+            <div className="iiud-portrait-image" style={{ backgroundImage: 'url(/images/india_institution_1784867318650.png)' }}></div>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700' }}>Institution</h4>
+          </div>
+          <div className="iiud-portrait-card">
+            <div className="iiud-portrait-image" style={{ backgroundImage: 'url(/images/india_affiliate_1784867329262.png)' }}></div>
+            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '700' }}>Affiliate</h4>
+          </div>
+        </div>
+      </div>
+
+      {/* ════════ COURSES ════════ */}
       <div className="section-alt">
-        <div className="section-inner" style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap' }}>
-          <div className="stat-card anim-fade-up anim-delay-1" ref={studentsRef}>
-            <div className="stat-number">{students.toLocaleString()}+</div>
-            <div className="stat-label">Students Enrolled</div>
-          </div>
-          <div style={{ width: '1px', background: 'var(--border-strong)', margin: '1rem 0' }} />
-          <div className="stat-card anim-fade-up anim-delay-2" ref={facultyRef}>
-            <div className="stat-number">{faculty}+</div>
-            <div className="stat-label">Expert Faculty</div>
-          </div>
-          <div style={{ width: '1px', background: 'var(--border-strong)', margin: '1rem 0' }} />
-          <div className="stat-card anim-fade-up anim-delay-3" ref={programsRef}>
-            <div className="stat-number">{programs}+</div>
-            <div className="stat-label">Programs Offered</div>
-          </div>
-          <div style={{ width: '1px', background: 'var(--border-strong)', margin: '1rem 0' }} />
-          <div className="stat-card anim-fade-up anim-delay-4" ref={placementRef}>
-            <div className="stat-number">{placement}%</div>
-            <div className="stat-label">Placement Rate</div>
-          </div>
-        </div>
-      </div>
+        <h2 className="section-title" style={{ margin: '0 0 2rem 4rem' }}>Search for a course</h2>
+        
 
-      {/* ════════ NEWS TICKER ════════ */}
-      <div className="section" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
-          <span style={{ color: 'var(--primary)', fontWeight: '800', fontSize: '1.1rem', whiteSpace: 'nowrap' }}>✦ Stay in touch with updates</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-strong)' }} />
-        </div>
-        <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', paddingBottom: '1rem' }}>
-          {news.map((item, i) => (
-            <div key={i} className="glass-card" style={{
-              padding: '1.2rem 1.8rem',
-              minWidth: '280px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              flexShrink: 0,
-            }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
-              <span style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-color)' }}>{item}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', padding: '0 4rem' }}>
+          {[
+            { tag: 'Medical', title: 'Pharmacy and Nursing preparation', img: '/images/data.png' },
+            { tag: 'Engineering', title: 'Bachelor in structural & Civil Engineering', img: '/images/civil.png' },
+            { tag: 'Science', title: 'Computer Science and Engineering', img: '/images/cs.png' },
+            { tag: 'Language', title: 'Regional Languages and Arts', img: '/images/arts.png' }
+          ].map((course, i) => (
+            <div key={i} className="iiud-course-card">
+              <div className="iiud-course-image" style={{ backgroundImage: `url(${course.img})` }}></div>
+              <div style={{ padding: '1.5rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem' }}>
+                  <div style={{ width: '6px', height: '6px', background: 'var(--primary)', borderRadius: '50%' }}></div> {course.tag}
+                </span>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', lineHeight: '1.4' }}>{course.title}</h4>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ════════ ADMISSION PREVIEW ════════ */}
-      <div className="section-alt">
-        <div className="section-inner">
-          <div style={{ display: 'flex', gap: '4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '320px' }} className="anim-fade-left">
-              <div style={{
-                width: '100%',
-                height: '400px',
-                backgroundImage: 'url(/images/arts.png)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                borderRadius: '24px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-              }} />
+      {/* ════════ RESEARCH & PUBLICATION ════════ */}
+      <div className="section" style={{ background: 'white' }}>
+        <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '3rem' }}>Research and Publication</h2>
+        
+        <div style={{ display: 'flex', gap: '2rem', maxWidth: '1100px', margin: '0 auto', flexWrap: 'wrap', padding: '0 2rem' }}>
+          <div style={{ flex: 1, minWidth: '350px', background: '#fef3c7', borderRadius: '20px', overflow: 'hidden' }}>
+            <img src="/images/india_students_1784866265313.png" style={{ width: '100%', height: '250px', objectFit: 'cover' }} alt="Research" />
+            <div style={{ padding: '2rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700' }}>Article</span>
+              <h3 style={{ margin: '0.5rem 0', fontSize: '1.4rem', fontWeight: '800' }}>The paper on "Tech Innovations" published by Top Journals</h3>
             </div>
-            <div style={{ flex: 1, minWidth: '320px' }} className="anim-fade-right">
-              <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.8rem' }}>
-                Admissions Open
-              </p>
-              <h2 className="section-title" style={{ fontSize: '2.4rem' }}>
-                Begin Your Journey With Us
-              </h2>
-              <p style={{ fontSize: '1.05rem', color: 'var(--text-light)', lineHeight: '1.7', marginBottom: '2rem', maxWidth: '480px' }}>
-                Our streamlined admission process is designed to be simple, fast, and transparent. Apply online, upload your documents, and track your application status in real-time.
-              </p>
-              <Link to="/admission" className="glass-btn">
-                Start Application <ArrowRight size={18} />
-              </Link>
+          </div>
+          
+          <div style={{ flex: 1, minWidth: '350px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1.5rem', background: '#f8f9fa', borderRadius: '20px', padding: '1.5rem', alignItems: 'center' }}>
+              <img src="/images/media__1784726996698.png" style={{ width: '120px', height: '120px', borderRadius: '12px', objectFit: 'cover' }} alt="Publication" />
+              <div>
+                <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: '700' }}>Publication</span>
+                <h4 style={{ margin: '0.5rem 0 0', fontSize: '1.2rem', fontWeight: '700' }}>New research "On Time Data" by financial analytics</h4>
+              </div>
+            </div>
+            <div style={{ background: '#11141a', color: 'white', borderRadius: '20px', padding: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flex: 1 }}>
+              <h3 style={{ color: '#ffffff', fontSize: '1.8rem', fontWeight: '700', margin: 0, maxWidth: '250px' }}>Explore more Research and publication</h3>
+              <button style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: 'white', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                View all <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ════════ FIND YOUR WAY / DEPARTMENTS ════════ */}
-      <div className="section">
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <h2 className="section-title" style={{ textAlign: 'center' }}>Find Your Way</h2>
-          <p className="section-subtitle center">Explore our diverse range of departments and programs to find the perfect fit for your academic journey.</p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-          {departments.map((dept, i) => {
-            const Icon = dept.icon;
-            return (
-              <div key={i} className={`glass-card anim-fade-up anim-delay-${i % 5 + 1}`} style={{
-                padding: '2rem',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '1.5rem',
-                cursor: 'pointer',
-              }}>
-                <div style={{
-                  width: '56px', height: '56px', borderRadius: '16px',
-                  background: `${dept.color}15`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <Icon size={26} color={dept.color} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1.15rem', fontWeight: '700' }}>{dept.name}</h3>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', lineHeight: '1.5' }}>{dept.desc}</p>
-                </div>
-                <ChevronRight size={20} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '4px' }} />
-              </div>
-            );
-          })}
+      {/* ════════ MORE ABOUT ════════ */}
+      <div className="iiud-about">
+        <div className="iiud-about-card anim-fade-up">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            <Globe size={18} /> About PaperBuddy
+          </div>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: '0 0 1rem' }}>More about University</h2>
+          <p style={{ color: 'var(--text-light)', lineHeight: '1.7', marginBottom: '2rem' }}>
+            We are dedicated to preparing students for a rapidly changing world by equipping them with critical thinking skills, a global perspective, and a respect for core values of honesty, loyalty, perseverance, and compassion.
+          </p>
+          
+          <ul className="iiud-about-list">
+            <li>Our History <ChevronRight size={20} color="var(--border-strong)" /></li>
+            <li>Values & Goals <ChevronRight size={20} color="var(--border-strong)" /></li>
+            <li className="active">Career at PaperBuddy <ChevronRight size={20} /></li>
+            <li>Our Campus <ChevronRight size={20} color="var(--border-strong)" /></li>
+            <li>Contact Us <ChevronRight size={20} color="var(--border-strong)" /></li>
+          </ul>
         </div>
       </div>
 
-      {/* ════════ COURSES GRID ════════ */}
-      <div className="section-alt">
-        <div className="section-inner">
-          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>Popular Courses</h2>
-            <p className="section-subtitle center">Explore our most sought-after programs designed to shape the leaders of tomorrow.</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {[
-              { title: 'Computer Science & AI', tag: 'B.Tech / M.Tech', img: '/images/cs.png' },
-              { title: 'Business Administration', tag: 'BBA / MBA', img: '/images/business.png' },
-              { title: 'Civil Engineering', tag: 'B.Tech', img: '/images/civil.png' },
-              { title: 'Data Science', tag: 'M.Sc / PG Diploma', img: '/images/data.png' },
-            ].map((course, i) => (
-              <div key={i} className={`program-card anim-fade-up anim-delay-${i + 1}`}>
-                <img src={course.img} alt={course.title} />
-                <div className="program-card-overlay">
-                  <span style={{ fontSize: '0.75rem', fontWeight: '600', background: 'var(--primary)', padding: '0.25rem 0.6rem', borderRadius: '6px', marginBottom: '0.5rem', display: 'inline-block' }}>{course.tag}</span>
-                  <h3>{course.title}</h3>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ════════ INTRODUCING GRADUATES ════════ */}
+      <div className="section" style={{ background: 'white', textAlign: 'center', paddingBottom: '8rem', overflow: 'hidden' }}>
+        <div className="iiud-graduates-grid" style={{ maxWidth: '1200px', margin: '0 auto -6rem', padding: '0 2rem' }}>
+          {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
+             <div key={i} className="iiud-graduate-pic" style={{ backgroundImage: `url(/images/${i % 3 === 0 ? 'india_graduates_1784866276372.png' : i % 2 === 0 ? 'india_students_1784866265313.png' : 'media__1784726117891.png'})` }}></div>
+          ))}
+        </div>
+        
+        <div style={{ background: 'white', padding: '3rem', position: 'relative', zIndex: 10, display: 'inline-block', borderRadius: '24px', boxShadow: '0 -20px 60px rgba(255,255,255,0.95)' }}>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.5rem' }}>Introducing the Graduates</h2>
+          <p style={{ color: 'var(--text-light)', marginBottom: '2rem' }}>We are proud of our successful alumni who have achieved greatly after beginning their journey with us in India.</p>
+          <button style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '8px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 auto' }}>
+            View the Graduation Ceremony <ChevronRight size={18} />
+          </button>
         </div>
       </div>
-
-      {/* ════════ ABOUT / MORE INFO ════════ */}
-      <div className="section">
-        <div style={{ display: 'flex', gap: '4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '320px' }} className="anim-fade-left">
-            <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.8rem' }}>
-              About Us
-            </p>
-            <h2 className="section-title" style={{ fontSize: '2.4rem' }}>
-              More About PaperBuddy
-            </h2>
-            <p style={{ fontSize: '1.05rem', color: 'var(--text-light)', lineHeight: '1.8', marginBottom: '1.5rem', maxWidth: '520px' }}>
-              PaperBuddy is a next-generation fee management platform designed for educational institutions across Tamil Nadu and beyond. We combine cutting-edge technology with intuitive design to make fee collection, financial reporting, and scholarship management effortless.
-            </p>
-            <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--primary)' }}>50+</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Colleges Trust Us</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--primary)' }}>₹2Cr+</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Fees Processed</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--primary)' }}>99.9%</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Uptime</div>
-              </div>
-            </div>
-            <Link to="/contact" className="glass-btn-outline">
-              Learn More <ArrowRight size={18} />
-            </Link>
-          </div>
-          <div style={{ flex: 1, minWidth: '320px' }} className="anim-fade-right">
-            <div style={{
-              width: '100%',
-              height: '420px',
-              backgroundImage: 'url(/images/mech.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              borderRadius: '24px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-            }} />
-          </div>
-        </div>
-      </div>
-
-      {/* ════════ WHY CHOOSE US ════════ */}
-      <div className="section-alt">
-        <div className="section-inner">
-          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center' }}>
-              Why Choose Our <span style={{ color: 'var(--primary)' }}>Campus</span>?
-            </h2>
-            <p className="section-subtitle center">Our institution blends tradition with innovation, creating an ecosystem where academic excellence thrives.</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-            {[
-              { icon: Building, title: 'State-of-the-Art Facilities', desc: 'Modern campus blending traditional Tamil architectural aesthetics with cutting-edge technology, smart classrooms, and advanced research labs.', color: '#0ea5e9' },
-              { icon: Award, title: 'Expert Faculty', desc: 'Learn from industry leaders and distinguished professors dedicated to fostering innovation, critical thinking, and academic excellence.', color: 'var(--primary)' },
-              { icon: Users, title: 'Vibrant Student Life', desc: 'Join diverse cultural clubs, technical symposiums, and sports activities on a beautifully landscaped green campus in Tamil Nadu.', color: '#8b5cf6' },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div key={i} className={`glass-card anim-fade-up anim-delay-${i + 1}`} style={{ padding: '2.5rem' }}>
-                  <div style={{
-                    width: '56px', height: '56px', borderRadius: '16px',
-                    background: `${item.color}15`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    marginBottom: '1.5rem',
-                  }}>
-                    <Icon size={26} color={item.color} />
-                  </div>
-                  <h3 style={{ fontSize: '1.3rem', marginBottom: '0.8rem', fontWeight: '700' }}>{item.title}</h3>
-                  <p style={{ color: 'var(--text-light)', lineHeight: '1.7', margin: 0 }}>{item.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ════════ CTA ════════ */}
-      <div className="section" style={{ textAlign: 'center', paddingBottom: '5rem' }}>
-        <h2 className="section-title" style={{ textAlign: 'center' }}>
-          Ready to Begin Your <span style={{ color: 'var(--primary)' }}>Academic Journey</span>?
-        </h2>
-        <p className="section-subtitle center">
-          Join thousands of students who have already discovered their potential with us. Take the first step today.
-        </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/admission" className="glass-btn">
-            Apply Now <ArrowRight size={18} />
-          </Link>
-          <Link to="/contact" className="glass-btn-outline">
-            Talk to Us
-          </Link>
-        </div>
-      </div>
-
+      
     </div>
   );
 };
