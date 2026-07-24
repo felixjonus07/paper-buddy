@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
 import { IndianRupee, CheckCircle, Clock } from 'lucide-react';
+import { useAlert } from '../../context/AlertContext';
 
 const FinanceManagement = () => {
   const [ledger, setLedger] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
+  const { showAlert } = useAlert();
 
   const fetchLedger = async () => {
     try {
@@ -42,7 +44,7 @@ const FinanceManagement = () => {
       // Refresh ledger
       await fetchLedger();
     } catch (err) {
-      alert(err.message);
+      showAlert(err.message);
     } finally {
       setConfirmingId(null);
     }
@@ -59,7 +61,7 @@ const FinanceManagement = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '1rem', background: 'rgba(99,102,241,0.1)', borderRadius: '12px', color: 'var(--primary-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: 'var(--clay-base)', borderRadius: '16px', color: 'var(--primary)', boxShadow: 'inset 2px 2px 5px rgba(255, 255, 255, 0.5), inset -3px -3px 7px rgba(0, 0, 0, 0.05)' }}>
               <IndianRupee size={24} />
             </div>
             <div>
@@ -71,7 +73,7 @@ const FinanceManagement = () => {
 
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '1rem', background: 'rgba(34,197,94,0.1)', borderRadius: '12px', color: '#22c55e' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: 'var(--clay-base)', borderRadius: '16px', color: '#22c55e', boxShadow: 'inset 2px 2px 5px rgba(255, 255, 255, 0.5), inset -3px -3px 7px rgba(0, 0, 0, 0.05)' }}>
               <CheckCircle size={24} />
             </div>
             <div>
@@ -83,7 +85,7 @@ const FinanceManagement = () => {
 
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '1rem', background: 'rgba(245,158,11,0.1)', borderRadius: '12px', color: '#f59e0b' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: 'var(--clay-base)', borderRadius: '16px', color: '#f59e0b', boxShadow: 'inset 2px 2px 5px rgba(255, 255, 255, 0.5), inset -3px -3px 7px rgba(0, 0, 0, 0.05)' }}>
               <Clock size={24} />
             </div>
             <div>

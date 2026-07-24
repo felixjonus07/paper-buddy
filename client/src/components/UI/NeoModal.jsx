@@ -27,7 +27,7 @@ const NeoModal = ({ isOpen, onClose, title, children, width = '100%', maxWidth =
         maxWidth,
         maxHeight: '90vh',
         overflowY: 'auto',
-        background: 'var(--clay-base)',
+        background: 'var(--bg-color)',
         backdropFilter: 'blur(28px) saturate(180%)',
         WebkitBackdropFilter: 'blur(28px) saturate(180%)',
         borderRadius: '28px',

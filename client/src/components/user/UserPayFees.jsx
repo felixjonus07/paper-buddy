@@ -22,10 +22,8 @@ const UserPayFees = ({ studentFees, fees, handlePayFee }) => {
   ];
 
   return (
-    <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-      <h2 style={{ color: 'var(--primary)', marginBottom: '2rem', textAlign: 'center' }}>Pay Outstanding Fees</h2>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+    <div style={{ animation: 'slideUp 0.3s ease-out', width: '100%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
         {allPending.map(f => (
           <NeoCard key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

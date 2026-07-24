@@ -126,7 +126,7 @@ const BillingOverview = ({ token }) => {
 
   if (error || !data) return (
     <div style={{ textAlign: 'center', padding: '4rem' }}>
-      <p style={{ color: '#ef4444', fontWeight: 700, marginBottom: '1rem' }}>⚠️ {error || 'Failed to load billing data.'}</p>
+      <p style={{ color: '#ef4444', fontWeight: 700, marginBottom: '1rem' }}>{error || 'Failed to load billing data.'}</p>
       <NeoButton variant="secondary" onClick={fetchData}>Try Again</NeoButton>
     </div>
   );
@@ -140,19 +140,16 @@ const BillingOverview = ({ token }) => {
         display: 'flex', flexWrap: 'wrap', gap: '1.5rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
-          <div style={{ width: 12, height: 12, borderRadius: 3, background: '#22c55e', flexShrink: 0 }} />
-          <strong style={{ color: '#16a34a' }}>Platform (Centralized):</strong>
-          <span style={{ color: 'var(--text-secondary)' }}>Online fees from colleges using our gateway — money goes to EduFin platform account.</span>
+          <strong style={{ color: 'var(--primary)' }}>Platform (Centralized):</strong>
+          <span style={{ color: 'var(--text-secondary)' }}>Online fees from colleges using our gateway - money goes to EduFin platform account.</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
-          <div style={{ width: 12, height: 12, borderRadius: 3, background: '#6366f1', flexShrink: 0 }} />
-          <strong style={{ color: '#6366f1' }}>College Own Gateway (Decentralized):</strong>
-          <span style={{ color: 'var(--text-secondary)' }}>Online fees from colleges using their own PhonePe — money goes to college's own account.</span>
+          <strong style={{ color: 'var(--primary)' }}>College Own Gateway (Decentralized):</strong>
+          <span style={{ color: 'var(--text-secondary)' }}>Online fees from colleges using their own PhonePe - money goes to college's own account.</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
-          <div style={{ width: 12, height: 12, borderRadius: 3, background: '#f59e0b', flexShrink: 0 }} />
-          <strong style={{ color: '#d97706' }}>Cash (Cashier):</strong>
-          <span style={{ color: 'var(--text-secondary)' }}>Cash collected directly by college cashiers — credited to college.</span>
+          <strong style={{ color: 'var(--primary)' }}>Cash (Cashier):</strong>
+          <span style={{ color: 'var(--text-secondary)' }}>Cash collected directly by college cashiers - credited to college.</span>
         </div>
       </div>
 
@@ -162,36 +159,32 @@ const BillingOverview = ({ token }) => {
           <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
             <IndianRupee size={22} color="var(--primary)" />
           </div>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Total Collected</p>
-          <h2 style={{ margin: '0.2rem 0 0', color: 'var(--primary)', fontSize: '1.8rem' }}>{fmt(data.summary.grandTotal)}</h2>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All colleges combined</p>
+          <h2 style={{ margin: '0.2rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{fmt(data.summary.grandTotal)}</h2>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total Collected</p>
         </NeoCard>
 
         <NeoCard style={{ textAlign: 'center' }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
-            <Globe size={22} color="#22c55e" />
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
+            <Globe size={22} color="var(--primary)" />
           </div>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Platform Gateway</p>
-          <h2 style={{ margin: '0.2rem 0 0', color: '#22c55e', fontSize: '1.8rem' }}>{fmt(data.summary.grandPlatform)}</h2>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Credited to EduFin</p>
+          <h2 style={{ margin: '0.2rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{fmt(data.summary.grandPlatform)}</h2>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Platform Gateway</p>
         </NeoCard>
 
         <NeoCard style={{ textAlign: 'center' }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
-            <Landmark size={22} color="#6366f1" />
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
+            <Landmark size={22} color="var(--primary)" />
           </div>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>College Own Gateway</p>
-          <h2 style={{ margin: '0.2rem 0 0', color: '#6366f1', fontSize: '1.8rem' }}>{fmt(data.summary.grandOwnGateway)}</h2>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Credited to college</p>
+          <h2 style={{ margin: '0.2rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{fmt(data.summary.grandOwnGateway)}</h2>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>College Own Gateway</p>
         </NeoCard>
 
         <NeoCard style={{ textAlign: 'center' }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
-            <Banknote size={22} color="#f59e0b" />
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
+            <Banknote size={22} color="var(--primary)" />
           </div>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>Cash (Cashier)</p>
-          <h2 style={{ margin: '0.2rem 0 0', color: '#f59e0b', fontSize: '1.8rem' }}>{fmt(data.summary.grandCash)}</h2>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Collected directly</p>
+          <h2 style={{ margin: '0.2rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{fmt(data.summary.grandCash)}</h2>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cash (Cashier)</p>
         </NeoCard>
       </div>
 
@@ -214,15 +207,15 @@ const BillingOverview = ({ token }) => {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'rgba(0,0,0,0.04)' }}>
-                <th style={{ padding: '0.9rem 1rem', borderBottom: '2px solid var(--border)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>College</th>
-                <th style={{ padding: '0.9rem 1rem', borderBottom: '2px solid var(--border)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>Mode</th>
-                <SortTh label="🟢 Platform" k="platformAmount" />
-                <SortTh label="🟣 Own Gateway" k="ownGatewayAmount" />
-                <SortTh label="🟡 Cash" k="cashAmount" />
+              <tr style={{ background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)' }}>
+                <th style={{ padding: '1rem', borderBottom: '2px solid var(--border)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-color)' }}>College</th>
+                <th style={{ padding: '1rem', borderBottom: '2px solid var(--border)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-color)' }}>Mode</th>
+                <SortTh label="Platform" k="platformAmount" />
+                <SortTh label="Own Gateway" k="ownGatewayAmount" />
+                <SortTh label="Cash" k="cashAmount" />
                 <SortTh label="Total" k="totalCollected" />
                 <SortTh label="Balance Owed" k="balanceOwed" />
-                <th style={{ padding: '0.9rem 1rem', borderBottom: '2px solid var(--border)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>Action</th>
+                <th style={{ padding: '1rem', borderBottom: '2px solid var(--border)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-color)' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -312,7 +305,7 @@ const BillingOverview = ({ token }) => {
               <p style={{ margin: '0 0 0.5rem', color: 'var(--text-color)' }}>Paying out to: <strong>{selectedCollege.name}</strong></p>
               <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Outstanding Balance: <strong>{fmt(selectedCollege.balanceOwed)}</strong></p>
             </div>
-            
+
             <NeoInput
               label="Payout Amount (₹)"
               type="number"
@@ -328,7 +321,7 @@ const BillingOverview = ({ token }) => {
               onChange={(e) => setPayoutForm({ ...payoutForm, reference: e.target.value })}
               placeholder="e.g. UTR Number"
             />
-            
+
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <NeoButton type="button" variant="secondary" onClick={() => setPayoutModalOpen(false)} style={{ flex: 1 }}>
                 Cancel

@@ -50,7 +50,7 @@ const CollegeDetail = () => {
           </NeoButton>
           <h1 style={{ color: 'var(--primary)', margin: 0 }}>{college.name} ({college.code})</h1>
         </div>
-        <ThemeToggle />
+
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>

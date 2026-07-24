@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bot, ToggleLeft, ToggleRight, RefreshCw, TrendingUp, MessageSquare, Shield, ShieldOff, Zap } from 'lucide-react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
+import { useAlert } from '../../context/AlertContext';
 
 const AgentManagement = ({ token }) => {
   const [colleges, setColleges] = useState([]);
@@ -9,6 +10,7 @@ const AgentManagement = ({ token }) => {
   const [toggling, setToggling] = useState(null);
   const [resetting, setResetting] = useState(null);
   const [notification, setNotification] = useState(null);
+  const { showConfirm } = useAlert();
 
   const showNotif = (msg, type = 'success') => {
     setNotification({ msg, type });
@@ -56,7 +58,8 @@ const AgentManagement = ({ token }) => {
   };
 
   const resetPrompts = async (college) => {
-    if (!window.confirm(`Reset prompt count for ${college.name}?`)) return;
+    const confirmed = await showConfirm(`Reset prompt count for ${college.name}?`);
+    if (!confirmed) return;
     setResetting(college._id);
     try {
       const res = await fetch(`/api/superadmin/colleges/${college._id}/reset-prompts`, {
@@ -147,32 +150,32 @@ const AgentManagement = ({ token }) => {
         </NeoCard>
         <NeoCard style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(234,179,8,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={24} color="#eab308" />
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Zap size={24} color="var(--primary)" />
             </div>
           </div>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Tokens Used</p>
-          <h2 style={{ margin: '0.25rem 0 0', color: '#eab308', fontSize: '2.5rem' }}>{totalTokens.toLocaleString()}</h2>
+          <h2 style={{ margin: '0.25rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{totalTokens.toLocaleString()}</h2>
           <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>LLM token consumption</p>
         </NeoCard>
         <NeoCard style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Bot size={24} color="#22c55e" />
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Bot size={24} color="var(--primary)" />
             </div>
           </div>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>AI Enabled Colleges</p>
-          <h2 style={{ margin: '0.25rem 0 0', color: '#22c55e', fontSize: '2.5rem' }}>{aiEnabledCount}</h2>
+          <h2 style={{ margin: '0.25rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{aiEnabledCount}</h2>
           <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>of {colleges.length} total</p>
         </NeoCard>
         <NeoCard style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldOff size={24} color="#ef4444" />
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(248,116,16,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldOff size={24} color="var(--primary)" />
             </div>
           </div>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>AI Disabled Colleges</p>
-          <h2 style={{ margin: '0.25rem 0 0', color: '#ef4444', fontSize: '2.5rem' }}>{colleges.length - aiEnabledCount}</h2>
+          <h2 style={{ margin: '0.25rem 0 0', color: 'var(--primary)', fontSize: '2.5rem' }}>{colleges.length - aiEnabledCount}</h2>
           <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Access blocked</p>
         </NeoCard>
       </div>

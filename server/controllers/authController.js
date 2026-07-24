@@ -6,6 +6,16 @@ const registerUser = async (req, res) => {
   try {
     const { name, username, password, role } = req.body;
 
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const usernameRegex = /^[A-Za-z0-9_]+$/;
+
+    if (!nameRegex.test(name)) {
+      return res.status(400).json({ message: 'Full name can only contain letters and spaces' });
+    }
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({ message: 'Username can only contain letters, numbers, and underscores' });
+    }
+
     const userExists = await User.findOne({ username });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });

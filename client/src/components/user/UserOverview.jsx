@@ -22,28 +22,55 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ padding: '10px', backgroundColor: 'var(--clay-pink-light)', borderRadius: '15px', color: 'var(--icon-pink)' }}>
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '50%',
+              background: 'var(--clay-primary-bg)',
+              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid var(--clay-primary-border)',
+              color: 'var(--primary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.4)',
+              flexShrink: 0
+            }}>
               <IndianRupee size={20} />
             </div>
-            <h4 style={{ margin: 0 }}>Outstanding Fees</h4>
+          <h4 style={{ margin: 0 }}>Outstanding Fees</h4>
           </div>
-          <p style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-color)' }}>₹{totalFees.toFixed(2)}</p>
+          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)', wordBreak: 'break-word' }}>₹{totalFees.toFixed(2)}</p>
         </NeoCard>
 
         <NeoCard>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ padding: '10px', backgroundColor: 'var(--clay-mint-light)', borderRadius: '15px', color: 'var(--icon-mint)' }}>
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '50%',
+              background: 'var(--clay-primary-bg)',
+              backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid var(--clay-primary-border)',
+              color: 'var(--primary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.4)',
+              flexShrink: 0
+            }}>
               <FileText size={20} />
             </div>
             <h4 style={{ margin: 0 }}>Pending Loans</h4>
           </div>
-          <p style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-color)' }}>{pendingLoans.length}</p>
+          <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>{pendingLoans.length}</p>
         </NeoCard>
         
         {profile?.scholarship && (
           <NeoCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '10px', backgroundColor: 'var(--clay-lavender-light)', borderRadius: '15px', color: 'var(--icon-lavender)' }}>
+              <div style={{
+                width: '42px', height: '42px', borderRadius: '50%',
+                background: 'var(--clay-primary-bg)',
+                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid var(--clay-primary-border)',
+                color: 'var(--primary)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.4)',
+                flexShrink: 0
+              }}>
                 <FileText size={20} />
               </div>
               <h4 style={{ margin: 0 }}>Active Scholarship</h4>
@@ -55,14 +82,14 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
       </div>
 
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        <NeoCard style={{ flex: '1', minWidth: '350px', backgroundColor: 'var(--clay-lavender-light)' }}>
-          <h3 style={{ marginBottom: '1rem', color: 'var(--icon-lavender)' }}>Loan History</h3>
+        <NeoCard style={{ flex: '1', minWidth: '350px' }}>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Loan History</h3>
           <div className="table-container">
             <table style={{ backgroundColor: 'transparent' }}>
               <thead>
                 <tr>
-                  <th style={{ color: 'var(--icon-lavender)' }}>Amount</th>
-                  <th style={{ color: 'var(--icon-lavender)' }}>Status</th>
+                  <th style={{ color: 'var(--text-color)' }}>Amount</th>
+                  <th style={{ color: 'var(--text-color)' }}>Status</th>
                 </tr>
               </thead>
               <tbody>

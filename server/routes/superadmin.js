@@ -26,7 +26,7 @@ router.get('/analytics', async (req, res) => {
     const totalColleges = await College.countDocuments();
     const activeSubscriptions = await College.countDocuments({ subscriptionStatus: 'active' });
     const totalStudents = await User.countDocuments({ role: 'user' });
-    
+
     // Calculate total revenue processed (if Payment model has amounts)
     const payments = await Payment.find({ status: 'completed' });
     const totalRevenueProcessed = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
@@ -77,7 +77,7 @@ router.get('/colleges/:id', async (req, res) => {
 router.post('/colleges', async (req, res) => {
   try {
     const { name, code, address, subscriptionStatus } = req.body;
-    
+
     const existingCollege = await College.findOne({ code });
     if (existingCollege) {
       return res.status(400).json({ message: 'College code already exists' });
@@ -104,7 +104,7 @@ router.put('/colleges/:id', async (req, res) => {
   try {
     const { subscriptionStatus } = req.body;
     const college = await College.findByIdAndUpdate(req.params.id, { subscriptionStatus }, { new: true });
-    
+
     if (college) {
       await AuditLog.create({
         action: 'UPDATED_COLLEGE_STATUS',
@@ -126,7 +126,7 @@ router.put('/colleges/:id/ai-access', async (req, res) => {
   try {
     const { aiAccess } = req.body;
     const college = await College.findByIdAndUpdate(req.params.id, { aiAccess }, { new: true });
-    
+
     if (college) {
       await AuditLog.create({
         action: 'UPDATED_AI_ACCESS',
@@ -167,7 +167,7 @@ router.put('/colleges/:id/reset-prompts', async (req, res) => {
 router.post('/admins', async (req, res) => {
   try {
     const { collegeId, name, username, password } = req.body;
-    
+
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
@@ -184,7 +184,7 @@ router.post('/admins', async (req, res) => {
       collegeId,
       mustChangePassword: true
     });
-    
+
     await admin.save();
 
     await AuditLog.create({
@@ -214,7 +214,7 @@ router.get('/audit-logs', async (req, res) => {
   }
 });
 
-// Billing Overview — centralized vs decentralized payments per college
+// Billing Overview - centralized vs decentralized payments per college
 router.get('/billing-overview', async (req, res) => {
   try {
     const colleges = await College.find().sort({ createdAt: -1 });
