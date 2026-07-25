@@ -20,6 +20,7 @@ import { useAlert } from '../../context/AlertContext';
 import PaymentSettings from '../../components/admin/PaymentSettings';
 import CashierManagement from '../../components/admin/CashierManagement';
 import FinanceManagement from '../../components/admin/FinanceManagement';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -640,6 +641,7 @@ const AdminDashboard = () => {
                 {activeTab === 'scholarships' && 'This page is for creating standard "Scholarships". You can define rules like "50% off if the student has a high academic score".'}
                 {activeTab === 'cashiers' && 'This page helps you track your Cashiers. You can see who is assigned, view their daily collected cash logs, and download reports.'}
                 {activeTab === 'reports' && 'This page helps you generate detailed financial reports. You can select dates and see all successful payments made by students.'}
+                {activeTab === 'profile' && 'Manage your personal profile and account settings.'}
               </p>
             </div>
           </div>
@@ -656,7 +658,10 @@ const AdminDashboard = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
               <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />
           )}
-          {activeTab === 'finance' && <FinanceManagement />}
+          {activeTab === 'finance' && (
+            <FinanceManagement collegeId={collegeId || user?.collegeId} />
+          )}
+          {activeTab === 'profile' && <ProfileAndSettingsView />}
           {activeTab === 'fees' && (
             (fees.filter(f => f.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :

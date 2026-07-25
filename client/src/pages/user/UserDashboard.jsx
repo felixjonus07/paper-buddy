@@ -8,12 +8,11 @@ import ThemeToggle from '../../components/UI/ThemeToggle';
 import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle, MessageCircle, Home, ChevronLeft, ChevronRight, Menu, Landmark } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import UserOverview from '../../components/user/UserOverview';
-import UserProfile from '../../components/user/UserProfile';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 import UserPayFees from '../../components/user/UserPayFees';
 import UserFeeRequests from '../../components/user/UserFeeRequests';
 import UserApplyLoan from '../../components/user/UserApplyLoan';
 import UserPaidFees from '../../components/user/UserPaidFees';
-import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useAlert } from '../../context/AlertContext';
@@ -477,8 +476,7 @@ const UserDashboard = () => {
               {activeTab === 'fee-requests' && 'Fee Requests'}
               {activeTab === 'loan' && 'Financial Aid'}
               {activeTab === 'paid-fees' && 'Payment History'}
-              {activeTab === 'profile' && 'My Profile'}
-              {activeTab === 'settings' && 'Account Settings'}
+              {activeTab === 'profile' && 'Profile & Settings'}
             </h2>
             <div className="header-actions">
               <NeoButton 
@@ -495,7 +493,7 @@ const UserDashboard = () => {
         <div className="dashboard-scroll-area">
 
           {activeTab === 'dashboard' && <UserOverview user={user} studentFees={filteredStudentFees} loans={filteredLoans} profile={profile} />}
-          {activeTab === 'profile' && <UserProfile profile={profile} openProfileEdit={openProfileEdit} />}
+          {activeTab === 'profile' && <ProfileAndSettingsView />}
           {activeTab === 'pay-fees' && (
             (filteredFees.length === 0 && filteredStudentFees.length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
@@ -512,7 +510,6 @@ const UserDashboard = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
               <UserPaidFees studentFees={filteredStudentFees} handleDownloadReceipt={handleDownloadReceipt} />
           )}
-          {activeTab === 'settings' && <UserSettings handleChangePassword={handleChangePassword} passwordData={passwordData} setPasswordData={setPasswordData} passwordMessage={passwordMessage} />}
         </div>
       </div>
 

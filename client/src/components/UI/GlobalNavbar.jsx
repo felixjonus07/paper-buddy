@@ -174,10 +174,8 @@ const GlobalNavbar = () => {
               }}>
                 <div style={{ padding: '0.5rem' }}>
 
-                  {user.role === 'user' && (
-                    <>
                       <div 
-                        onClick={() => { setIsDropdownOpen(false); navigate('/user/dashboard?tab=profile'); }}
+                        onClick={() => { setIsDropdownOpen(false); navigate(dashboardPath + '?tab=profile'); }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
                           cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
@@ -187,24 +185,9 @@ const GlobalNavbar = () => {
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
                         <User size={18} />
-                        My Profile
-                      </div>
-                      <div 
-                        onClick={() => { setIsDropdownOpen(false); navigate('/user/dashboard?tab=settings'); }}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
-                          cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
-                          transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--clay-base)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <Settings size={18} />
-                        Settings
+                        Profile
                       </div>
                       <div style={{ height: '1px', background: 'rgba(128,128,128,0.2)', margin: '0.5rem 0' }} />
-                    </>
-                  )}
                   <div 
                     onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
                     style={{
@@ -315,22 +298,12 @@ const GlobalNavbar = () => {
             {/* Dashboard and Logout below links */}
             {token && user && (
               <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', borderTop: '1px solid rgba(128,128,128,0.2)', paddingTop: '1.5rem', gap: '0.5rem' }}>
-                {user.role === 'user' && (
-                  <>
                     <div 
-                      onClick={() => { setIsMobileMenuOpen(false); navigate('/user/dashboard?tab=profile'); }}
+                      onClick={() => { setIsMobileMenuOpen(false); navigate(dashboardPath + '?tab=profile'); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
                     >
-                      <User size={20} /> My Profile
+                      <User size={20} /> Profile
                     </div>
-                    <div 
-                      onClick={() => { setIsMobileMenuOpen(false); navigate('/user/dashboard?tab=settings'); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      <Settings size={20} /> Settings
-                    </div>
-                  </>
-                )}
                 <div 
                   onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
