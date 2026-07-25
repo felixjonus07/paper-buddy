@@ -153,9 +153,12 @@ const Login = () => {
   };
 
   return (
-    <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '90vh', position: 'relative' }}>
-      <NeoCard style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-        <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>
+    <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '90vh', position: 'relative', padding: '2rem' }}>
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'stretch', width: '100%', maxWidth: '1200px' }}>
+        
+        {/* Login Form Card */}
+        <NeoCard style={{ flex: '1 1 400px', maxWidth: '400px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>
           Welcome Back
         </h2>
 
@@ -217,37 +220,57 @@ const Login = () => {
             </>
           )}
         </form>
+        </NeoCard>
         
+        {/* Quick Logins Card */}
         {isLogin && !needsReset && (
-          <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(0,0,0,0.03)', borderRadius: '10px' }}>
-            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--text-light)', fontWeight: 'bold' }}>Quick Demo Logins</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginTop: '0.5rem' }}>
-              <button onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={demoBtnStyle}>Super Admin</button>
-              <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
-              <button onClick={() => handleAutoLogin('admin', 'admin123')} style={demoBtnStyle}>Admin</button>
-              <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
+          <NeoCard style={{ flex: '1 1 500px', maxWidth: '600px' }}>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               
-              <div style={{ width: '50%', borderTop: '2px solid var(--primary)', display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
-                <div style={{ borderRight: '2px solid var(--primary)', height: '15px' }}></div>
-              </div>
-              
-              <div style={{ width: '100%', display: 'flex' }}>
-                <div style={{ width: '50%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-                  <button onClick={() => handleAutoLogin('cashier', 'cashier123')} style={demoBtnStyle}>Cashier</button>
+              {/* Left Column: Flowchart */}
+              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-color)', fontSize: '1.1rem' }}>Quick Demo Logins</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                  <div style={{ ...demoBtnStyle, cursor: 'default' }}>Super Admin</div>
+                  <div style={{ borderLeft: '2px solid var(--primary)', height: '20px' }}></div>
+                  <div style={{ ...demoBtnStyle, cursor: 'default' }}>Admin</div>
+                  <div style={{ borderLeft: '2px solid var(--primary)', height: '20px' }}></div>
+                  
+                  <div style={{ width: '60%', borderTop: '2px solid var(--primary)', display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ borderLeft: '2px solid var(--primary)', height: '20px' }}></div>
+                    <div style={{ borderRight: '2px solid var(--primary)', height: '20px' }}></div>
+                  </div>
+                  
+                  <div style={{ width: '100%', display: 'flex' }}>
+                    <div style={{ width: '50%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                      <div style={{ ...demoBtnStyle, cursor: 'default' }}>Cashier</div>
+                    </div>
+                    <div style={{ width: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ ...demoBtnStyle, cursor: 'default' }}>Group Admin</div>
+                      <div style={{ borderLeft: '2px solid var(--primary)', height: '20px' }}></div>
+                      <div style={{ ...demoBtnStyle, cursor: 'default' }}>Student</div>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ width: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <button onClick={() => handleAutoLogin('aidsa', 'aidsa123')} style={demoBtnStyle}>Group Admin</button>
-                  <div style={{ borderLeft: '2px solid var(--primary)', height: '15px' }}></div>
-                  <button onClick={() => handleAutoLogin('student', 'student123')} style={demoBtnStyle}>Student</button>
-                </div>
               </div>
-            </div>
 
-          </div>
+              {/* Right Column: Clickable Buttons */}
+              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', borderLeft: window.innerWidth > 600 ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingLeft: window.innerWidth > 600 ? '1.5rem' : '0' }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
+                  Or click a button below to auto-login:
+                </p>
+                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={{ width: '100%' }}>Super Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin123')} style={{ width: '100%' }}>Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('cashier', 'cashier123')} style={{ width: '100%' }}>Cashier</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('aidsa', 'aidsa123')} style={{ width: '100%' }}>Group Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('student', 'student123')} style={{ width: '100%' }}>Student</NeoButton>
+              </div>
+
+            </div>
+          </NeoCard>
         )}
-      </NeoCard>
+      </div>
     </div>
   );
 };

@@ -84,8 +84,23 @@ const MentorDashboard = () => {
         </div>
 
         <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: '0.8rem', display: 'flex', justifyContent: 'center' }}>
-            <LogOut size={18} /> {isSidebarOpen && 'Logout'}
+          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.3rem 1rem 0.3rem 0.3rem' : '0.4rem', display: 'flex', justifyContent: isSidebarOpen ? 'flex-start' : 'center', alignItems: 'center', gap: '0.8rem' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 2px 5px rgba(242,92,5,0.3)',
+              flexShrink: 0,
+            }}>
+              <LogOut size={16} />
+            </div>
+            {isSidebarOpen && 'Logout'}
           </NeoButton>
         </div>
       </div>
