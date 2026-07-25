@@ -229,15 +229,15 @@ const ReportsManagement = () => {
                 <tbody>
                   {reports.payments.map((p) => (
                     <tr key={p._id} style={{ borderBottom: '1px solid var(--border)', transition: 'background-color 0.2s' }}>
-                      <td style={{ padding: '1rem', color: 'var(--text-color)' }}>{new Date(p.paidAt).toLocaleDateString()}</td>
-                      <td style={{ padding: '1rem', color: 'var(--text-color)' }}>
+                      <td style={{ padding: '1rem', color: 'var(--text-color)', background: 'transparent', backdropFilter: 'none' }}>{new Date(p.paidAt).toLocaleDateString()}</td>
+                      <td style={{ padding: '1rem', color: 'var(--text-color)', background: 'transparent', backdropFilter: 'none' }}>
                         <strong>{p.userDetails?.name || 'N/A'}</strong><br/>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>Reg: {p.userDetails?.registerNumber || 'N/A'}</span>
                       </td>
-                      <td style={{ padding: '1rem', color: 'var(--text-color)' }}>{p.feeDetails?.title || 'Unknown Fee'}</td>
-                      <td style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--clay-mint)' }}>₹{p.amount}</td>
-                      <td style={{ padding: '1rem', color: 'var(--text-light)' }}>{p.paymentMethod}</td>
-                      <td style={{ padding: '1rem' }}>
+                      <td style={{ padding: '1rem', color: 'var(--text-color)', background: 'transparent', backdropFilter: 'none' }}>{p.feeDetails?.title || 'Unknown Fee'}</td>
+                      <td style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--clay-mint)', background: 'transparent', backdropFilter: 'none' }}>₹{p.amount}</td>
+                      <td style={{ padding: '1rem', color: 'var(--text-light)', background: 'transparent', backdropFilter: 'none' }}>{p.paymentMethod}</td>
+                      <td style={{ padding: '1rem', background: 'transparent', backdropFilter: 'none' }}>
                         <span style={{ 
                           padding: '0.3rem 0.6rem', 
                           borderRadius: '10px', 

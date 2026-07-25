@@ -994,13 +994,12 @@ const ChatBot = () => {
           to { opacity: 1; transform: translateX(0); }
         }
         .chatbot-window {
-          position: sticky;
-          top: 100px;
-          align-self: flex-start;
-          margin: 100px 1.25rem 1.25rem 0;
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
           height: 600px;
-          max-height: calc(100vh - 120px);
-          width: 340px;
+          max-height: 80vh;
+          width: 360px;
           background: var(--clay-base);
           backdrop-filter: blur(40px) saturate(200%);
           -webkit-backdrop-filter: blur(40px) saturate(200%);

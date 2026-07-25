@@ -125,7 +125,7 @@ const CashierManagement = ({ isReadOnly, collegeId }) => {
                 style={{
                   padding: '1.2rem',
                   borderRadius: '16px',
-                  backgroundColor: selectedCashier?._id === c._id ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg-secondary)',
+                  backgroundColor: selectedCashier?._id === c._id ? 'var(--clay-primary-bg)' : 'var(--clay-base)',
                   border: `1px solid ${selectedCashier?._id === c._id ? 'var(--primary)' : 'var(--border)'}`,
                   cursor: 'pointer',
                   transition: 'all 0.2s',

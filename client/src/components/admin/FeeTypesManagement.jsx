@@ -33,7 +33,7 @@ const FeeTypesManagement = ({
           <h3 style={{marginBottom: '1rem' }}>Existing Fee Types</h3>
           <div className="card-grid">
             {feeTypes.map(c => (
-              <NeoCard key={c._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)' }}>
+              <NeoCard key={c._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{c.name}</h4>
                   {!isReadOnly && <NeoButton variant="peach" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }} onClick={() => handleDeleteFeeType(c._id)}>Delete</NeoButton>}
