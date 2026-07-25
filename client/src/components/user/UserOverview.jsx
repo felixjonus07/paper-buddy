@@ -10,10 +10,10 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
   return (
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
       <NeoCard style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '2rem' }}>
-         <div>
-           <h2 style={{ margin: 0, color: 'var(--primary)' }}>Hello, {user.name}!</h2>
-           <p>Welcome to your personal Paper Buddy dashboard.</p>
-         </div>
+        <div>
+          <h2 style={{ margin: 0, color: 'var(--primary)' }}>Hello, {user.name}!</h2>
+          <p>Welcome to your personal Paper Buddy dashboard.</p>
+        </div>
       </NeoCard>
 
       <div className="stats-grid-small">
@@ -31,7 +31,7 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
             }}>
               <IndianRupee size={20} />
             </div>
-          <h4 style={{ margin: 0 }}>Outstanding Fees</h4>
+            <h4 style={{ margin: 0 }}>Outstanding Fees</h4>
           </div>
           <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)', wordBreak: 'break-word' }}>₹{totalFees.toFixed(2)}</p>
         </NeoCard>
@@ -54,7 +54,7 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
           </div>
           <p style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>{pendingLoans.length}</p>
         </NeoCard>
-        
+
         {profile?.scholarship && (
           <NeoCard>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
@@ -78,7 +78,7 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop:'15px' }}>
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '15px' }}>
         <NeoCard style={{ flex: '1', minWidth: '350px' }}>
           <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Loan History</h3>
           <div className="table-container">
@@ -94,7 +94,7 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
                   <tr key={l._id}>
                     <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>₹{l.amount}</td>
                     <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
-                      <span style={{ 
+                      <span style={{
                         padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem',
                         backgroundColor: l.status === 'pending' ? 'var(--clay-peach-light)' : l.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
                         color: l.status === 'pending' ? '#9a3412' : l.status === 'approved' ? '#115e59' : '#831843'

@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
-import Admission from './pages/Admission';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import UserDashboard from './pages/user/UserDashboard';
@@ -22,7 +21,7 @@ import { AlertProvider } from './context/AlertContext';
 
 const ConditionalFooter = () => {
   const location = useLocation();
-  const publicRoutes = ['/', '/admission', '/contact', '/login'];
+  const publicRoutes = ['/', '/login'];
   if (publicRoutes.includes(location.pathname)) {
     return <Footer />;
   }
@@ -38,12 +37,16 @@ function App() {
           <div className="global-content">
             <ErrorBoundary>
               <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/admission" element={<Admission />} />
-                <Route path="/contact" element={<Contact />} />
+                <Route path="/" element={
+                  <>
+                    <Home />
+                    <Contact />
+                  </>
+                } />
+              
                 <Route path="/login" element={<Login />} />
                 <Route
-                  path="/user/dashboard"
+                  path="/user/:username/dashboard"
                   element={
                     <ProtectedRoute requiredRole="user">
                       <UserDashboard />
@@ -51,7 +54,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/admin/dashboard"
+                  path="/admin/:username/dashboard"
                   element={
                     <ProtectedRoute requiredRole="admin">
                       <AdminDashboard />
@@ -59,7 +62,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/superadmin/dashboard"
+                  path="/superadmin/:username/dashboard"
                   element={
                     <ProtectedRoute requiredRole="superadmin">
                       <SuperAdminDashboard />
@@ -83,7 +86,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/cashier/dashboard"
+                  path="/cashier/:username/dashboard"
                   element={
                     <ProtectedRoute requiredRole="cashier">
                       <CashierDashboard />
@@ -91,7 +94,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/mentor/dashboard"
+                  path="/mentor/:username/dashboard"
                   element={
                     <ProtectedRoute requiredRole="mentor">
                       <MentorDashboard />

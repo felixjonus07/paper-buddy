@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X } from 'lucide-react';
+import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const GlobalNavbar = () => {
@@ -40,17 +40,22 @@ const GlobalNavbar = () => {
     navigate('/login');
   };
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Admission', path: '/admission' },
-    { name: 'Contact', path: '/contact' }
-  ];
-
   let dashboardPath = '/';
   if (token && user) {
-    dashboardPath = '/user/dashboard';
-    if (user.role === 'admin') dashboardPath = '/admin/dashboard';
-    else if (user.role === 'cashier') dashboardPath = '/cashier/dashboard';
+    const u = user.username || 'me';
+    dashboardPath = `/user/${u}/dashboard`;
+    if (user.role === 'superadmin') dashboardPath = `/superadmin/${u}/dashboard`;
+    else if (user.role === 'admin') dashboardPath = `/admin/${u}/dashboard`;
+    else if (user.role === 'cashier') dashboardPath = `/cashier/${u}/dashboard`;
+    else if (user.role === 'mentor') dashboardPath = `/mentor/${u}/dashboard`;
+  }
+
+  const navLinks = [
+    { name: 'Home', path: '/' },
+  ];
+
+  if (token && user) {
+    navLinks.push({ name: 'Dashboard', path: dashboardPath });
   }
 
   return (
@@ -58,8 +63,8 @@ const GlobalNavbar = () => {
       
       <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
         {/* Logo Section */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-color)', textDecoration: 'none' }}>
-          <GraduationCap size={28} color="var(--primary)" strokeWidth={2.5} />
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-color)', textDecoration: 'none' }}>
+          <img src="/images/Logo.png" alt="Paper Buddy Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           <span style={{ fontWeight: '700', fontSize: '1.4rem', letterSpacing: '0.5px' }}>Paper Buddy</span>
         </Link>
       </div>
@@ -89,83 +94,7 @@ const GlobalNavbar = () => {
         })}
       </div>
 
-      {/* Mobile Side Drawer Overlay */}
-      <div 
-        className={`mobile-menu-overlay ${isMobileMenuOpen ? 'visible' : ''}`}
-        onClick={() => setIsMobileMenuOpen(false)} 
-      />
 
-      {/* Mobile Side Drawer Content */}
-      <div className={`mobile-menu-drawer ${isMobileMenuOpen ? 'visible' : ''}`}>
-        <button 
-          onClick={() => setIsMobileMenuOpen(false)}
-          style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-color)', cursor: 'pointer' }}
-        >
-          <X size={24} />
-        </button>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-          
-          {/* Mobile User Profile Section */}
-          {token && user && (
-            <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid rgba(128,128,128,0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{
-                  width: '48px', height: '48px', borderRadius: '50%', background: 'var(--primary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
-                  fontWeight: 'bold', fontSize: '1.4rem'
-                }}>
-                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-color)' }}>{user.name || 'User'}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', textTransform: 'uppercase' }}>{user.role}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Mobile Links */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {navLinks.map(link => (
-              <Link 
-                key={link.name} 
-                to={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-color)', textDecoration: 'none' }}
-              >
-                {link.name}
-              </Link>
-            ))}
-            {!token && (
-              <Link 
-                to="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary)', textDecoration: 'none', marginTop: '0.5rem' }}
-              >
-                Login
-              </Link>
-            )}
-
-            {/* Dashboard and Logout below links */}
-            {token && user && (
-              <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', borderTop: '1px solid rgba(128,128,128,0.2)', paddingTop: '1.5rem', gap: '0.5rem' }}>
-                <div 
-                  onClick={() => { setIsMobileMenuOpen(false); navigate(dashboardPath); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
-                >
-                  <LayoutDashboard size={20} /> Dashboard
-                </div>
-                <div 
-                  onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
-                >
-                  <LogOut size={20} /> Logout
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Actions Section */}
       <div className="navbar-actions">
@@ -244,19 +173,38 @@ const GlobalNavbar = () => {
                 animation: 'dropdownFadeIn 0.2s ease-out'
               }}>
                 <div style={{ padding: '0.5rem' }}>
-                  <div 
-                    onClick={() => { setIsDropdownOpen(false); navigate(dashboardPath); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
-                      cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
-                      transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--clay-base)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <LayoutDashboard size={18} />
-                    Dashboard
-                  </div>
+
+                  {user.role === 'user' && (
+                    <>
+                      <div 
+                        onClick={() => { setIsDropdownOpen(false); navigate('/user/dashboard?tab=profile'); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
+                          cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--clay-base)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <User size={18} />
+                        My Profile
+                      </div>
+                      <div 
+                        onClick={() => { setIsDropdownOpen(false); navigate('/user/dashboard?tab=settings'); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
+                          cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--clay-base)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <Settings size={18} />
+                        Settings
+                      </div>
+                      <div style={{ height: '1px', background: 'rgba(128,128,128,0.2)', margin: '0.5rem 0' }} />
+                    </>
+                  )}
                   <div 
                     onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
                     style={{
@@ -305,6 +253,94 @@ const GlobalNavbar = () => {
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
+      </div>
+
+      {/* Mobile Side Drawer Overlay */}
+      <div 
+        className={`mobile-menu-overlay ${isMobileMenuOpen ? 'visible' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)} 
+      />
+
+      {/* Mobile Side Drawer Content */}
+      <div className={`mobile-menu-drawer ${isMobileMenuOpen ? 'visible' : ''}`}>
+        <button 
+          onClick={() => setIsMobileMenuOpen(false)}
+          style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-color)', cursor: 'pointer', zIndex: 1010 }}
+        >
+          <X size={24} />
+        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem', position: 'relative', zIndex: 1005 }}>
+          
+          {/* Mobile User Profile Section */}
+          {token && user && (
+            <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid rgba(128,128,128,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '50%', background: 'var(--primary)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white',
+                  fontWeight: 'bold', fontSize: '1.4rem'
+                }}>
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-color)' }}>{user.name || 'User'}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', textTransform: 'uppercase' }}>{user.role}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Links */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {navLinks.map(link => (
+              <Link 
+                key={link.name} 
+                to={link.path}
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-color)', textDecoration: 'none' }}
+              >
+                {link.name}
+              </Link>
+            ))}
+            {!token && (
+              <Link 
+                to="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary)', textDecoration: 'none', marginTop: '0.5rem' }}
+              >
+                Login
+              </Link>
+            )}
+
+            {/* Dashboard and Logout below links */}
+            {token && user && (
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', borderTop: '1px solid rgba(128,128,128,0.2)', paddingTop: '1.5rem', gap: '0.5rem' }}>
+                {user.role === 'user' && (
+                  <>
+                    <div 
+                      onClick={() => { setIsMobileMenuOpen(false); navigate('/user/dashboard?tab=profile'); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      <User size={20} /> My Profile
+                    </div>
+                    <div 
+                      onClick={() => { setIsMobileMenuOpen(false); navigate('/user/dashboard?tab=settings'); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      <Settings size={20} /> Settings
+                    </div>
+                  </>
+                )}
+                <div 
+                  onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  <LogOut size={20} /> Logout
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );

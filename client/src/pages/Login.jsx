@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock } from 'lucide-react';
 import NeoCard from '../components/UI/NeoCard';
@@ -8,13 +8,30 @@ import ThemeToggle from '../components/UI/ThemeToggle';
 import { useAlert } from '../context/AlertContext';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { showAlert } = useAlert();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const u = user.username || 'me';
+        if (user.role === 'superadmin') navigate(`/superadmin/${u}/dashboard`);
+        else if (user.role === 'admin') navigate(`/admin/${u}/dashboard`);
+        else if (user.role === 'cashier') navigate(`/cashier/${u}/dashboard`);
+        else if (user.role === 'mentor') navigate(`/mentor/${u}/dashboard`);
+        else navigate(`/user/${u}/dashboard`);
+      } catch (e) {}
+    }
+  }, [navigate]);
+
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: '', password: '', name: '', newPassword: '' });
   const [error, setError] = useState(null);
   const [needsReset, setNeedsReset] = useState(false);
   const [resetToken, setResetToken] = useState(null);
-  const navigate = useNavigate();
-  const { showAlert } = useAlert();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,16 +67,17 @@ const Login = () => {
         localStorage.setItem('user', JSON.stringify(data));
         
         // Redirect based on role
+        const u = data.username || 'me';
         if (data.role === 'superadmin') {
-          navigate('/superadmin/dashboard');
+          navigate(`/superadmin/${u}/dashboard`);
         } else if (data.role === 'admin') {
-          navigate('/admin/dashboard');
+          navigate(`/admin/${u}/dashboard`);
         } else if (data.role === 'cashier') {
-          navigate('/cashier/dashboard');
+          navigate(`/cashier/${u}/dashboard`);
         } else if (data.role === 'mentor') {
-          navigate('/mentor/dashboard');
+          navigate(`/mentor/${u}/dashboard`);
         } else {
-          navigate('/user/dashboard');
+          navigate(`/user/${u}/dashboard`);
         }
       } else {
         setError(data.message || 'Authentication failed');

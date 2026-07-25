@@ -79,12 +79,8 @@ const Footer = () => {
 
         <div className="footer-bottom-row">
           <p style={{ margin: 0 }}>
-            © 2024 PaperBuddy University India. All Rights Reserved.
+            © PaperBuddy India. All Rights Reserved.
           </p>
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
-            <span>Privacy Policy</span>
-            <span>Terms of Use</span>
-          </div>
         </div>
         
       </div>

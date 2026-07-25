@@ -25,7 +25,9 @@ const FeeManagement = ({ fees, setFeeModalOpen, handleDeleteFee, isReadOnly }) =
               <span style={{ 
                 padding: '0.4rem 0.8rem', 
                 borderRadius: '12px', 
-                backgroundColor: 'var(--bg-color)',
+                background: 'var(--clay-base)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid var(--border)',
                 boxShadow: 'var(--clay-outer)',
                 fontSize: '0.85rem'
               }}>
@@ -34,7 +36,9 @@ const FeeManagement = ({ fees, setFeeModalOpen, handleDeleteFee, isReadOnly }) =
               <span style={{ 
                 padding: '0.4rem 0.8rem', 
                 borderRadius: '12px', 
-                backgroundColor: 'var(--bg-color)',
+                background: 'var(--clay-base)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid var(--border)',
                 boxShadow: 'var(--clay-outer)',
                 fontSize: '0.85rem'
               }}>

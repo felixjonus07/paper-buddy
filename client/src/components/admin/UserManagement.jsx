@@ -28,8 +28,8 @@ const UserManagement = ({
     <div style={{ animation: 'slideUp 0.3s ease-out' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ margin: 0, color: 'var(--primary)' }}>User Management</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ width: '280px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-end' }}>
+          <div style={{ flex: '1 1 250px', minWidth: '200px', maxWidth: '100%' }}>
             <NeoInput 
               Icon={Search} 
               placeholder="Search users..." 
@@ -38,7 +38,7 @@ const UserManagement = ({
             />
           </div>
           {!isReadOnly && (
-            <NeoButton variant="mint" onClick={() => setUserModalOpen(true)}>
+            <NeoButton variant="mint" style={{ flex: '1 1 auto', minWidth: '140px' }} onClick={() => setUserModalOpen(true)}>
               <Plus size={20} /> Bulk Create
             </NeoButton>
           )}

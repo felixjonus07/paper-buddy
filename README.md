@@ -1,74 +1,80 @@
-# College Education Fintech App
+# PaperBuddy India
 
-Welcome to the College Education Fintech App! This project is designed to provide financial solutions and educational resources tailored for college students. 
+PaperBuddy India is a modern educational management and smart financing platform. Designed with a stunning, glassmorphism-inspired SaaS aesthetic, it simplifies payments, tracks tasks, and connects students with administrators, cashiers, and mentors effortlessly.
 
-## Tech Stack
+## 🚀 Features
 
-This project is built using the **MERN** stack:
-- **MongoDB**: NoSQL database for flexible data storage.
-- **Express.js**: Web application framework for the backend.
-- **React.js**: Frontend JavaScript library for building user interfaces.
-- **Node.js**: JavaScript runtime environment for executing backend code.
+- **Role-Based Access Control (RBAC):**
+  - **Student/User Dashboard:** Track payments, view academic progress, and manage tasks.
+  - **Mentor Dashboard:** Oversee student performance and guide academic journeys.
+  - **Cashier Dashboard:** Handle transactions, verify payments, and manage fee structures.
+  - **Admin & Superadmin:** Complete oversight of the institution, including user management, global fee types, and scholarship configurations.
+- **Smart Financing:** Streamline fee collections, manage scholarships, and track financial transactions securely.
+- **Responsive & Modern UI:** A fully responsive interface featuring floating glass cards, subtle animations, and an intuitive layout.
+- **Dark/Light Mode:** First-class support for both light and dark themes using a beautiful custom UI token system.
+- **Integrated AI Chatbot:** Get quick answers and assistance without leaving the page.
 
-## Key Features (Proposed)
-- **Financial Tracking**: Track tuition, books, and living expenses easily.
-- **Financial Aid & Loan Matching**: Find micro-loans, scholarships, or grants suitable for students.
-- **Financial Literacy**: Educational modules on budgeting, saving, and investing.
-- **Secure Transactions**: Secure handling of user financial data.
+## 🛠️ Tech Stack
 
-## Prerequisites
+- **Frontend:**
+  - React.js
+  - React Router DOM
+  - Vanilla CSS (Glassmorphism & Flex/Grid layouts)
+  - Lucide React (Icons)
+- **Backend:**
+  - Node.js
+  - Express.js
+  - MongoDB (Mongoose)
+  - JWT Authentication
 
-Make sure you have the following installed on your local machine:
-- [Node.js](https://nodejs.org/)
-- [MongoDB](https://www.mongodb.com/) (running locally or a MongoDB Atlas URI)
-- npm or yarn (Package managers)
+## 📦 Installation & Setup
 
-## Getting Started
+Follow these instructions to get a copy of the project up and running on your local machine.
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repo-url>
-cd <your-repo-name>
+git clone <repository-url>
+cd paper-buddy
 ```
 
-### 2. Install Dependencies
-
-You will need to install dependencies for both the backend and frontend.
-
-**Backend:**
+### 2. Setup the Server
 ```bash
-# From the root directory or backend directory
+cd server
 npm install
 ```
-
-**Frontend:**
-```bash
-cd client # or whatever your React frontend directory is named
-npm install
-```
-
-### 3. Environment Variables
-Create a `.env` file in the backend/root directory and add the necessary environment variables:
+Create a `.env` file in the `server` directory and add your environment variables:
 ```env
-PORT=5050
+PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 ```
-
-### 4. Running the Application
-
-**Run the Backend Server:**
+Run the server:
 ```bash
-# In the root/backend directory
-npm run dev # or node server.js
-```
-
-**Run the React Client:**
-```bash
-# In the client directory
-cd client
 npm start
 ```
 
-## Contributing
-Feel free to fork this project, submit issues, and send pull requests!
+### 3. Setup the Client
+```bash
+cd ../client
+npm install
+```
+Run the development server:
+```bash
+npm run dev
+```
+
+The client will be available at `http://localhost:5173/` and the API server at `http://localhost:5000/`.
+
+## 🎨 Design Philosophy
+
+The application utilizes a highly custom CSS framework avoiding generic utility classes where possible. It prioritizes:
+- **Visual Excellence:** Soft shadows, vibrant gradients, and premium typography.
+- **Micro-animations:** Elements respond smoothly to user interaction.
+- **Glassmorphism:** Heavy use of `backdrop-filter` and semi-transparent backgrounds to create depth.
+
+---
+*Funding futures, simplifying learning.*
