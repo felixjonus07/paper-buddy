@@ -20,6 +20,8 @@
   --overlay-bg: rgba(255, 255, 255, 0.3);
   --border: rgba(255, 255, 255, 0.6); /* White glass edge */
   --border-strong: rgba(255, 255, 255, 0.8);
+  --success: #10b981;
+  --error: #ef4444;
 
   /* accent aliases */
   --clay-primary-bg: rgba(242, 92, 5, 0.15);
@@ -74,6 +76,8 @@
   --overlay-bg: rgba(0, 0, 0, 0.5);
   --border: rgba(255, 255, 255, 0.08); /* Subtle glass edge */
   --border-strong: rgba(255, 255, 255, 0.15);
+  --success: #10b981;
+  --error: #ef4444;
   
   /* accent aliases */
   --clay-primary-bg: rgba(242, 92, 5, 0.15);
@@ -204,6 +208,8 @@ a { text-decoration: none; color: inherit; }
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .app-container {

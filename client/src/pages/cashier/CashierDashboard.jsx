@@ -5,6 +5,7 @@ import NeoCard from '../../components/UI/NeoCard';
 import NeoInput from '../../components/UI/NeoInput';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoSelect from '../../components/UI/NeoSelect';
+import NeoModal from '../../components/UI/NeoModal';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -66,7 +67,7 @@ const CashierDashboard = () => {
 
   // Add fee modal
   const [showAddFee, setShowAddFee] = useState(false);
-  const [addFeeData, setAddFeeData] = useState({ title: '', amount: '', feeType: '' });
+  const [addFeeData, setAddFeeData] = useState({ title: '', amount: '', feeType: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [addFeeMsg, setAddFeeMsg] = useState('');
   const [feeTypes, setFeeTypes] = useState([]);
 
@@ -237,7 +238,7 @@ const CashierDashboard = () => {
       const data = await res.json();
       if (res.ok) {
         setAddFeeMsg('✅ Fee added!');
-        setAddFeeData({ title: '', amount: '', feeType: '' });
+        setAddFeeData({ title: '', amount: '', feeType: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
         // Refresh pending fees
         const feesRes = await fetch(`/api/cashier/students/${selectedStudent._id}/fees`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -555,33 +556,75 @@ const CashierDashboard = () => {
                 )}
 
                 {/* Add Fee Modal */}
-                {showAddFee && selectedStudent && (
-                  <div style={{
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <NeoCard style={{ width: '100%', maxWidth: '420px', position: 'relative' }}>
-                      <button onClick={() => setShowAddFee(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}><X size={20} /></button>
-                      <h3 style={{ color: 'var(--primary)', marginBottom: '0.3rem' }}>Add Fee to Student</h3>
-                      <p style={{ color: 'var(--text-light)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                        Manually create and assign a one-off fee for <strong>{selectedStudent.name}</strong>.
-                      </p>
-                      <form onSubmit={handleAddFee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <NeoInput type="text" placeholder="Fee Title (e.g. Lab Fee)" value={addFeeData.title} onChange={e => setAddFeeData({ ...addFeeData, title: e.target.value })} required />
-                        <NeoInput type="number" placeholder="Amount (₹)" value={addFeeData.amount} onChange={e => setAddFeeData({ ...addFeeData, amount: e.target.value })} required />
-                        <NeoSelect
-                          value={addFeeData.feeType}
-                          onChange={v => setAddFeeData({ ...addFeeData, feeType: v })}
-                          placeholder="Select Fee Type..."
-                          options={feeTypes.map(ft => ({ value: ft._id, label: ft.name }))}
-                          required
+                <NeoModal 
+                  isOpen={showAddFee && selectedStudent} 
+                  onClose={() => setShowAddFee(false)} 
+                  title="Add Fee to Student"
+                  maxWidth="420px"
+                >
+                  <p style={{ color: 'var(--text-light)', fontSize: '0.85rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+                    Manually create and assign a one-off fee for <strong>{selectedStudent?.name}</strong>.
+                  </p>
+                  <form onSubmit={handleAddFee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Fee Title</label>
+                      <NeoInput type="text" placeholder="Fee Title (e.g. Lab Fee)" value={addFeeData.title} onChange={e => setAddFeeData({ ...addFeeData, title: e.target.value })} required />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Amount (₹)</label>
+                      <NeoInput type="number" placeholder="Amount (₹)" value={addFeeData.amount} onChange={e => setAddFeeData({ ...addFeeData, amount: e.target.value })} required min="0" />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Fee Type</label>
+                      <NeoSelect
+                        value={addFeeData.feeType}
+                        onChange={v => setAddFeeData({ ...addFeeData, feeType: v })}
+                        placeholder="Select Fee Type..."
+                        options={feeTypes.map(ft => ({ value: ft._id, label: ft.name }))}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Deadline Date (Optional)</label>
+                      <NeoInput 
+                        type="date" 
+                        value={addFeeData.deadlineDate || ''} 
+                        onChange={e => setAddFeeData({...addFeeData, deadlineDate: e.target.value})} 
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Fine (₹)</label>
+                        <NeoInput 
+                          type="number" 
+                          placeholder="Fine Amount" 
+                          value={addFeeData.lateFeeFine || ''} 
+                          onChange={e => setAddFeeData({...addFeeData, lateFeeFine: e.target.value})} 
+                          min="0"
                         />
-                        <NeoButton variant="primary" type="submit" style={{ width: '100%' }}>Add Fee</NeoButton>
-                        {addFeeMsg && <p style={{ textAlign: 'center', color: addFeeMsg.startsWith('✅') ? 'var(--clay-mint)' : 'var(--clay-peach)' }}>{addFeeMsg}</p>}
-                      </form>
-                    </NeoCard>
-                  </div>
-                )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Type</label>
+                        <NeoSelect 
+                          value={addFeeData.lateFeeFineType || 'total'}
+                          onChange={val => setAddFeeData({...addFeeData, lateFeeFineType: val})}
+                          options={[
+                            { value: 'total', label: 'Total (Fixed)' },
+                            { value: 'per day', label: 'Per Day' },
+                            { value: 'per month', label: 'Per Month' }
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    <NeoButton variant="primary" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Add Fee</NeoButton>
+                    {addFeeMsg && <p style={{ textAlign: 'center', marginTop: '1rem', color: addFeeMsg.startsWith('✅') ? 'var(--clay-mint)' : 'var(--clay-peach)' }}>{addFeeMsg}</p>}
+                  </form>
+                </NeoModal>
 
                 {/* Recently Accessed / Serviced Students */}
                 {!selectedStudent && todayLog.length > 0 && (

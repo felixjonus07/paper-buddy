@@ -39,6 +39,19 @@ const feeSchema = new mongoose.Schema({
     ref: 'College',
     required: true
   },
+  deadlineDate: {
+    type: Date,
+    required: false
+  },
+  lateFeeFine: {
+    type: Number,
+    default: 0
+  },
+  lateFeeFineType: {
+    type: String,
+    enum: ['per day', 'per month', 'total'],
+    default: 'total'
+  },
   createdAt: {
     type: Date,
     default: Date.now,

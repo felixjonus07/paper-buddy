@@ -20,6 +20,7 @@ const GroupDashboard = () => {
   const navigate = useNavigate();
   const { showAlert } = useAlert();
   const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,7 @@ const GroupDashboard = () => {
   // Add Fee State
   const [isAddFeeModalOpen, setIsAddFeeModalOpen] = useState(false);
   const [feeTypes, setFeeTypes] = useState([]);
-  const [newFee, setNewFee] = useState({ title: '', amount: '', feeType: '' });
+  const [newFee, setNewFee] = useState({ title: '', amount: '', feeType: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [isAddingFee, setIsAddingFee] = useState(false);
   const [selectedUserIdForFee, setSelectedUserIdForFee] = useState(null);
 
@@ -167,7 +168,7 @@ const GroupDashboard = () => {
 
   const openAddFeeModal = (userId = null) => {
     setSelectedUserIdForFee(userId);
-    setNewFee({ title: '', amount: '', feeType: '' });
+    setNewFee({ title: '', amount: '', feeType: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
     setIsAddFeeModalOpen(true);
     if (feeTypes.length === 0) fetchFeeTypes();
   };
@@ -254,12 +255,13 @@ const GroupDashboard = () => {
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <NeoButton variant="secondary" onClick={() => {
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          navigate(user.role === 'mentor' ? '/mentor/dashboard' : '/admin/dashboard');
-        }} style={{ padding: '0.6rem', borderRadius: '50%' }}>
-          <ArrowLeft size={20} />
-        </NeoButton>
+        {user.role !== 'mentor' && (
+          <NeoButton variant="secondary" onClick={() => {
+            navigate('/admin/dashboard');
+          }} style={{ padding: '0.6rem', borderRadius: '50%' }}>
+            <ArrowLeft size={20} />
+          </NeoButton>
+        )}
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h1 style={{ margin: 0, color: 'var(--primary)' }}>{group?.name || 'Unknown'} Dashboard</h1>

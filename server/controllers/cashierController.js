@@ -3,6 +3,7 @@ const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
 const Fee = require('../models/Fee');
 const FeeType = require('../models/FeeType');
+const { calculateDynamicFeeAmount } = require('../utils/feeUtils');
 
 // Search students by name / username / register number (live search)
 const searchStudents = async (req, res) => {
@@ -33,9 +34,14 @@ const getStudentPendingFees = async (req, res) => {
     const pendingFees = await StudentFee.find({
       studentId: studentId,
       status: 'PENDING'
-    }).populate('feeId');
+    }).populate('feeId').lean();
 
-    res.json(pendingFees);
+    const updatedPendingFees = pendingFees.map(sf => {
+      sf.finalAmount = calculateDynamicFeeAmount(sf);
+      return sf;
+    });
+
+    res.json(updatedPendingFees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -69,11 +75,13 @@ const processCashPayment = async (req, res) => {
       return res.status(404).json({ message: 'Pending fee not found' });
     }
 
+    const dynamicFinalAmount = calculateDynamicFeeAmount(studentFee);
+
     const payment = await Payment.create({
       user: studentId,
       fee: studentFee.feeId._id,
       group: studentFee.groupId,
-      amount: studentFee.finalAmount,
+      amount: dynamicFinalAmount,
       paymentMethod: 'CASH',
       status: 'SUCCESS',
       collegeId: req.user.collegeId,
@@ -82,6 +90,7 @@ const processCashPayment = async (req, res) => {
     });
 
     studentFee.status = 'PAID';
+    studentFee.finalAmount = dynamicFinalAmount;
     await studentFee.save();
 
     res.status(200).json({ message: 'Payment recorded successfully', payment });
