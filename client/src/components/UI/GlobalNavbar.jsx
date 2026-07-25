@@ -177,7 +177,7 @@ const GlobalNavbar = () => {
                   {user.role === 'user' && (
                     <>
                       <div 
-                        onClick={() => { setIsDropdownOpen(false); navigate('/user/dashboard?tab=profile'); }}
+                        onClick={() => { setIsDropdownOpen(false); navigate(`${dashboardPath}?tab=profile`); }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
                           cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
@@ -190,7 +190,7 @@ const GlobalNavbar = () => {
                         My Profile
                       </div>
                       <div 
-                        onClick={() => { setIsDropdownOpen(false); navigate('/user/dashboard?tab=settings'); }}
+                        onClick={() => { setIsDropdownOpen(false); navigate(`${dashboardPath}?tab=settings`); }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
                           cursor: 'pointer', borderRadius: '8px', color: 'var(--text-color)', fontWeight: '600',
@@ -318,13 +318,13 @@ const GlobalNavbar = () => {
                 {user.role === 'user' && (
                   <>
                     <div 
-                      onClick={() => { setIsMobileMenuOpen(false); navigate('/user/dashboard?tab=profile'); }}
+                      onClick={() => { setIsMobileMenuOpen(false); navigate(`${dashboardPath}?tab=profile`); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
                     >
                       <User size={20} /> My Profile
                     </div>
                     <div 
-                      onClick={() => { setIsMobileMenuOpen(false); navigate('/user/dashboard?tab=settings'); }}
+                      onClick={() => { setIsMobileMenuOpen(false); navigate(`${dashboardPath}?tab=settings`); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
                     >
                       <Settings size={20} /> Settings
