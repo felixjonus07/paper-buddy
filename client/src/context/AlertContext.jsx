@@ -2,7 +2,10 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import NeoModal from '../components/UI/NeoModal';
 import NeoButton from '../components/UI/NeoButton';
 
-const AlertContext = createContext();
+const AlertContext = createContext({
+  showAlert: () => Promise.resolve(),
+  showConfirm: () => Promise.resolve(false),
+});
 
 export const useAlert = () => useContext(AlertContext);
 

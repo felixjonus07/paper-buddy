@@ -512,6 +512,11 @@ const CashierDashboard = () => {
                                 Base: {fmt(fee.baseAmount)}
                                 {fee.discountAmount > 0 && <span style={{ color: 'var(--clay-mint)', marginLeft: '0.5rem' }}> · Discount: {fmt(fee.discountAmount)}</span>}
                               </p>
+                              {fee.feeId?.deadlineDate && (
+                                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                                  Due: {new Date(fee.feeId.deadlineDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </p>
+                              )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                               <div style={{ textAlign: 'right' }}>
