@@ -101,23 +101,23 @@ const AdminDashboard = () => {
   const [mentorData, setMentorData] = useState({ groupId: null, name: '', username: '', password: '' });
   const [mentorMessage, setMentorMessage] = useState('');
 
-  const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '' });
+  const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [feeMessage, setFeeMessage] = useState('');
 
-  const [userFeeData, setUserFeeData] = useState({ title: '', amount: '', feeType: '', userId: '' });
+  const [userFeeData, setUserFeeData] = useState({ title: '', amount: '', feeType: '', userId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [currentFeeRequest, setCurrentFeeRequest] = useState(null);
 
   const [isAssignStudentModalOpen, setAssignStudentModalOpen] = useState(false);
-  const [isAssignSubgroupModalOpen, setAssignSubgroupModalOpen] = useState(false);
+
   const [isGlowChartModalOpen, setGlowChartModalOpen] = useState(false);
 
   const [selectedUserForGroup, setSelectedUserForGroup] = useState(null);
-  const [selectedGroupForSub, setSelectedGroupForSub] = useState(null);
+
   const [selectedGroupForChart, setSelectedGroupForChart] = useState(null);
   const [expandedUser, setExpandedUser] = useState(null);
 
   const [assignStudentData, setAssignStudentData] = useState({ groupId: '' });
-  const [assignSubgroupData, setAssignSubgroupData] = useState({ parentId: '' });
+
 
   const [editUserData, setEditUserData] = useState({ scholarship: 'NONE', academicScore: 0, _id: null });
 
@@ -286,7 +286,8 @@ const AdminDashboard = () => {
         body: JSON.stringify({
           name: editGroupData.name,
           description: editGroupData.description,
-          isGlobal: editGroupData.isGlobal
+          isGlobal: editGroupData.isGlobal,
+          parentId: editGroupData.parentId
         })
       });
       const data = await res.json();
@@ -337,7 +338,10 @@ const AdminDashboard = () => {
       setFeeMessage(res.ok ? 'Fee assigned successfully!' : (data.message || 'Failed to assign fee'));
       if (res.ok) {
         fetchData();
-        setTimeout(() => setFeeModalOpen(false), 1500);
+        setTimeout(() => {
+          setFeeModalOpen(false);
+          setFeeData({ title: '', amount: '', feeType: '', groupId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
+        }, 1500);
       }
     } catch (err) { setFeeMessage('Server error'); }
   };
@@ -352,6 +356,7 @@ const AdminDashboard = () => {
       });
       if (res.ok) {
         setAssignUserFeeModalOpen(false);
+        setUserFeeData({ title: '', amount: '', feeType: '', userId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
         fetchData();
         showAlert('Fee assigned to student successfully!');
       } else {
@@ -412,20 +417,6 @@ const AdminDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleAssignSubgroup = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/admin/groups/assign-subgroup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ childId: selectedGroupForSub?._id, parentId: assignSubgroupData.parentId })
-      });
-      if (res.ok) {
-        fetchData();
-        setAssignSubgroupModalOpen(false);
-      }
-    } catch (err) { console.error(err); }
-  };
 
   const handleEditUserSubmit = async (e) => {
     e.preventDefault();
@@ -679,7 +670,7 @@ const AdminDashboard = () => {
           {activeTab === 'groups' && (
             (groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
-              <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />
+              <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />
           )}
           {activeTab === 'finance' && <FinanceManagement />}
           {activeTab === 'fees' && (
@@ -883,6 +874,17 @@ const AdminDashboard = () => {
             </label>
           </div>
 
+          <NeoSelect
+            value={editGroupData.parentId || ''}
+            onChange={val => setEditGroupData({ ...editGroupData, parentId: val })}
+            required={false}
+            placeholder="Assign to Parent Group (Optional)"
+            options={[
+              { value: '', label: 'No Parent' },
+              ...groups.filter(g => g._id !== editGroupData._id).map(g => ({ value: g._id, label: g.name }))
+            ]}
+          />
+
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Save Changes</NeoButton>
           {editGroupMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{editGroupMessage}</p>}
         </form>
@@ -931,6 +933,42 @@ const AdminDashboard = () => {
             />
           </div>
 
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Deadline Date (Optional)</label>
+            <NeoInput 
+              type="date" 
+              value={feeData.deadlineDate || ''} 
+              onChange={e => setFeeData({...feeData, deadlineDate: e.target.value})} 
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Fine (₹)</label>
+              <NeoInput 
+                type="number" 
+                placeholder="Fine Amount" 
+                value={feeData.lateFeeFine || ''} 
+                onChange={e => setFeeData({...feeData, lateFeeFine: e.target.value})} 
+                min="0"
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Type</label>
+              <div style={{ position: 'relative' }}>
+                <NeoSelect 
+                  value={feeData.lateFeeFineType || 'total'}
+                  onChange={val => setFeeData({...feeData, lateFeeFineType: val})}
+                  options={[
+                    { value: 'total', label: 'Total (Fixed)' },
+                    { value: 'per day', label: 'Per Day' },
+                    { value: 'per month', label: 'Per Month' }
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
           <NeoButton variant="peach" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Assign Fee</NeoButton>
           {feeMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-peach)', textAlign: 'center' }}>{feeMessage}</p>}
         </form>
@@ -952,7 +990,44 @@ const AdminDashboard = () => {
               required={true}
               placeholder="Select Fee Type..."
               options={feeTypes.map(c => ({ value: c._id, label: c.name }))}
+              style={{ marginBottom: '1rem' }}
             />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Deadline Date (Optional)</label>
+            <NeoInput 
+              type="date" 
+              value={userFeeData.deadlineDate || ''} 
+              onChange={e => setUserFeeData({...userFeeData, deadlineDate: e.target.value})} 
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Fine (₹)</label>
+              <NeoInput 
+                type="number" 
+                placeholder="Fine Amount" 
+                value={userFeeData.lateFeeFine || ''} 
+                onChange={e => setUserFeeData({...userFeeData, lateFeeFine: e.target.value})} 
+                min="0"
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Type</label>
+              <div style={{ position: 'relative' }}>
+                <NeoSelect 
+                  value={userFeeData.lateFeeFineType || 'total'}
+                  onChange={val => setUserFeeData({...userFeeData, lateFeeFineType: val})}
+                  options={[
+                    { value: 'total', label: 'Total (Fixed)' },
+                    { value: 'per day', label: 'Per Day' },
+                    { value: 'per month', label: 'Per Month' }
+                  ]}
+                />
+              </div>
+            </div>
           </div>
 
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Assign Fee</NeoButton>
@@ -978,22 +1053,6 @@ const AdminDashboard = () => {
       </NeoModal>
 
       {/* Assign Subgroup Modal */}
-      {/* Assign Subgroup Modal */}
-      <NeoModal isOpen={isAssignSubgroupModalOpen} onClose={() => setAssignSubgroupModalOpen(false)} title={`Set Parent for ${selectedGroupForSub?.name}`}>
-        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
-          Make this group a "child" of another group. For example, "Section A" can be a child of "Computer Science Department".
-        </p>
-        <form onSubmit={handleAssignSubgroup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <NeoSelect
-            value={assignSubgroupData.parentId}
-            onChange={val => setAssignSubgroupData({ parentId: val })}
-            required={true}
-            placeholder="Select Parent Group..."
-            options={groups.filter(g => g._id !== selectedGroupForSub?._id).map(g => ({ value: g._id, label: g.name }))}
-          />
-          <NeoButton variant="pink" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Set Parent</NeoButton>
-        </form>
-      </NeoModal>
 
       {/* Edit User Modal */}
       {/* Edit User Modal */}

@@ -45,6 +45,11 @@ const StudentLedger = ({ selectedStudent, setSelectedStudent, pendingFees, handl
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)', marginTop: '0.2rem' }}>
                   Base Amount: ₹{fee.baseAmount}
                   {fee.discountAmount > 0 && ` | Discount: ₹${fee.discountAmount}`}
+                  {fee.finalAmount > (fee.baseAmount - (fee.discountAmount || 0)) && (
+                    <span style={{ color: 'var(--clay-peach)', marginLeft: '0.5rem', fontWeight: 'bold' }}>
+                      (+ Late Fee applied)
+                    </span>
+                  )}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>

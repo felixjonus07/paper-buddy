@@ -4,6 +4,8 @@ const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
 const FeeRequest = require('../models/FeeRequest');
 const FeeType = require('../models/FeeType');
+const Scholarship = require('../models/Scholarship');
+const { calculateDynamicFeeAmount } = require('../utils/feeUtils');
 const bcrypt = require('bcryptjs');
 
 const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('pg-sdk-node');
@@ -91,8 +93,16 @@ const getStudentFees = async (req, res) => {
   try {
     const studentFees = await StudentFee.find({ studentId: req.user._id })
       .populate('feeId')
-      .sort({ createdAt: -1 });
-    res.json(studentFees);
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    // Dynamically calculate late fees
+    const updatedStudentFees = studentFees.map(sf => {
+      sf.finalAmount = calculateDynamicFeeAmount(sf);
+      return sf;
+    });
+
+    res.json(updatedStudentFees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -112,13 +122,17 @@ const payFee = async (req, res) => {
     }
 
     studentFee.status = 'PAID';
+    
+    // Dynamically calculate the final amount with late fees
+    const dynamicFinalAmount = calculateDynamicFeeAmount(studentFee);
+    studentFee.finalAmount = dynamicFinalAmount; // update the stored finalAmount to lock in the late fee
     await studentFee.save();
 
     const payment = new Payment({
       user: req.user._id,
       group: studentFee.groupId,
       fee: studentFee.feeId,
-      amount: studentFee.finalAmount,
+      amount: dynamicFinalAmount,
       collegeId: req.user.collegeId
     });
     await payment.save();
@@ -154,9 +168,17 @@ const payNewFee = async (req, res) => {
         baseAmount: fee.amount,
         discountAmount: 0,
         finalAmount: fee.amount,
-        status: 'PAID'
+        status: 'PENDING' // Set as pending briefly to calculate late fee
       });
+      // populate feeId for dynamic calculation
+      studentFee.feeId = fee;
+      studentFee.finalAmount = calculateDynamicFeeAmount(studentFee);
+      studentFee.feeId = fee._id; // revert back to ObjectId
+      studentFee.status = 'PAID';
     } else {
+      studentFee.feeId = fee; // inject populated fee temporarily
+      studentFee.finalAmount = calculateDynamicFeeAmount(studentFee);
+      studentFee.feeId = fee._id; // revert back to ObjectId
       studentFee.status = 'PAID';
     }
     
@@ -187,12 +209,14 @@ const createPaymentOrder = async (req, res) => {
     if (isMissing) {
       const fee = await Fee.findById(id);
       if (!fee) return res.status(404).json({ message: 'Fee not found' });
-      amountToPay = fee.amount;
+      // Create a dummy studentFee to calculate dynamic amount for missing fee
+      const dummySf = { finalAmount: fee.amount, feeId: fee, status: 'PENDING' };
+      amountToPay = calculateDynamicFeeAmount(dummySf);
     } else {
-      const studentFee = await StudentFee.findById(id);
+      const studentFee = await StudentFee.findById(id).populate('feeId');
       if (!studentFee) return res.status(404).json({ message: 'Fee record not found' });
       if (studentFee.status === 'PAID') return res.status(400).json({ message: 'Already paid' });
-      amountToPay = studentFee.finalAmount;
+      amountToPay = calculateDynamicFeeAmount(studentFee);
     }
 
     const merchantOrderId = `MT${Date.now()}${id.substring(0, 6)}`;
