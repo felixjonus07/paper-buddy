@@ -9,8 +9,6 @@ const GroupManagement = ({
   setGroupModalOpen,
   setEditGroupData,
   setEditGroupModalOpen,
-  setSelectedGroupForSub,
-  setAssignSubgroupModalOpen,
   mentorData,
   setMentorData,
   setCreateMentorModalOpen,
@@ -56,13 +54,10 @@ const GroupManagement = ({
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <NeoButton variant="mint" style={{ flex: '1 1 45%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
                   e.stopPropagation(); 
-                  setEditGroupData({ _id: g._id, name: g.name, description: g.description || '', isGlobal: g.isGlobal || false });
+                  setEditGroupData({ _id: g._id, name: g.name, description: g.description || '', isGlobal: g.isGlobal || false, parentId: g.parentGroups?.[0]?._id || '' });
                   setEditGroupModalOpen(true);
                 }}>
                   Edit
-                </NeoButton>
-                <NeoButton variant="pink" style={{ flex: '1 1 45%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setSelectedGroupForSub(g); setAssignSubgroupModalOpen(true); }}>
-                  Parent Group
                 </NeoButton>
                 <NeoButton variant="secondary" style={{ flex: '1 1 100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { 
                   e.stopPropagation(); 
@@ -82,3 +77,4 @@ const GroupManagement = ({
 };
 
 export default GroupManagement;
+/* Force HMR update */

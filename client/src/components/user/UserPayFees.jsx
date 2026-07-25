@@ -11,13 +11,15 @@ const UserPayFees = ({ studentFees, fees, handlePayFee }) => {
       id: sf._id,
       title: sf.feeId?.title || 'Unknown Fee',
       amountDue: sf.finalAmount,
-      isMissing: false
+      isMissing: false,
+      hasLateFee: sf.finalAmount > (sf.baseAmount - (sf.discountAmount || 0))
     })),
     ...missingFees.map(f => ({
       id: f._id,
       title: f.title,
       amountDue: f.amount,
-      isMissing: true
+      isMissing: true,
+      hasLateFee: false // Missing fees are calculated at checkout, but we can't easily know here without extra logic
     }))
   ];
 
@@ -31,6 +33,11 @@ const UserPayFees = ({ studentFees, fees, handlePayFee }) => {
             </div>
             <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>
               ₹{f.amountDue.toFixed(2)}
+              {f.hasLateFee && (
+                <span style={{ fontSize: '0.9rem', color: 'var(--clay-peach)', marginLeft: '0.8rem', fontWeight: 'bold' }}>
+                  (+ Late Fee)
+                </span>
+              )}
             </div>
             <NeoButton 
               variant="mint" 
