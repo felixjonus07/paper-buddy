@@ -53,6 +53,17 @@ const CollegeDetail = () => {
 
       </div>
 
+      <NeoCard style={{ marginBottom: '2rem' }}>
+        <h2 style={{ marginBottom: '1rem' }}>Institution Details</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', color: 'var(--text-secondary)' }}>
+          <div><strong>Address:</strong> <br/>{college.address || 'N/A'}</div>
+          <div><strong>Phone Number:</strong> <br/>{college.phone || 'N/A'}</div>
+          <div><strong>Mail ID:</strong> <br/>{college.email || 'N/A'}</div>
+          <div><strong>Administrator:</strong> <br/>{college.administratorName || 'N/A'}</div>
+          <div><strong>Strength:</strong> <br/>{college.strength ? college.strength.toLocaleString() : 'N/A'}</div>
+        </div>
+      </NeoCard>
+
       <div className="stats-grid-small" style={{ marginBottom: '2rem' }}>
         <NeoCard>
           <h3 style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={18} /> Total Admins</h3>

@@ -4,6 +4,10 @@ const collegeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   code: { type: String, required: true, unique: true },
   address: { type: String, required: true },
+  phone: { type: String },
+  email: { type: String },
+  administratorName: { type: String },
+  strength: { type: Number },
   subscriptionStatus: { type: String, enum: ['active', 'suspended'], default: 'active' },
   paymentType: { type: String, enum: ['CENTRALIZED', 'DECENTRALIZED'], default: 'CENTRALIZED' },
   paymentCredentials: {
