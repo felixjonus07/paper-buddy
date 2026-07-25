@@ -572,12 +572,11 @@ const UserDashboard = () => {
           />
           <NeoSelect
             value={feeRequestData.feeType}
-            onChange={e => setFeeRequestData({ ...feeRequestData, feeType: e.target.value })}
+            onChange={val => setFeeRequestData({ ...feeRequestData, feeType: val })}
+            options={feeTypes.map(c => ({ value: c._id, label: c.name }))}
+            placeholder="Select Fee Type"
             required
-          >
-            <option value="" disabled>Select Fee Type</option>
-            {feeTypes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-          </NeoSelect>
+          />
           <textarea
             placeholder="Optional reason or context..."
             value={feeRequestData.reason}
