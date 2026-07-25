@@ -850,8 +850,8 @@ const ChatBot = () => {
   const location = useLocation();
 
   const initialMessage = getUserRole() === 'admin' || getUserRole() === 'superadmin'
-    ? ' Hi! I\'m EduFin AI. I can help you manage fees, groups, scholarships, loans, and more.\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
-    : ' Hi! I\'m EduFin AI. How can I help you today?';
+    ? ' Hi Im buddy agent integrated to do anything inside the website\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
+    : ' Hi Im buddy agent integrated to do anything inside the website';
 
   const [messages, setMessages] = useState([
     { role: 'assistant', content: initialMessage }
@@ -1079,7 +1079,7 @@ const ChatBot = () => {
               <Bot size={20} color="white" />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-color)' }}>EduFin AI</div>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-color)' }}>Buddy</div>
             </div>
             <button onClick={() => setOpen(false)} style={{
               background: 'none', border: 'none', cursor: 'pointer',
@@ -1216,25 +1216,60 @@ const ChatBot = () => {
         </div>
       )}
 
-      {/* FAB (Only visible when chatbot is closed) */}
+      {/* FAB Container (Only visible when chatbot is closed) */}
       {!open && (
-        <button
-          className="chatbot-fab"
-          onClick={() => setOpen(true)}
-          title="Open EduFin AI"
-          style={{
-            position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9998,
-            width: '56px', height: '56px', borderRadius: '18px', border: 'none',
-            background: 'linear-gradient(135deg, #f87410, #ea580c)',
-            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-            animation: 'pulse 2.5s ease-in-out infinite',
-            boxShadow: '0 8px 32px rgba(248,116,16,0.4)',
-            transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)'
-          }}
-        >
-          <MessageCircle size={24} />
-        </button>
+        <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9998, display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
+          {/* Agent Popup Bubble */}
+          <div style={{
+            background: 'var(--clay-base)',
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            border: '1px solid var(--border)',
+            borderRadius: '16px',
+            padding: '0.85rem 1.25rem',
+            color: 'var(--text-color)',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+            position: 'relative',
+            animation: 'slideInRightFade 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 0.5s',
+            opacity: 0,
+            transform: 'translateX(20px)',
+            marginBottom: '0.5rem'
+          }}>
+            I'm a Buddy, I can do anything for U ✨
+            {/* Triangle pointing to FAB */}
+            <div style={{
+              position: 'absolute',
+              right: '-6px',
+              bottom: '20px',
+              width: '12px',
+              height: '12px',
+              background: 'var(--clay-base)',
+              borderRight: '1px solid var(--border)',
+              borderBottom: '1px solid var(--border)',
+              transform: 'rotate(-45deg)'
+            }} />
+          </div>
+
+          <button
+            className="chatbot-fab"
+            onClick={() => setOpen(true)}
+            title="Open Buddy"
+            style={{
+              width: '56px', height: '56px', borderRadius: '18px', border: 'none',
+              background: 'linear-gradient(135deg, #f87410, #ea580c)',
+              color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              animation: 'pulse 2.5s ease-in-out infinite',
+              boxShadow: '0 8px 32px rgba(248,116,16,0.4)',
+              transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+              flexShrink: 0
+            }}
+          >
+            <Bot size={24} />
+          </button>
+        </div>
       )}
     </>
   );

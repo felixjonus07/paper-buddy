@@ -438,9 +438,19 @@ const AdminDashboard = () => {
           academicScore: Number(editUserData.academicScore)
         })
       });
-      if (res.ok) {
+      
+      // Also assign the user to the selected group
+      const assignRes = await fetch('/api/admin/users/assign-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ userId: editUserData._id, groupId: editUserData.groupId })
+      });
+
+      if (res.ok && assignRes.ok) {
         fetchData();
         setEditUserModalOpen(false);
+      } else {
+        console.error('Failed to update user profile or group');
       }
     } catch (err) { console.error(err); }
   };
@@ -564,8 +574,23 @@ const AdminDashboard = () => {
         </div>
 
         <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: '0.8rem', display: 'flex', justifyContent: 'center' }}>
-            <LogOut size={18} /> {isSidebarOpen && 'Logout'}
+          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.3rem 1rem 0.3rem 0.3rem' : '0.4rem', display: 'flex', justifyContent: isSidebarOpen ? 'flex-start' : 'center', alignItems: 'center', gap: '0.8rem' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 2px 5px rgba(242,92,5,0.3)',
+              flexShrink: 0,
+            }}>
+              <LogOut size={16} />
+            </div>
+            {isSidebarOpen && 'Logout'}
           </NeoButton>
         </div>
       </div>
@@ -986,6 +1011,16 @@ const AdminDashboard = () => {
             options={[
               { value: 'NONE', label: 'No Scholarship' },
               ...scholarships.map(s => ({ value: s._id, label: `${s.name} (${s.discountPercentage}% Off)` }))
+            ]}
+          />
+          <NeoSelect
+            value={editUserData.groupId || ''}
+            onChange={val => setEditUserData({ ...editUserData, groupId: val })}
+            required={false}
+            placeholder="Assign to Group (Optional)"
+            options={[
+              { value: '', label: 'No Group' },
+              ...groups.filter(g => g.name !== 'Global').map(g => ({ value: g._id, label: g.name }))
             ]}
           />
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Save Changes</NeoButton>
