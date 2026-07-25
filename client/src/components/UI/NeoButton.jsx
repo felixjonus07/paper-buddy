@@ -5,41 +5,41 @@ const VARIANTS = {
     bg: 'var(--clay-primary-bg)',
     color: 'var(--clay-primary-text)',
     border: '1px solid var(--clay-primary-border)',
-    shadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.5)',
-    shadowHover: '0 8px 24px rgba(248,116,16,0.25), inset 0 1px 0 rgba(255,255,255,0.7)',
-    shadowPressed: '0 2px 4px rgba(248,116,16,0.1), inset 0 1px 0 rgba(255,255,255,0.3)',
+    shadow: 'var(--clay-btn-primary)',
+    shadowHover: 'var(--clay-btn-primary)',
+    shadowPressed: 'var(--clay-primary-pressed)',
   },
   mint: {
     bg: 'var(--clay-primary-bg)',
     color: 'var(--clay-primary-text)',
     border: '1px solid var(--clay-primary-border)',
-    shadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.5)',
-    shadowHover: '0 8px 24px rgba(248,116,16,0.25), inset 0 1px 0 rgba(255,255,255,0.7)',
-    shadowPressed: '0 2px 4px rgba(248,116,16,0.1), inset 0 1px 0 rgba(255,255,255,0.3)',
+    shadow: 'var(--clay-btn-primary)',
+    shadowHover: 'var(--clay-btn-primary)',
+    shadowPressed: 'var(--clay-primary-pressed)',
   },
   pink: {
     bg: 'var(--clay-primary-bg)',
     color: 'var(--clay-primary-text)',
     border: '1px solid var(--clay-primary-border)',
-    shadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.5)',
-    shadowHover: '0 8px 24px rgba(248,116,16,0.25), inset 0 1px 0 rgba(255,255,255,0.7)',
-    shadowPressed: '0 2px 4px rgba(248,116,16,0.1), inset 0 1px 0 rgba(255,255,255,0.3)',
+    shadow: 'var(--clay-btn-primary)',
+    shadowHover: 'var(--clay-btn-primary)',
+    shadowPressed: 'var(--clay-primary-pressed)',
   },
   peach: {
     bg: 'var(--clay-primary-bg)',
     color: 'var(--clay-primary-text)',
     border: '1px solid var(--clay-primary-border)',
-    shadow: '0 4px 12px rgba(248,116,16,0.15), inset 0 1px 0 rgba(255,255,255,0.5)',
-    shadowHover: '0 8px 24px rgba(248,116,16,0.25), inset 0 1px 0 rgba(255,255,255,0.7)',
-    shadowPressed: '0 2px 4px rgba(248,116,16,0.1), inset 0 1px 0 rgba(255,255,255,0.3)',
+    shadow: 'var(--clay-btn-primary)',
+    shadowHover: 'var(--clay-btn-primary)',
+    shadowPressed: 'var(--clay-primary-pressed)',
   },
   secondary: {
     bg: 'var(--clay-base)',
     color: 'var(--text-color)',
     border: '1px solid var(--border)',
-    shadow: '0 2px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.3)',
-    shadowHover: '0 4px 20px rgba(0,0,0,0.1)',
-    shadowPressed: 'inset 0 2px 8px rgba(0,0,0,0.15)',
+    shadow: 'var(--clay-btn)',
+    shadowHover: 'var(--clay-btn)',
+    shadowPressed: 'var(--clay-pressed)',
   },
 };
 
@@ -91,12 +91,6 @@ const NeoButton = ({ children, onClick, type = 'button', className = '', style, 
       onTouchEnd={() => setPressed(false)}
       disabled={disabled}
     >
-      {/* shine overlay */}
-      <span style={{
-        position: 'absolute', inset: 0, borderRadius: '50px',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 60%)',
-        pointerEvents: 'none',
-      }} />
       {children}
     </button>
   );

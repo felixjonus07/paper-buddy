@@ -123,15 +123,29 @@ button, input, select, textarea {
   font-family: inherit;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
 }
 
 ::placeholder {
@@ -144,7 +158,7 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus, 
 input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--text-color) !important;
-  -webkit-box-shadow: 0 0 0px 1000px var(--clay-base-solid) inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-secondary) inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -179,13 +193,17 @@ a { text-decoration: none; color: inherit; }
 ═══════════════════════════════════════════════════════ */
 .global-layout {
   display: flex;
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   width: 100%;
 }
 
 .global-content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-container {
@@ -197,6 +215,19 @@ a { text-decoration: none; color: inherit; }
 
 .global-navbar {
   padding: 1rem 4rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: var(--clay-base-solid);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
 }
 .global-navbar-links {
   display: flex;
@@ -227,15 +258,35 @@ a { text-decoration: none; color: inherit; }
 
 .dashboard-layout {
   display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   gap: 1.5rem;
-  height: calc(100vh - 90px);
-  padding: 1.25rem;
+  padding: 1rem;
   box-sizing: border-box;
+  max-width: 100%;
+  margin: 0;
+}
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR & CONTENT
+═══════════════════════════════════════════════════════ */
+.dashboard-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* ═══════════════════════════════════════════════════════
-   SIDEBAR — premium glass
-═══════════════════════════════════════════════════════ */
+.dashboard-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  min-height: 0;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
+}
 .sidebar {
   width: 260px;
   background: var(--clay-base) !important;
@@ -249,7 +300,8 @@ a { text-decoration: none; color: inherit; }
   gap: 0.35rem;
   flex-shrink: 0;
   position: static;
-  height: 100%;
+  height: fit-content;
+  align-self: flex-start;
   overflow-y: auto;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
@@ -1662,22 +1714,6 @@ select:focus {
 ═══════════════════════════════════════════════════════ */
 
 /* -- Navbar -- */
-.global-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 50;
-  background: var(--clay-base);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 4rem;
-  box-sizing: border-box;
-}
 .navbar-links {
   display: flex;
   align-items: center;
@@ -4104,5 +4140,51 @@ select:focus {
 @media (max-width: 1024px) {
   .saas-float-card {
     display: none; /* Hide floating cards on smaller screens for cleaner view */
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHATBOT STYLES
+═══════════════════════════════════════════════════════ */
+.chatbot-window {
+  position: fixed;
+  bottom: 6rem;
+  right: 1.5rem;
+  width: 380px;
+  height: 600px;
+  max-height: calc(100vh - 120px);
+  max-width: calc(100vw - 3rem);
+  background: var(--clay-base);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  overflow: hidden;
+  animation: slideUpFade 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInRightFade {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

@@ -33,7 +33,7 @@ function App() {
     <AlertProvider>
       <Router>
         <GlobalNavbar />
-        <div className="global-layout" style={{ marginTop: '72px' }}>
+        <div className="global-layout" style={{ paddingTop: '72px' }}>
           <div className="global-content">
             <ErrorBoundary>
               <Routes>

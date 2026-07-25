@@ -76,14 +76,16 @@ router.get('/colleges/:id', async (req, res) => {
 // Create a new college
 router.post('/colleges', async (req, res) => {
   try {
-    const { name, code, address, subscriptionStatus } = req.body;
+    const { name, code, address, phone, email, administratorName, strength, subscriptionStatus } = req.body;
 
     const existingCollege = await College.findOne({ code });
     if (existingCollege) {
       return res.status(400).json({ message: 'College code already exists' });
     }
 
-    const college = new College({ name, code, address, subscriptionStatus });
+    const college = new College({ 
+      name, code, address, phone, email, administratorName, strength, subscriptionStatus 
+    });
     await college.save();
 
     await AuditLog.create({
@@ -162,6 +164,37 @@ router.put('/colleges/:id/reset-prompts', async (req, res) => {
 });
 
 
+// Get all provisioned admins
+router.get('/admins', async (req, res) => {
+  try {
+    const admins = await User.find({ role: 'admin' })
+      .populate('collegeId', 'name code')
+      .select('-password')
+      .sort({ createdAt: -1 });
+    res.json(admins);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+// Delete an Admin
+router.delete('/admins/:id', async (req, res) => {
+  try {
+    const admin = await User.findByIdAndDelete(req.params.id);
+    if (admin) {
+      await AuditLog.create({
+        action: 'DELETED_ADMIN',
+        details: `Deleted admin account: ${admin.username}`,
+        performedBy: req.user._id,
+        collegeId: admin.collegeId
+      });
+      res.json({ message: 'Admin deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Admin not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Create an Admin for a college
 router.post('/admins', async (req, res) => {
