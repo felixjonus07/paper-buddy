@@ -12,14 +12,16 @@ const UserPayFees = ({ studentFees, fees, handlePayFee }) => {
       title: sf.feeId?.title || 'Unknown Fee',
       amountDue: sf.finalAmount,
       isMissing: false,
-      hasLateFee: sf.finalAmount > (sf.baseAmount - (sf.discountAmount || 0))
+      hasLateFee: sf.finalAmount > (sf.baseAmount - (sf.discountAmount || 0)),
+      deadline: sf.feeId?.deadlineDate
     })),
     ...missingFees.map(f => ({
       id: f._id,
       title: f.title,
       amountDue: f.amount,
       isMissing: true,
-      hasLateFee: false // Missing fees are calculated at checkout, but we can't easily know here without extra logic
+      hasLateFee: false, // Missing fees are calculated at checkout, but we can't easily know here without extra logic
+      deadline: f.deadlineDate
     }))
   ];
 
@@ -31,6 +33,11 @@ const UserPayFees = ({ studentFees, fees, handlePayFee }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--primary)' }}>{f.title}</h3>
             </div>
+            {f.deadline && (
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                Due: {new Date(f.deadline).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </div>
+            )}
             <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-color)' }}>
               ₹{f.amountDue.toFixed(2)}
               {f.hasLateFee && (
