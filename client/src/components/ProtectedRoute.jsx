@@ -18,10 +18,12 @@ const ProtectedRoute = ({ children, requiredRole }) => {
       // Allow superadmin to access admin dashboard
     } else if (!allowedRoles.includes(user.role)) {
       // If they are logged in but have the wrong role, send them to their own dashboard
-      if (user.role === 'admin' || user.role === 'superadmin') return <Navigate to="/admin/dashboard" replace />;
-      if (user.role === 'cashier') return <Navigate to="/cashier/dashboard" replace />;
-      if (user.role === 'mentor') return <Navigate to="/mentor/dashboard" replace />;
-      return <Navigate to="/user/dashboard" replace />;
+      const u = user.username || 'me';
+      if (user.role === 'superadmin') return <Navigate to={`/superadmin/${u}/dashboard`} replace />;
+      if (user.role === 'admin') return <Navigate to={`/admin/${u}/dashboard`} replace />;
+      if (user.role === 'cashier') return <Navigate to={`/cashier/${u}/dashboard`} replace />;
+      if (user.role === 'mentor') return <Navigate to={`/mentor/${u}/dashboard`} replace />;
+      return <Navigate to={`/user/${u}/dashboard`} replace />;
     }
   }
 

@@ -432,12 +432,7 @@ const UserDashboard = () => {
         <div className={`nav-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => handleNavClick('paid-fees')}>
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>
-        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => handleNavClick('profile')}>
-          <User size={20} /> <span className="nav-text">My Profile</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => handleNavClick('settings')}>
-          <Settings size={20} /> <span className="nav-text">Settings</span>
-        </div>
+
 
         <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
           <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', backgroundColor: 'rgba(128,128,128,0.2)', color: 'var(--text-color)', border: 'none', display: 'flex', justifyContent: 'center' }}>
@@ -466,12 +461,7 @@ const UserDashboard = () => {
             <div className={`mobile-tab-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => handleNavClick('paid-fees')}>
               <FileText size={16} /> Payment History
             </div>
-            <div className={`mobile-tab-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => handleNavClick('profile')}>
-              <User size={16} /> My Profile
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => handleNavClick('settings')}>
-              <Settings size={16} /> Settings
-            </div>
+
           </div>
         )}
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>

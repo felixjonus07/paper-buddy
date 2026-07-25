@@ -65,7 +65,7 @@ const ScholarshipsManagement = ({
           <h3 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Existing Scholarships</h3>
           <div className="card-grid">
             {scholarships.map(s => (
-              <NeoCard key={s._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)' }}>
+              <NeoCard key={s._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <h4 style={{ margin: 0, fontSize: '1.2rem' }}>{s.name}</h4>
                   <div style={{ color: 'var(--clay-mint)', fontSize: '1.2rem', fontWeight: 'bold' }}>{s.discountPercentage}%</div>
