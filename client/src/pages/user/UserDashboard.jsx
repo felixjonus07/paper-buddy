@@ -458,27 +458,7 @@ const UserDashboard = () => {
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        {/* Mobile Dashboard Tabs (Only visible on mobile via flex/display setup) */}
-        {isMobile && (
-          <div className="mobile-dashboard-tabs">
-            <div className={`mobile-tab-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
-              <LayoutDashboard size={16} /> Dashboard
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'pay-fees' ? 'active' : ''}`} onClick={() => handleNavClick('pay-fees')}>
-              <IndianRupee size={16} /> Pay Fees
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => handleNavClick('fee-requests')}>
-              <PlusCircle size={16} /> Fee Requests
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'loan' ? 'active' : ''}`} onClick={() => handleNavClick('loan')}>
-              <Landmark size={16} /> Financial Aid
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => handleNavClick('paid-fees')}>
-              <FileText size={16} /> Payment History
-            </div>
 
-          </div>
-        )}
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',

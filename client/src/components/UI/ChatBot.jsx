@@ -1221,9 +1221,7 @@ const ChatBot = () => {
         <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9998, display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
           {/* Agent Popup Bubble */}
           <div style={{
-            background: 'var(--clay-base)',
-            backdropFilter: 'blur(24px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            background: 'var(--clay-base-solid)',
             border: '1px solid var(--border)',
             borderRadius: '16px',
             padding: '0.85rem 1.25rem',
@@ -1234,7 +1232,10 @@ const ChatBot = () => {
             position: 'relative',
             animation: 'slideInRightFade 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 0.5s',
             opacity: 0,
-            transform: 'translateX(20px)',
+            transform: 'translateX(20px) translateZ(0)',
+            willChange: 'transform',
+            WebkitBackfaceVisibility: 'hidden',
+            backfaceVisibility: 'hidden',
             marginBottom: '0.5rem'
           }}>
             I'm a Buddy, I can do anything for U ✨
@@ -1264,6 +1265,10 @@ const ChatBot = () => {
               animation: 'pulse 2.5s ease-in-out infinite',
               boxShadow: '0 8px 32px rgba(248,116,16,0.4)',
               transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+              transform: 'translateZ(0)',
+              willChange: 'transform, box-shadow',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
               flexShrink: 0
             }}
           >

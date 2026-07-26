@@ -588,20 +588,7 @@ const AdminDashboard = () => {
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        {/* Mobile Dashboard Tabs */}
-        {isMobile && (
-          <div className="mobile-dashboard-tabs">
-            {[...mainNavItems, ...managementNavItems].map(item => (
-              <div 
-                key={item.id} 
-                className={`mobile-tab-item ${activeTab === item.id ? 'active' : ''}`} 
-                onClick={() => handleNavClick(item.id)}
-              >
-                <item.icon size={16} /> {item.label}
-              </div>
-            ))}
-          </div>
-        )}
+
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',

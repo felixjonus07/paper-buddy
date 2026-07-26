@@ -1139,6 +1139,7 @@ select:focus {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 72px);
+  flex-shrink: 0;
 }
 
 .section {
@@ -2097,7 +2098,7 @@ select:focus {
     right: 0;
     width: 280px;
     height: 100vh;
-    background: var(--clay-base) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
     backdrop-filter: blur(40px) saturate(200%);
     -webkit-backdrop-filter: blur(40px) saturate(200%);
     z-index: 1000;
@@ -2108,7 +2109,7 @@ select:focus {
     overflow-y: auto;
   }
   [data-theme='dark'] .mobile-menu-drawer {
-    background: var(--clay-base) !important;
+    background: rgba(15, 17, 21, 0.9) !important;
   }
   .mobile-menu-drawer.visible {
     transform: translateX(0);
@@ -2517,6 +2518,7 @@ select:focus {
   background-color: var(--bg-color);
   background-image: radial-gradient(circle, var(--border) 1.2px, transparent 1.2px);
   background-size: 26px 26px;
+  flex-shrink: 0;
 }
 
 /* ── Hero: 3 columns  [left | center | right] ───────── */
@@ -3907,13 +3909,8 @@ select:focus {
 /* Tablet — hide floating cards, center everything */
 @media (max-width: 1024px) {
   .lp-hero {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    grid-template-areas:
-      "center"
-      "tr"
-      "bl"
-      "br";
+    display: flex;
+    flex-direction: column;
     padding: 3rem 1.5rem;
     min-height: unset;
     gap: 1.5rem;
@@ -3954,7 +3951,7 @@ select:focus {
   .lp-cta { width: 100%; padding: 16px; }
 
   .lp-int-icons { justify-content: center; }
-  .lp-integrations-card { width: 100%; }
+  .lp-int-card { width: 100%; }
   .lp-tasks-card { width: 100%; min-width: unset; }
 }
 
