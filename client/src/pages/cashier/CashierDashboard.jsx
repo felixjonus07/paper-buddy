@@ -9,6 +9,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
 import { useAlert } from '../../context/AlertContext';
 
 const TABS = [
@@ -135,22 +136,56 @@ const CashierDashboard = () => {
     } catch { /* ignore */ }
   };
 
-  const handleDownloadReceipt = (feeInfo, studentInfo, paymentDate) => {
+  const handleDownloadReceipt = async (feeInfo, studentInfo, paymentDate) => {
     const doc = new jsPDF();
 
+    try {
+      const img = new Image();
+      img.src = '/images/Logo.png';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      doc.addImage(img, 'PNG', 14, 12, 16, 16);
+    } catch (e) {
+      console.warn("Could not load logo for PDF", e);
+    }
+
+    // Add custom fonts
+    doc.addFileToVFS("Gagalin.ttf", gagalinBase64);
+    doc.addFont("Gagalin.ttf", "gagalin", "normal");
+    
+    doc.addFileToVFS("LilitaOne.ttf", lilitaOneBase64);
+    doc.addFont("LilitaOne.ttf", "lilitaOne", "normal");
+
+    // Header
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(22);
     doc.setTextColor(248, 116, 16); // Orange primary color
-    doc.text("Paper Buddy", 14, 20);
+    doc.text("Paper Buddy", 34, 22);
+    
+    // Calculate width while font is still size 22
+    const titleWidth = doc.getTextWidth("Paper Buddy");
+
+    // Subtitle
+    doc.setFont("lilitaOne", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    const subtitleWidth = doc.getTextWidth("by E.D.I.T.H");
+    doc.text("by E.D.I.T.H", 34 + titleWidth - subtitleWidth, 26);
+
+    // Reset font for the rest of the document
+    doc.setFont("helvetica", "normal");
 
     doc.setFontSize(14);
     doc.setTextColor(50, 50, 50);
-    doc.text("Official Fee Receipt", 14, 30);
+    doc.text("Official Fee Receipt", 34, 34);
 
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Student Name: ${studentInfo.name}`, 14, 42);
-    doc.text(`Username: @${studentInfo.username}`, 14, 48);
-    doc.text(`Date of Payment: ${new Date(paymentDate).toLocaleDateString()}`, 14, 54);
+    doc.text(`Student Name: ${studentInfo.name}`, 14, 46);
+    doc.text(`Username: @${studentInfo.username}`, 14, 52);
+    doc.text(`Date of Payment: ${new Date(paymentDate).toLocaleDateString()}`, 14, 58);
 
     const tableColumn = ["Description", "Details"];
     const tableRows = [
@@ -162,7 +197,7 @@ const CashierDashboard = () => {
     ];
 
     autoTable(doc, {
-      startY: 65,
+      startY: 68,
       head: [tableColumn],
       body: tableRows,
       theme: 'striped',
