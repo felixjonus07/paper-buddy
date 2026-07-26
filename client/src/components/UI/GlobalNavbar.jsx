@@ -110,7 +110,10 @@ const GlobalNavbar = () => {
         {/* Logo Section */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-color)', textDecoration: 'none' }}>
           <img src="/images/Logo.png" alt="Paper Buddy Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
-          <span style={{ fontWeight: '700', fontSize: '1.4rem', letterSpacing: '0.5px' }}>Paper Buddy</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '2px' }}>
+            <span style={{ fontWeight: 'normal', fontSize: '1.4rem', letterSpacing: '0.5px', fontFamily: '"Cooper Black", serif', color: 'var(--primary)', lineHeight: '1' }}>Paper Buddy</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-light)', fontFamily: "'Lilita One', cursive", marginTop: '2px' }}>by E.D.I.T.H</span>
+          </div>
         </Link>
       </div>
 
@@ -284,8 +287,8 @@ const GlobalNavbar = () => {
             title="Logout"
             style={{
               background: 'var(--clay-base)',
-              backdropFilter: 'blur(30px) saturate(150%)',
-              border: '1px solid var(--border)',
+              border: 'none',
+              outline: 'none',
               borderRadius: '50%',
               width: '40px',
               height: '40px',
@@ -296,7 +299,7 @@ const GlobalNavbar = () => {
               cursor: 'pointer',
               transition: 'transform 0.2s, background 0.2s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'var(--clay-base)'; }}
           >
             <LogOut size={20} />
