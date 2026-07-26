@@ -381,20 +381,7 @@ const CashierDashboard = () => {
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        {/* Mobile Dashboard Tabs */}
-        {isMobile && (
-          <div className="mobile-dashboard-tabs">
-            {TABS.map(item => (
-              <div 
-                key={item.key} 
-                className={`mobile-tab-item ${activeTab === item.key ? 'active' : ''}`} 
-                onClick={() => setActiveTab(item.key)}
-              >
-                <item.icon size={16} /> {item.label}
-              </div>
-            ))}
-          </div>
-        )}
+
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
