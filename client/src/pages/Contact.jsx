@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin } from 'lucide-react';
 
 const Contact = () => {
   return (
-    <div className="public-page" style={{ padding: '6rem 2rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="public-page" style={{ padding: '6rem clamp(1rem, 5vw, 2rem) 4rem', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
 
       {/* ════════ HEADER ════════ */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
@@ -18,7 +18,7 @@ const Contact = () => {
       </div>
 
       {/* ════════ MAIN CONTENT GRID ════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2rem' }}>
 
         {/* LEFT: FORM */}
         <div style={{
@@ -33,7 +33,7 @@ const Contact = () => {
           </h2>
 
           <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name *</label>
                 <input type="text" placeholder="Enter your Name" style={{
@@ -109,7 +109,7 @@ const Contact = () => {
               CONTACT INFORMATION
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '2rem' }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                 <Phone size={24} color="#ce1126" style={{ marginTop: '2px' }} />
                 <div>

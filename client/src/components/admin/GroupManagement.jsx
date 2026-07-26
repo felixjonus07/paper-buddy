@@ -39,7 +39,6 @@ const GroupManagement = ({
               <span style={{ 
                 fontSize: '0.8rem', color: 'var(--primary-dark)', display: 'inline-block', 
                 backgroundColor: 'var(--clay-peach-light)', 
-                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                 border: '1px solid rgba(255,255,255,0.4)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
                 padding: '0.2rem 0.5rem', borderRadius: '8px', alignSelf: 'flex-start', fontWeight: 'bold' 

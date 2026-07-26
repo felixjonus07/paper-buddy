@@ -57,8 +57,6 @@ const UserManagement = ({
                 padding: '0.3rem 0.6rem', 
                 borderRadius: '12px', 
                 backgroundColor: u.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
                 border: '1px solid rgba(255,255,255,0.4)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
                 color: u.role === 'admin' ? 'var(--primary-dark)' : 'var(--primary)',
