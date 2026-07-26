@@ -78,7 +78,7 @@ const UserDashboard = () => {
     if (!merchantTransactionId || !feeId) return;
 
     // Clear URL params immediately so refresh doesn't re-trigger, but stay on pay-fees tab
-    navigate('/user/dashboard?tab=pay-fees', { replace: true });
+    navigate(`/user/${user.username}/dashboard?tab=pay-fees`, { replace: true });
 
     const verifyPhonePePayment = async () => {
       setPaymentVerifying(true);

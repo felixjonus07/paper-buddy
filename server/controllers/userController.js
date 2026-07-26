@@ -223,7 +223,7 @@ const createPaymentOrder = async (req, res) => {
     const amountInPaise = Math.round(amountToPay * 100);
     // Ensure CLIENT_URL doesn't have a trailing slash for clean URLs
     const baseUrl = CLIENT_URL.endsWith('/') ? CLIENT_URL.slice(0, -1) : CLIENT_URL;
-    const redirectUrl = `${baseUrl}/user/dashboard?merchantOrderId=${merchantOrderId}&feeId=${id}&isMissing=${isMissing}`;
+    const redirectUrl = `${baseUrl}/user/${req.user.username}/dashboard?merchantOrderId=${merchantOrderId}&feeId=${id}&isMissing=${isMissing}`;
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(merchantOrderId)
