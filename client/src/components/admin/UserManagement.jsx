@@ -79,10 +79,9 @@ const UserManagement = ({
             )}
 
             {u.role === 'user' && !isReadOnly && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem', flexWrap: 'wrap' }}>
-                <NeoButton variant="peach" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0, groupId: u.groups?.[0]?._id || '' }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
-                <NeoButton variant="mint" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setUserFeeData({ title: '', amount: '', feeType: '', userId: u._id }); setAssignUserFeeModalOpen(true); }}>Add Fee</NeoButton>
-                {/* <NeoButton variant="secondary" style={{ flex: '1 1 100%', padding: '0.5rem', fontSize: '0.8rem' }}  }}>Add Fee</NeoButton> */}
+              <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <NeoButton variant="peach" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0, groupId: u.groups?.[0]?._id || '' }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
+                <NeoButton variant="mint" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setUserFeeData({ title: '', amount: '', feeType: '', userId: u._id }); setAssignUserFeeModalOpen(true); }}>Add Fee</NeoButton>
               </div>
             )}
           </NeoCard>

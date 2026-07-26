@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings } from 'lucide-react';
+import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings, Users, Layers, IndianRupee, FileText, PlusCircle, UserCog, TrendingUp, CreditCard, Scan, Building, Database, Bot } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const GlobalNavbar = () => {
@@ -54,8 +54,53 @@ const GlobalNavbar = () => {
     { name: 'Home', path: '/' },
   ];
 
+  let dashboardTabs = [];
   if (token && user) {
     navLinks.push({ name: 'Dashboard', path: dashboardPath });
+    const u = user.username || 'me';
+    
+    if (user.role === 'superadmin') {
+      dashboardTabs = [
+        { name: 'Analytics', path: `/superadmin/${u}/dashboard?tab=analytics`, icon: <LayoutDashboard size={18} /> },
+        { name: 'Colleges', path: `/superadmin/${u}/dashboard?tab=colleges`, icon: <Building size={18} /> },
+        { name: 'Admins', path: `/superadmin/${u}/dashboard?tab=admins`, icon: <Users size={18} /> },
+        { name: 'Audit Logs', path: `/superadmin/${u}/dashboard?tab=logs`, icon: <Database size={18} /> },
+        { name: 'Agent Mgmt', path: `/superadmin/${u}/dashboard?tab=agent`, icon: <Bot size={18} /> },
+        { name: 'Payments', path: `/superadmin/${u}/dashboard?tab=billing`, icon: <CreditCard size={18} /> },
+      ];
+    } else if (user.role === 'admin') {
+      dashboardTabs = [
+        { name: 'Dashboard', path: `/admin/${u}/dashboard?tab=dashboard`, icon: <LayoutDashboard size={18} /> },
+        { name: 'Students', path: `/admin/${u}/dashboard?tab=users`, icon: <Users size={18} /> },
+        { name: 'Groups', path: `/admin/${u}/dashboard?tab=groups`, icon: <Layers size={18} /> },
+        { name: 'Finance', path: `/admin/${u}/dashboard?tab=finance`, icon: <IndianRupee size={18} /> },
+        { name: 'Fees Mgmt', path: `/admin/${u}/dashboard?tab=fees`, icon: <FileText size={18} /> },
+        { name: 'Fee Types', path: `/admin/${u}/dashboard?tab=fee_types`, icon: <Settings size={18} /> },
+        { name: 'Fee Requests', path: `/admin/${u}/dashboard?tab=fee_requests`, icon: <PlusCircle size={18} /> },
+        { name: 'Scholarships', path: `/admin/${u}/dashboard?tab=scholarships`, icon: <GraduationCap size={18} /> },
+        { name: 'Cashiers', path: `/admin/${u}/dashboard?tab=cashiers`, icon: <UserCog size={18} /> },
+        { name: 'Reports', path: `/admin/${u}/dashboard?tab=reports`, icon: <TrendingUp size={18} /> },
+        { name: 'Gateway Settings', path: `/admin/${u}/dashboard?tab=payment_settings`, icon: <CreditCard size={18} /> }
+      ];
+    } else if (user.role === 'cashier') {
+      dashboardTabs = [
+        { name: 'Dashboard', path: `/cashier/${u}/dashboard?tab=dashboard`, icon: <LayoutDashboard size={18} /> },
+        { name: 'Scan & Pay', path: `/cashier/${u}/dashboard?tab=scan`, icon: <Scan size={18} /> },
+        { name: 'Transactions', path: `/cashier/${u}/dashboard?tab=transactions`, icon: <FileText size={18} /> },
+        { name: 'Reports', path: `/cashier/${u}/dashboard?tab=reports`, icon: <TrendingUp size={18} /> }
+      ];
+    } else if (user.role === 'mentor') {
+      dashboardTabs = [
+        { name: 'Dashboard', path: `/mentor/${u}/dashboard?tab=dashboard`, icon: <LayoutDashboard size={18} /> }
+      ];
+    } else { // user
+      dashboardTabs = [
+        { name: 'Dashboard', path: `/user/${u}/dashboard?tab=dashboard`, icon: <LayoutDashboard size={18} /> },
+        { name: 'Pay Fees', path: `/user/${u}/dashboard?tab=pay-fees`, icon: <IndianRupee size={18} /> },
+        { name: 'Fee Requests', path: `/user/${u}/dashboard?tab=fee-requests`, icon: <PlusCircle size={18} /> },
+        { name: 'Payment History', path: `/user/${u}/dashboard?tab=paid-fees`, icon: <FileText size={18} /> },
+      ];
+    }
   }
 
   return (
@@ -205,19 +250,6 @@ const GlobalNavbar = () => {
                       <div style={{ height: '1px', background: 'rgba(128,128,128,0.2)', margin: '0.5rem 0' }} />
                     </>
                   )}
-                  <div 
-                    onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
-                      cursor: 'pointer', borderRadius: '8px', color: '#ef4444', fontWeight: '600',
-                      transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--clay-base)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <LogOut size={18} />
-                    Logout
-                  </div>
                 </div>
               </div>
             )}
@@ -243,6 +275,34 @@ const GlobalNavbar = () => {
             Login
           </Link>
         )}
+
+        {/* Desktop Logout Button */}
+        {token && user && (
+          <button 
+            className="desktop-logout-btn"
+            onClick={handleLogout}
+            title="Logout"
+            style={{
+              background: 'var(--clay-base)',
+              backdropFilter: 'blur(30px) saturate(150%)',
+              border: '1px solid var(--border)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ef4444',
+              cursor: 'pointer',
+              transition: 'transform 0.2s, background 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'var(--clay-base)'; }}
+          >
+            <LogOut size={20} />
+          </button>
+        )}
+
         <ThemeToggle />
         
         {/* Hamburger button moved next to Theme Toggle for mobile */}
@@ -292,16 +352,38 @@ const GlobalNavbar = () => {
 
           {/* Mobile Links */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {navLinks.map(link => (
-              <Link 
-                key={link.name} 
-                to={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-color)', textDecoration: 'none' }}
-              >
-                {link.name}
-              </Link>
-            ))}
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-color)', textDecoration: 'none' }}>
+              Home
+            </Link>
+
+            {/* Dashboard Tabs for logged-in user */}
+            {token && user && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.2rem' }}>
+                {dashboardTabs.map(tab => {
+                  const isActive = location.pathname + location.search === tab.path;
+                  return (
+                    <Link 
+                      key={tab.name} 
+                      to={tab.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      style={{ 
+                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                        fontSize: '1rem', fontWeight: isActive ? '700' : '500', 
+                        color: isActive ? 'var(--primary)' : 'var(--text-color)', 
+                        textDecoration: 'none',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '12px',
+                        background: isActive ? 'var(--clay-primary-bg)' : 'transparent',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {tab.icon}
+                      {tab.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
             {!token && (
               <Link 
                 to="/login"
