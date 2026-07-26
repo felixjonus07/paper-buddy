@@ -132,36 +132,68 @@ const AdminDashboard = () => {
         headers['x-college-id'] = collegeId;
       }
 
-      const [usersRes, groupsRes, feesRes, catsRes, schRes, feeReqRes] = await Promise.all([
-        fetch('/api/admin/users', { headers }),
-        fetch('/api/admin/groups', { headers }),
-        fetch('/api/admin/fees', { headers }),
-        fetch('/api/admin/fee-types', { headers }),
-        fetch('/api/admin/scholarships', { headers }),
-        fetch('/api/admin/fee-requests', { headers })
-      ]);
-
-      if (usersRes.ok) setUsers(await usersRes.json());
-      if (groupsRes.ok) setGroups(await groupsRes.json());
-      if (feesRes.ok) setFees(await feesRes.json());
-      if (catsRes.ok) setFeeTypes(await catsRes.json());
-      if (schRes.ok) setScholarships(await schRes.json());
-      if (feeReqRes.ok) setFeeRequests(await feeReqRes.json());
-
-      const paymentRes = await fetch('/api/admin/college/payment-settings', { headers });
-      if (paymentRes.ok) {
-        const paymentData = await paymentRes.json();
-        setPaymentStatus(paymentData.paymentType);
+      const CACHE_KEY = `admin_data_${collegeId || 'default'}`;
+      const cachedData = sessionStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          if (parsed.users) setUsers(parsed.users);
+          if (parsed.groups) setGroups(parsed.groups);
+          if (parsed.fees) setFees(parsed.fees);
+          if (parsed.cats) setFeeTypes(parsed.cats);
+          if (parsed.sch) setScholarships(parsed.sch);
+          if (parsed.feeReq) setFeeRequests(parsed.feeReq);
+          if (parsed.paymentStatus) setPaymentStatus(parsed.paymentStatus);
+          if (parsed.monthlyPayments) setMonthlyPayments(parsed.monthlyPayments);
+        } catch (e) {}
       }
 
       const date = new Date();
       const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
       const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
-      const monthlyRes = await fetch(`/api/admin/reports/payments?startDate=${firstDay}&endDate=${lastDay}`, { headers });
+
+      const [usersRes, groupsRes, feesRes, catsRes, schRes, feeReqRes, paymentRes, monthlyRes] = await Promise.all([
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/groups', { headers }),
+        fetch('/api/admin/fees', { headers }),
+        fetch('/api/admin/fee-types', { headers }),
+        fetch('/api/admin/scholarships', { headers }),
+        fetch('/api/admin/fee-requests', { headers }),
+        fetch('/api/admin/college/payment-settings', { headers }),
+        fetch(`/api/admin/reports/payments?startDate=${firstDay}&endDate=${lastDay}`, { headers })
+      ]);
+
+      const [usersData, groupsData, feesData, catsData, schData, feeReqData] = await Promise.all([
+        usersRes.ok ? usersRes.json() : null,
+        groupsRes.ok ? groupsRes.json() : null,
+        feesRes.ok ? feesRes.json() : null,
+        catsRes.ok ? catsRes.json() : null,
+        schRes.ok ? schRes.json() : null,
+        feeReqRes.ok ? feeReqRes.json() : null
+      ]);
+
+      const newData = cachedData ? JSON.parse(cachedData) : {};
+      
+      if (usersData) { setUsers(usersData); newData.users = usersData; }
+      if (groupsData) { setGroups(groupsData); newData.groups = groupsData; }
+      if (feesData) { setFees(feesData); newData.fees = feesData; }
+      if (catsData) { setFeeTypes(catsData); newData.cats = catsData; }
+      if (schData) { setScholarships(schData); newData.sch = schData; }
+      if (feeReqData) { setFeeRequests(feeReqData); newData.feeReq = feeReqData; }
+      
+      if (paymentRes.ok) {
+        const paymentData = await paymentRes.json();
+        setPaymentStatus(paymentData.paymentType);
+        newData.paymentStatus = paymentData.paymentType;
+      }
+
       if (monthlyRes.ok) {
         const monthlyData = await monthlyRes.json();
         setMonthlyPayments(monthlyData.payments || []);
+        newData.monthlyPayments = monthlyData.payments || [];
       }
+      
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(newData));
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
@@ -522,6 +554,36 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteGroup = async (id) => {
+    try {
+      const res = await fetch(`/api/admin/groups/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        fetchData();
+        showAlert('Group deleted successfully!');
+      } else {
+        const data = await res.json();
+        showAlert(`Cannot delete group: ${data.message}`);
+      }
+    } catch (err) {
+      showAlert('Error deleting group');
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        fetchData();
+        showAlert('User deleted successfully!');
+      } else {
+        const data = await res.json();
+        showAlert(`Cannot delete user: ${data.message}`);
+      }
+    } catch (err) {
+      showAlert('Error deleting user');
+    }
+  };
+
   return (
     <div className="app-container dashboard-layout">
 
@@ -631,12 +693,12 @@ const AdminDashboard = () => {
           {activeTab === 'users' && (
             (users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
-              <UserManagement users={users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase()))} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} setAssignUserFeeModalOpen={setAssignUserFeeModalOpen} setUserFeeData={setUserFeeData} isReadOnly={isReadOnly} />
+              <UserManagement users={users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase()))} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} setAssignUserFeeModalOpen={setAssignUserFeeModalOpen} setUserFeeData={setUserFeeData} handleDeleteUser={handleDeleteUser} isReadOnly={isReadOnly} />
           )}
           {activeTab === 'groups' && (
             (groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
-              <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />
+              <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} handleDeleteGroup={handleDeleteGroup} isReadOnly={isReadOnly} />
           )}
           {activeTab === 'finance' && <FinanceManagement />}
           {activeTab === 'fees' && (

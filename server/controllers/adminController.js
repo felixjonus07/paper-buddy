@@ -603,6 +603,19 @@ const updateUser = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({ _id: id, collegeId: req.user.collegeId });
+    if (!user) return res.status(404).json({ message: 'User not found or unauthorized' });
+    
+    await User.deleteOne({ _id: id });
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get Group Dashboard Data
 const getGroupDashboardData = async (req, res) => {
   try {
@@ -1105,6 +1118,7 @@ module.exports = {
   getPaymentSettings,
   getCashiers,
   getCashierLogs,
+  deleteUser,
   getLedger,
   confirmSettlement
 };

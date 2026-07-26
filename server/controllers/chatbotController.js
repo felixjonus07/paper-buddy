@@ -76,7 +76,7 @@ You detect the user's intent and extract relevant field values from their messag
     Extract: name, code, address
 
 === UNAUTHORIZED ACTIONS ===
-If the user asks to manage users, fees, groups, scholarships, loans, or perform ANY administrative action other than toggling AI access, you MUST politely refuse and state: "This action can only be done through the college Admin portal." Do NOT pretend that you have performed the action.\n`;
+If the user asks to manage users, fees, groups, scholarships, loans, or perform ANY administrative action other than toggling AI access, you MUST politely refuse and state: "for security Super admin can't alter the college portal details since its a financial work". Do NOT pretend that you have performed the action.\n`;
   } else {
     prompt += `
 1. CREATE_FEE_REQUEST - Request a fee waiver, reduction, or custom fee.

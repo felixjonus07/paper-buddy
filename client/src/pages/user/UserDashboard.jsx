@@ -134,6 +134,19 @@ const UserDashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
 
+      const CACHE_KEY = `user_data_${user?.collegeId || 'default'}`;
+      const cachedData = sessionStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          if (parsed.fees) setFees(parsed.fees);
+          if (parsed.profile) setProfile(parsed.profile);
+          if (parsed.studentFees) setStudentFees(parsed.studentFees);
+          if (parsed.requests) setFeeRequests(parsed.requests);
+          if (parsed.feeTypes) setFeeTypes(parsed.feeTypes);
+        } catch (e) {}
+      }
+
       const [feesRes, profileRes, studentFeesRes, requestsRes, feeTypesRes] = await Promise.all([
         fetch('/api/user/fees', { headers }),
         fetch('/api/user/profile', { headers }),
@@ -142,11 +155,23 @@ const UserDashboard = () => {
         fetch('/api/user/fee-types', { headers })
       ]);
 
-      if (feesRes.ok) setFees(await feesRes.json());
-      if (profileRes.ok) setProfile(await profileRes.json());
-      if (studentFeesRes.ok) setStudentFees(await studentFeesRes.json());
-      if (requestsRes.ok) setFeeRequests(await requestsRes.json());
-      if (feeTypesRes.ok) setFeeTypes(await feeTypesRes.json());
+      const [feesData, profileData, studentFeesData, requestsData, feeTypesData] = await Promise.all([
+        feesRes.ok ? feesRes.json() : null,
+        profileRes.ok ? profileRes.json() : null,
+        studentFeesRes.ok ? studentFeesRes.json() : null,
+        requestsRes.ok ? requestsRes.json() : null,
+        feeTypesRes.ok ? feeTypesRes.json() : null
+      ]);
+
+      const newData = cachedData ? JSON.parse(cachedData) : {};
+
+      if (feesData) { setFees(feesData); newData.fees = feesData; }
+      if (profileData) { setProfile(profileData); newData.profile = profileData; }
+      if (studentFeesData) { setStudentFees(studentFeesData); newData.studentFees = studentFeesData; }
+      if (requestsData) { setFeeRequests(requestsData); newData.requests = requestsData; }
+      if (feeTypesData) { setFeeTypes(feeTypesData); newData.feeTypes = feeTypesData; }
+
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(newData));
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
