@@ -121,6 +121,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button, input, select, textarea {
@@ -292,6 +293,13 @@ a { text-decoration: none; color: inherit; }
   min-height: 0;
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
+}
+
+.dashboard-scroll-area::after {
+  content: "";
+  display: block;
+  height: 150px;
+  width: 100%;
 }
 .sidebar {
   width: 260px;
