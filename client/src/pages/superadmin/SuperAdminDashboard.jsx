@@ -234,28 +234,7 @@ const SuperAdminDashboard = () => {
           <CreditCard size={20} /> <span className="nav-text">Payments</span>
         </div>
 
-        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
-          <NeoButton variant="secondary" onClick={() => { localStorage.clear(); window.location.href = '/login'; }} style={{ width: '100%', padding: isSidebarOpen ? '0.2rem 1rem 0.2rem 0.2rem' : '0.3rem', display: 'flex', justifyContent: isSidebarOpen ? 'flex-start' : 'center', alignItems: 'center', gap: '0.8rem' }}>
-            <div style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              background: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              border: '2px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 2px 5px rgba(242,92,5,0.3)',
-              flexShrink: 0,
-            }}>
-              <LogOut size={14} />
-            </div>
-            {isSidebarOpen && <span style={{ fontSize: '0.85rem' }}>Logout</span>}
-          </NeoButton>
-        </div>
       </div>
-
       <div className="dashboard-content">
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{

@@ -35,8 +35,7 @@ const labelTextStyle = {
 };
 
 // ─── Action Popup ──────────────────────────────────────────────────────────────
-// A versatile popup that renders different forms depending on `intent`
-const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
+const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading, error, currentStep, totalSteps }) => {
   const [groups, setGroups] = useState([]);
   const [users, setUsers] = useState([]);
   const [feeTypes, setFeeTypes] = useState([]);
@@ -76,7 +75,8 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
       APPROVE_LOAN: ['loans'],
       APPROVE_FEE_REQUEST: ['feeRequests'],
       UPDATE_USER_SCHOLARSHIP: ['users', 'scholarships'],
-      CREATE_FEE_REQUEST: ['userFeeTypes']
+      CREATE_FEE_REQUEST: ['userFeeTypes'],
+      DELETE_GROUP: ['groups']
     };
 
     const toFetch = needs[intent] || [];
@@ -97,9 +97,10 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
     Promise.all(toFetch.map(k => requests[k]().then(d => [k, d])))
       .then(async results => {
         let fetchedGroups = null;
+        let fetchedUsers = null;
         results.forEach(([k, d]) => {
           if (k === 'groups') { setGroups(d); fetchedGroups = d; }
-          if (k === 'users') setUsers(d);
+          if (k === 'users') { setUsers(d); fetchedUsers = d; }
           if (k === 'feeTypes') setFeeTypes(d);
           if (k === 'scholarships') { setScholarships(d); }
           if (k === 'fees') setFees(d);
@@ -145,6 +146,34 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
             return { ...prev, ...updates };
           });
         }
+        
+        // General auto-select for groupName -> groupId
+        if (fetchedGroups) {
+          setForm(prev => {
+            if (prev.groupName && !prev.groupId) {
+              const match = fetchedGroups.find(g =>
+                g.name.toLowerCase().includes(prev.groupName.toLowerCase())
+              );
+              if (match) return { ...prev, groupId: match._id };
+            }
+            return prev;
+          });
+        }
+
+        // General auto-select for studentName -> userId
+        if (fetchedUsers) {
+          setForm(prev => {
+            if (prev.studentName && !prev.userId && fetchedUsers.length > 0) {
+              const match = fetchedUsers.find(u =>
+                u.name.toLowerCase().includes(prev.studentName.toLowerCase()) || 
+                u.username.toLowerCase().includes(prev.studentName.toLowerCase())
+              );
+              if (match) return { ...prev, userId: match._id };
+            }
+            return prev;
+          });
+        }
+
       })
       .finally(() => setFetchLoading(false));
   }, [isOpen, intent]);
@@ -251,6 +280,31 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
             <label style={labelStyle}>
               <span style={labelTextStyle}>Description (optional)</span>
               <input value={form.description || ''} onChange={e => setF('description', e.target.value)} placeholder="Optional description" style={fieldStyle} />
+            </label>
+          </>
+        );
+
+      case 'DELETE_GROUP':
+        return (
+          <>
+            <div style={{
+              background: 'rgba(239,68,68,0.07)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              borderRadius: '12px', padding: '0.75rem 1rem',
+              fontSize: '0.82rem', color: 'var(--text-light)', lineHeight: 1.6, marginBottom: '0.5rem'
+            }}>
+              ⚠️ <strong style={{ color: '#ef4444' }}>Warning:</strong> Deleting a group cannot be undone.
+            </div>
+            <label style={labelStyle}>
+              <span style={labelTextStyle}>Group to Delete</span>
+              <select value={form.groupId || ''} onChange={e => setF('groupId', e.target.value)} style={fieldStyle}>
+                <option value="">Choose a group...</option>
+                {groups.map(g => (
+                  <option key={g._id} value={g._id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
             </label>
           </>
         );
@@ -592,15 +646,16 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
     CREATE_COLLEGE_ADMIN: 'Create College Admin',
     CREATE_COLLEGE: 'Create New College',
     CREATE_FEE_REQUEST: 'Create Fee Request',
-    EDIT_PROFILE: 'Edit Profile'
+    EDIT_PROFILE: 'Edit Profile',
+    DELETE_GROUP: 'Delete Group'
   };
 
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'rgba(0,0,0,0.55)',
+      background: 'var(--overlay-bg)',
       backdropFilter: 'blur(8px)',
-      zIndex: 9999,
+      zIndex: 99990,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1rem'
     }}>
@@ -627,8 +682,21 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
             <MessageCircle size={20} color="white" />
           </div>
           <div style={{ flex: 1 }}>
-            <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-color)' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {intentTitles[intent] || 'Confirm Action'}
+              {totalSteps > 1 && (
+                <span style={{
+                  fontSize: '0.7rem',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'rgba(248,116,16,0.15)',
+                  color: '#ea580c',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
+                }}>
+                  Step {currentStep} of {totalSteps}
+                </span>
+              )}
             </h2>
             <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-light)' }}>
               Review and confirm the details before submitting
@@ -638,6 +706,18 @@ const ActionPopup = ({ isOpen, onClose, intent, data, onConfirm, loading }) => {
             <X size={20} />
           </button>
         </div>
+
+        {error && (
+          <div style={{
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: '12px', padding: '0.85rem 1rem',
+            color: '#ef4444', fontSize: '0.85rem', fontWeight: 500,
+            marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+          }}>
+            {error}
+          </div>
+        )}
 
         {fetchLoading ? (
           <p style={{ textAlign: 'center', color: 'var(--text-light)', padding: '2rem 0' }}>Loading data...</p>
@@ -728,6 +808,12 @@ const executeAction = async (intent, form) => {
       return fetch(`${API_BASE}/admin/groups`, {
         method: 'POST', headers: h,
         body: JSON.stringify({ name: form.name, description: form.description })
+      });
+
+    case 'DELETE_GROUP':
+      if (!form.groupId) throw new Error('Please select a group.');
+      return fetch(`${API_BASE}/admin/groups/${form.groupId}`, {
+        method: 'DELETE', headers: h
       });
 
     case 'ASSIGN_STUDENT_TO_GROUP':
@@ -833,6 +919,7 @@ const successMessages = {
   CREATE_FEE_TYPE: (f) => `✅ Fee type **"${f.name}"** has been created.`,
   CREATE_SCHOLARSHIP: (f) => `✅ Scholarship **"${f.name}"** with ${f.discountPercentage}% discount has been created.`,
   DELETE_FEE: () => `✅ The selected fee has been deleted successfully.`,
+  DELETE_GROUP: (f) => `✅ The group has been deleted successfully.`,
   CREATE_COLLEGE: (f) => `✅ College **"${f.name}"** (${f.code}) has been created successfully.`,
   APPROVE_LOAN: (f) => `✅ Loan has been **${f.status}**.`,
   APPROVE_FEE_REQUEST: (f) => `✅ Fee request has been **${f.status}**.`,
@@ -859,9 +946,10 @@ const ChatBot = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
-  const [activeIntent, setActiveIntent] = useState(null);
-  const [intentData, setIntentData] = useState({});
+  const [activeActions, setActiveActions] = useState([]);
+  const [currentActionIndex, setCurrentActionIndex] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState(null);
   const [notification, setNotification] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -920,17 +1008,19 @@ const ChatBot = () => {
         return;
       }
 
-      if (data.intent === 'PAYMENT_RESTRICTED') {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: data.message,
-          isRestricted: true
-        }]);
-      } else if (data.intent && data.intent !== 'CHAT') {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.message, isAction: true }]);
-        setActiveIntent(data.intent);
-        setIntentData(data.data || {});
-        setPopupOpen(true);
+      if (data.actions && data.actions.length > 0) {
+        if (data.actions[0].intent === 'PAYMENT_RESTRICTED') {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: data.message,
+            isRestricted: true
+          }]);
+        } else {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.message, isAction: true }]);
+          setActiveActions(data.actions);
+          setCurrentActionIndex(0);
+          setPopupOpen(true);
+        }
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
       }
@@ -943,20 +1033,36 @@ const ChatBot = () => {
 
   const handleConfirm = async (form) => {
     setActionLoading(true);
+    const currentAction = activeActions[currentActionIndex];
+    if (!currentAction) return;
+
     try {
-      const res = await executeAction(activeIntent, form);
-      const data = await res.json();
+      const res = await executeAction(currentAction.intent, form);
+      const resData = await res.json();
 
       if (res.ok) {
-        setPopupOpen(false);
-        const successMsg = successMessages[activeIntent]?.(form) || '✅ Action completed successfully.';
+        setActionError(null);
+        const successMsg = successMessages[currentAction.intent]?.(form) || '✅ Action completed successfully.';
         setMessages(prev => [...prev, { role: 'assistant', content: successMsg }]);
         showNotification('Action completed successfully!', 'success');
+        
+        // Immediate UI synchronization by triggering a window event
+        window.dispatchEvent(new Event('dashboard-sync-required'));
+
+        // Handle sequential sub-calls
+        if (currentActionIndex + 1 < activeActions.length) {
+          setCurrentActionIndex(prev => prev + 1);
+        } else {
+          setPopupOpen(false);
+          setActiveActions([]);
+          setCurrentActionIndex(0);
+          setActionError(null);
+        }
       } else {
-        showNotification(data.message || 'Action failed. Please try again.', 'error');
+        setActionError(resData.message || 'Action failed. Please try again.');
       }
     } catch (err) {
-      showNotification(err.message || 'Connection error. Please try again.', 'error');
+      setActionError(err.message || 'Connection error. Please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -1053,11 +1159,19 @@ const ChatBot = () => {
       {/* Action Popup */}
       <ActionPopup
         isOpen={popupOpen}
-        onClose={() => setPopupOpen(false)}
-        intent={activeIntent}
-        data={intentData}
+        onClose={() => {
+          setPopupOpen(false);
+          setActiveActions([]);
+          setCurrentActionIndex(0);
+          setActionError(null);
+        }}
+        intent={activeActions[currentActionIndex]?.intent}
+        data={activeActions[currentActionIndex]?.data}
         onConfirm={handleConfirm}
         loading={actionLoading}
+        error={actionError}
+        currentStep={currentActionIndex + 1}
+        totalSteps={activeActions.length}
       />
 
       {/* Chat Window */}
@@ -1238,7 +1352,7 @@ const ChatBot = () => {
             backfaceVisibility: 'hidden',
             marginBottom: '0.5rem'
           }}>
-            I'm a Buddy, I can do anything for U ✨
+            I'm  Buddy, I can do anything for U ✨
             {/* Triangle pointing to FAB */}
             <div style={{
               position: 'absolute',
