@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Clock, Calendar, Users, GraduationCap, IndianRupee } from 'lucide-react';
+import Typewriter from 'typewriter-effect';
 
 /* ── Avatar Stack ─────────────────────────── */
 const AvatarStack = () => (
@@ -87,18 +88,34 @@ const Home = () => {
         </div>
 
         {/* ─── CENTER COLUMN ─── */}
-        <div className="lp-col lp-col-center">
+        <div className="lp-col lp-col-center" style={{ minWidth: 0, width: '100%' }}>
           <div className="lp-logo-pill">
             <img src="/images/Logo.png" alt="PaperBuddy" className="lp-logo-img" />
           </div>
-          <h1 className="lp-headline">
-            Funding futures,<br />
-            <span className="lp-headline-orange">simplifying learning.</span>
-          </h1>
-          <p className="lp-subtext">
-            Smart financing, task tracking, and seamless<br />
-            management for educational institutions.
-          </p>
+          <div style={{ width: '100%', height: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <h1 className="lp-headline" style={{ width: '100%', margin: 0 }}>
+            <Typewriter
+              options={{
+                autoStart: true,
+                loop: true,
+                delay: 60,
+                deleteSpeed: 30
+              }}
+              onInit={(typewriter) => {
+                typewriter
+                  .typeString('Funding futures,<br /><span class="lp-headline-orange">simplifying learning.</span>')
+                  .pauseFor(2500)
+                  .deleteAll()
+                  .typeString('Smart financing,<br /><span class="lp-headline-orange">task tracking.</span>')
+                  .pauseFor(2500)
+                  .deleteAll()
+                  .typeString('Seamless management<br /><span class="lp-headline-orange">for educational institutions.</span>')
+                  .pauseFor(2500)
+                  .start();
+              }}
+            />
+            </h1>
+          </div>
           <button className="lp-cta" onClick={() => navigate('/login')}>
             Get free demo
           </button>

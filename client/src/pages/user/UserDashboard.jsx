@@ -16,6 +16,7 @@ import UserPaidFees from '../../components/user/UserPaidFees';
 import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
 import { useAlert } from '../../context/AlertContext';
 
 // PhonePe uses redirect-based checkout - no SDK script loading needed
@@ -278,24 +279,57 @@ const UserDashboard = () => {
     }
   };
 
-  const handleDownloadReceipt = (f) => {
+  const handleDownloadReceipt = async (f) => {
     const doc = new jsPDF();
 
+    try {
+      const img = new Image();
+      img.src = '/images/Logo.png';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      doc.addImage(img, 'PNG', 14, 12, 16, 16);
+    } catch (e) {
+      console.warn("Could not load logo for PDF", e);
+    }
+
+    // Add custom fonts
+    doc.addFileToVFS("Gagalin.ttf", gagalinBase64);
+    doc.addFont("Gagalin.ttf", "gagalin", "normal");
+    
+    doc.addFileToVFS("LilitaOne.ttf", lilitaOneBase64);
+    doc.addFont("LilitaOne.ttf", "lilitaOne", "normal");
+
     // Header
+    doc.setFont("helvetica", "normal"); // Back to old default font
     doc.setFontSize(22);
-    doc.setTextColor(20, 184, 166); // Mint color
-    doc.text("Paper Buddy", 14, 20);
+    doc.setTextColor(248, 116, 16); // Orange color
+    doc.text("Paper Buddy", 34, 22);
+
+    // Calculate width while font is still size 22
+    const titleWidth = doc.getTextWidth("Paper Buddy");
+
+    // Subtitle
+    doc.setFont("lilitaOne", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    const subtitleWidth = doc.getTextWidth("by E.D.I.T.H");
+    doc.text("by E.D.I.T.H", 34 + titleWidth - subtitleWidth, 26); // Aligned to the right end
+
+    // Reset font for the rest of the document
+    doc.setFont("helvetica", "normal");
 
     doc.setFontSize(14);
     doc.setTextColor(50, 50, 50);
-    doc.text("Official Fee Receipt", 14, 30);
+    doc.text("Official Fee Receipt", 34, 34);
 
     // User Details
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Student Name: ${user.name}`, 14, 42);
-    doc.text(`Username: @${user.username}`, 14, 48);
-    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 54);
+    doc.text(`Student Name: ${user.name}`, 14, 46);
+    doc.text(`Username: @${user.username}`, 14, 52);
+    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 58);
 
     // Receipt Details
     const tableColumn = ["Description", "Details"];
@@ -308,11 +342,11 @@ const UserDashboard = () => {
     ];
 
     autoTable(doc, {
-      startY: 65,
+      startY: 68,
       head: [tableColumn],
       body: tableRows,
       theme: 'striped',
-      headStyles: { fillColor: [20, 184, 166] },
+      headStyles: { fillColor: [248, 116, 16] },
       styles: { fontSize: 11, cellPadding: 6 },
       columnStyles: {
         0: { fontStyle: 'bold', textColor: [80, 80, 80], cellWidth: 80 },
@@ -321,7 +355,7 @@ const UserDashboard = () => {
       didParseCell: function (data) {
         if (data.row.index === 3 && data.column.index === 1) { // Amount Paid value
           data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = [20, 184, 166];
+          data.cell.styles.textColor = [248, 116, 16];
         }
       }
     });
