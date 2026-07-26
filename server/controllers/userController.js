@@ -403,6 +403,7 @@ const createFeeRequest = async (req, res) => {
     }
     const request = new FeeRequest({
       studentId: req.user._id,
+      collegeId: req.user.collegeId,
       requestedFeeTitle,
       amount,
       feeType,

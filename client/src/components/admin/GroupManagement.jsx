@@ -1,7 +1,7 @@
 import React from 'react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Trash2 } from 'lucide-react';
 
 const GroupManagement = ({
   groups,
@@ -12,6 +12,7 @@ const GroupManagement = ({
   mentorData,
   setMentorData,
   setCreateMentorModalOpen,
+  handleDeleteGroup,
   isReadOnly
 }) => {
   return (
@@ -29,10 +30,21 @@ const GroupManagement = ({
         {groups.map(g => (
           <NeoCard key={g._id} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1.2rem', cursor: 'pointer' }} onClick={() => navigate('/admin/groups/' + g._id)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{g.name}</h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                {new Date(g.createdAt).toLocaleDateString()}
-              </span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{g.name}</h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                  {new Date(g.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              {!isReadOnly && handleDeleteGroup && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); if (window.confirm('Are you sure you want to delete this group?')) handleDeleteGroup(g._id); }}
+                  style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '0.2rem' }}
+                  title="Delete Group"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
             </div>
             
             {g.parentGroups && g.parentGroups.length > 0 && (

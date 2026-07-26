@@ -222,8 +222,6 @@ const GlobalNavbar = () => {
               }}>
                 <div style={{ padding: '0.5rem' }}>
 
-                  {user.role === 'user' && (
-                    <>
                       <div 
                         onClick={() => { setIsDropdownOpen(false); navigate(`${dashboardPath}?tab=profile`); }}
                         style={{
@@ -251,8 +249,6 @@ const GlobalNavbar = () => {
                         Settings
                       </div>
                       <div style={{ height: '1px', background: 'rgba(128,128,128,0.2)', margin: '0.5rem 0' }} />
-                    </>
-                  )}
                 </div>
               </div>
             )}
