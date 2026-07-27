@@ -29,8 +29,6 @@ const Home = () => {
 
         {/* ─── LEFT COLUMN ─── */}
         <div className="lp-col lp-col-left">
-
-          {/* sticky note */}
           <div className="lp-float lp-float-1">
             <div className="lp-sticky-note">
               <div className="lp-pin" />
