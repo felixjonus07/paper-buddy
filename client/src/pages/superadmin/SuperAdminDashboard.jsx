@@ -8,6 +8,7 @@ import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCirc
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AgentManagement from '../../components/superadmin/AgentManagement';
 import BillingOverview from '../../components/superadmin/BillingOverview';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 import { useAlert } from '../../context/AlertContext';
 
 const SuperAdminDashboard = () => {
@@ -235,9 +236,37 @@ const SuperAdminDashboard = () => {
           <CreditCard size={20} /> <span className="nav-text">Payments</span>
         </div>
 
+<<<<<<< HEAD
         <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
           <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
             <LogOut size={20} /> <span className="nav-text">Logout</span>
+=======
+      </div>
+      <div className="dashboard-content">
+        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
+          <div className="dashboard-header" style={{
+            backgroundColor: 'var(--clay-base)',
+            padding: '1rem 2rem',
+            borderRadius: '50px',
+            boxShadow: 'var(--clay-outer)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+              <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
+                {activeTab === 'analytics' && 'Global Analytics'}
+                {activeTab === 'colleges' && 'Manage Colleges'}
+                {activeTab === 'admins' && 'Manage Admins'}
+                {activeTab === 'logs' && 'Audit Logs'}
+                {activeTab === 'agent' && 'Agent Management'}
+                {activeTab === 'billing' && 'Payments'}
+                {activeTab === 'profile' && 'Profile & Settings'}
+              </h2>
+            </div>
+            <div className="header-actions">
+              <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
+                Back to Home
+              </NeoButton>
+            </div>
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
           </div>
         </div>
       </div>
@@ -472,6 +501,10 @@ const SuperAdminDashboard = () => {
 
           {activeTab === 'billing' && (
             <BillingOverview token={token} />
+          )}
+
+          {activeTab === 'profile' && (
+            <ProfileAndSettingsView />
           )}
 
         </div>

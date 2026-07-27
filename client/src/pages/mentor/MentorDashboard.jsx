@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NeoButton from '../../components/UI/NeoButton';
-import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight, Menu, User } from 'lucide-react';
 import MentorGroups from '../../components/mentor/MentorGroups';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 
 const MentorDashboard = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'groups';
+  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   const [groups, setGroups] = useState([]);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -82,7 +86,11 @@ const MentorDashboard = () => {
           </button>
         </div>
 
+<<<<<<< HEAD
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setSearchParams({ tab: 'dashboard' })}>
+=======
+        <div className={`nav-item ${activeTab === 'groups' ? 'active' : ''}`} onClick={() => { setActiveTab('groups'); if (isMobile) setMobileSidebarOpen(false); }}>
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
           <LayoutDashboard size={20} />
           <span className="nav-text">My Groups</span>
         </div>
@@ -99,8 +107,15 @@ const MentorDashboard = () => {
 
 
         <div className="dashboard-scroll-area">
-          <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>My Assigned Groups</h2>
-          <MentorGroups groups={groups} navigate={navigate} />
+          {activeTab === 'groups' && (
+            <>
+              <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>My Assigned Groups</h2>
+              <MentorGroups groups={groups} navigate={navigate} />
+            </>
+          )}
+          {activeTab === 'profile' && (
+            <ProfileAndSettingsView />
+          )}
         </div>
       </div>
     </div>

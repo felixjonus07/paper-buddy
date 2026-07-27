@@ -8,12 +8,11 @@ import ThemeToggle from '../../components/UI/ThemeToggle';
 import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle, MessageCircle, Home, ChevronLeft, ChevronRight, Menu, Landmark } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import UserOverview from '../../components/user/UserOverview';
-import UserProfile from '../../components/user/UserProfile';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 import UserPayFees from '../../components/user/UserPayFees';
 import UserFeeRequests from '../../components/user/UserFeeRequests';
 import UserApplyLoan from '../../components/user/UserApplyLoan';
 import UserPaidFees from '../../components/user/UserPaidFees';
-import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
@@ -508,12 +507,41 @@ const UserDashboard = () => {
       {/* Main Content Area */}
       <div className="dashboard-content">
 
+<<<<<<< HEAD
 
+=======
+        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
+          <div className="dashboard-header" style={{
+            backgroundColor: 'var(--clay-base)',
+            padding: '1rem 2rem',
+            borderRadius: '50px',
+            boxShadow: 'var(--clay-outer)'
+          }}>
+            <h2 style={{ margin: 0, color: 'var(--text-color)', lineHeight: '1.2' }}>
+              {activeTab === 'dashboard' && <>Student <br /> Dashboard</>}
+              {activeTab === 'pay-fees' && 'Pay Fees'}
+              {activeTab === 'fee-requests' && 'Fee Requests'}
+              {activeTab === 'loan' && 'Financial Aid'}
+              {activeTab === 'paid-fees' && 'Payment History'}
+              {activeTab === 'profile' && 'Profile & Settings'}
+            </h2>
+            <div className="header-actions">
+              <NeoButton 
+                variant="secondary" 
+                onClick={() => navigate('/')}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '12px' }}
+              >
+                <span>Back to Home</span>
+              </NeoButton>
+            </div>
+          </div>
+        </div>
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
 
         <div className="dashboard-scroll-area">
 
           {activeTab === 'dashboard' && <UserOverview user={user} studentFees={filteredStudentFees} loans={filteredLoans} profile={profile} />}
-          {activeTab === 'profile' && <UserProfile profile={profile} openProfileEdit={openProfileEdit} />}
+          {activeTab === 'profile' && <ProfileAndSettingsView />}
           {activeTab === 'pay-fees' && (
             (filteredFees.length === 0 && filteredStudentFees.length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
@@ -530,7 +558,6 @@ const UserDashboard = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
               <UserPaidFees studentFees={filteredStudentFees} handleDownloadReceipt={handleDownloadReceipt} />
           )}
-          {activeTab === 'settings' && <UserSettings handleChangePassword={handleChangePassword} passwordData={passwordData} setPasswordData={setPasswordData} passwordMessage={passwordMessage} />}
         </div>
       </div>
 
