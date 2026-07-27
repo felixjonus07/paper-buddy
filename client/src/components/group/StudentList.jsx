@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
+import NeoInput from '../UI/NeoInput';
+import { Search } from 'lucide-react';
 
 const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, openAddFeeModal }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredLedgers = (studentLedgers || []).filter(l => 
+    l?.student?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    l?.student?.username?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredUsers = (users || []).filter(u => 
+    u?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    u?.username?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <NeoCard style={{ flex: '2', minWidth: '500px', overflow: 'hidden' }}>
       {/* Tab Control */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ 
           display: 'flex', 
           backgroundColor: 'var(--clay-base)', 
@@ -49,6 +63,14 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
             View All Students
           </div>
         </div>
+        <div style={{ flex: '1', minWidth: '200px', maxWidth: '300px' }}>
+          <NeoInput 
+            Icon={Search} 
+            placeholder="Search students..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Sliding Container */}
@@ -62,9 +84,9 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
           
           {/* Enrolled Students Tab */}
           <div style={{ width: '50%', flexShrink: 0, paddingRight: '1rem', boxSizing: 'border-box' }}>
-            <div className="table-container">
+            <div className="table-container" style={{ maxHeight: '600px', overflowY: 'auto' }}>
               <table>
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'var(--bg-secondary)' }}>
                   <tr>
                     <th>Student Name</th>
                     <th>Score / Tier</th>
@@ -77,7 +99,7 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
                   </tr>
                 </thead>
                 <tbody>
-                  {studentLedgers?.map(l => (
+                  {filteredLedgers?.map(l => (
                     <tr key={l?.student?._id || Math.random()}>
                       <td>{l?.student?.name || 'Unknown'} <br/><span style={{fontSize: '0.8rem', color: 'var(--text-light)'}}>{l?.student?.username || ''}</span></td>
                       <td>
@@ -98,7 +120,7 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
                       </td>
                     </tr>
                   ))}
-                  {(!studentLedgers || studentLedgers.length === 0) && (
+                  {(!filteredLedgers || filteredLedgers.length === 0) && (
                     <tr>
                       <td colSpan="8" style={{ textAlign: 'center' }}>No billing records for this group.</td>
                     </tr>
@@ -110,9 +132,9 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
 
           {/* All Users Tab */}
           <div style={{ width: '50%', flexShrink: 0, paddingLeft: '1rem', boxSizing: 'border-box' }}>
-            <div className="table-container">
+            <div className="table-container" style={{ maxHeight: '600px', overflowY: 'auto' }}>
               <table>
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'var(--bg-secondary)' }}>
                   <tr>
                     <th>Student Name</th>
                     <th>Username</th>
@@ -121,8 +143,8 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
                   </tr>
                 </thead>
                 <tbody>
-                  {users && users.length > 0 ? (
-                    users.map(u => (
+                  {filteredUsers && filteredUsers.length > 0 ? (
+                    filteredUsers.map(u => (
                       <tr key={u._id}>
                         <td>{u.name}</td>
                         <td>{u.username}</td>
@@ -136,7 +158,7 @@ const StudentList = ({ showAllUsers, setShowAllUsers, studentLedgers, users, ope
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" style={{ textAlign: 'center' }}>No students assigned to this group yet.</td>
+                      <td colSpan="4" style={{ textAlign: 'center' }}>No students found.</td>
                     </tr>
                   )}
                 </tbody>
