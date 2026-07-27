@@ -7,6 +7,7 @@ const StudentFee = require('../models/StudentFee');
 const FeeType = require('../models/FeeType');
 const Scholarship = require('../models/Scholarship');
 const FeeRequest = require('../models/FeeRequest');
+const { calculateDynamicFeeAmount } = require('../utils/feeUtils');
 const bcrypt = require('bcryptjs');
 const xlsx = require('xlsx');
 /**
@@ -256,6 +257,9 @@ const createGroup = async (req, res) => {
 
     res.status(201).json(group);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'A group with this name already exists. Please choose a different name.' });
+    }
     res.status(500).json({ message: error.message });
   }
 };
@@ -263,16 +267,45 @@ const createGroup = async (req, res) => {
 // Update Group
 const updateGroup = async (req, res) => {
   try {
-    const { name, description, isGlobal } = req.body;
+    const { name, description, isGlobal, parentId } = req.body;
     const group = await Group.findOne({ _id: req.params.id, collegeId: req.user.collegeId });
     if (!group) return res.status(404).json({ message: 'Group not found or unauthorized' });
     
     if (name) group.name = name;
     if (description !== undefined) group.description = description;
     if (isGlobal !== undefined) group.isGlobal = isGlobal;
+    if (parentId !== undefined) {
+      if (parentId === '') {
+        group.parentGroups = [];
+      } else {
+        group.parentGroups = [parentId];
+      }
+    }
     
     await group.save();
     res.json(group);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete Group
+const deleteGroup = async (req, res) => {
+  try {
+    const group = await Group.findOneAndDelete({ _id: req.params.id, collegeId: req.user.collegeId });
+    if (!group) return res.status(404).json({ message: 'Group not found or unauthorized' });
+    
+    // Remove group reference from users
+    await User.updateMany(
+      { groups: req.params.id, collegeId: req.user.collegeId },
+      { $pull: { groups: req.params.id } }
+    );
+    
+    // We could also delete related StudentFee entries or remove from parentGroups,
+    // but the instruction was to just write the function to delete the specific group
+    // from our collection without changing any other thing unless strictly necessary.
+
+    res.json({ message: 'Group deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -405,7 +438,7 @@ const assignSubGroup = async (req, res) => {
 // Assign Fee to User
 const assignFeeToUser = async (req, res) => {
   try {
-    const { title, amount, feeType, userId, groupId } = req.body;
+    const { title, amount, feeType, userId, groupId, deadlineDate, lateFeeFine, lateFeeFineType } = req.body;
     
     if (!title || !amount || !feeType || !userId) {
        return res.status(400).json({ message: 'Title, amount, feeType, and userId are required' });
@@ -420,7 +453,10 @@ const assignFeeToUser = async (req, res) => {
       feeType,
       assignedToUser: userId,
       assignedToGroup: groupId || null,
-      collegeId: req.user.collegeId
+      collegeId: req.user.collegeId,
+      deadlineDate: deadlineDate || null,
+      lateFeeFine: lateFeeFine || 0,
+      lateFeeFineType: lateFeeFineType || 'total'
     });
 
     const { baseAmount, discountAmount, finalAmount } = await applyFeeRules(user, fee);
@@ -444,7 +480,7 @@ const assignFeeToUser = async (req, res) => {
 // Assign Fee to Group
 const assignFeeToGroup = async (req, res) => {
   try {
-    const { title, amount, feeType, groupId } = req.body;
+    const { title, amount, feeType, groupId, deadlineDate, lateFeeFine, lateFeeFineType } = req.body;
     
     if (!title || !amount || !feeType || !groupId) {
        return res.status(400).json({ message: 'Title, amount, feeType, and groupId are required' });
@@ -460,7 +496,10 @@ const assignFeeToGroup = async (req, res) => {
       amount,
       feeType,
       assignedToGroup: groupId,
-      collegeId: req.user.collegeId
+      collegeId: req.user.collegeId,
+      deadlineDate: deadlineDate || null,
+      lateFeeFine: lateFeeFine || 0,
+      lateFeeFineType: lateFeeFineType || 'total'
     });
 
     // Generate StudentFee records for all students in this group
@@ -564,6 +603,19 @@ const updateUser = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({ _id: id, collegeId: req.user.collegeId });
+    if (!user) return res.status(404).json({ message: 'User not found or unauthorized' });
+    
+    await User.deleteOne({ _id: id });
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get Group Dashboard Data
 const getGroupDashboardData = async (req, res) => {
   try {
@@ -583,17 +635,22 @@ const getGroupDashboardData = async (req, res) => {
         path: 'studentId',
         select: 'name username academicScore scholarship',
         populate: { path: 'scholarship', select: 'name' }
-      });
+      }).populate('feeId').lean();
       payments = await Payment.find({ user: { $in: studentIds } });
     } else {
       studentFees = await StudentFee.find({ groupId: id }).populate({
         path: 'studentId',
         select: 'name username academicScore scholarship',
         populate: { path: 'scholarship', select: 'name' }
-      });
+      }).populate('feeId').lean();
       payments = await Payment.find({ group: id });
     }
-    
+
+    studentFees = studentFees.map(sf => {
+      sf.finalAmount = calculateDynamicFeeAmount(sf);
+      return sf;
+    });
+
     const totalAssignedValue = studentFees.reduce((sum, sf) => sum + sf.finalAmount, 0);
     
     const amountCollected = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -1034,6 +1091,7 @@ module.exports = {
   uploadBulkUsers,
   createGroup,
   updateGroup,
+  deleteGroup,
   createGroupMentor,
   getGroups,
   assignFeeToGroup,
@@ -1060,6 +1118,7 @@ module.exports = {
   getPaymentSettings,
   getCashiers,
   getCashierLogs,
+  deleteUser,
   getLedger,
   confirmSettlement
 };

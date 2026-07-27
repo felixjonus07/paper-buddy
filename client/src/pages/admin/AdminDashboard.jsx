@@ -102,23 +102,23 @@ const AdminDashboard = () => {
   const [mentorData, setMentorData] = useState({ groupId: null, name: '', username: '', password: '' });
   const [mentorMessage, setMentorMessage] = useState('');
 
-  const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '' });
+  const [feeData, setFeeData] = useState({ title: '', amount: '', feeType: '', groupId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [feeMessage, setFeeMessage] = useState('');
 
-  const [userFeeData, setUserFeeData] = useState({ title: '', amount: '', feeType: '', userId: '' });
+  const [userFeeData, setUserFeeData] = useState({ title: '', amount: '', feeType: '', userId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [currentFeeRequest, setCurrentFeeRequest] = useState(null);
 
   const [isAssignStudentModalOpen, setAssignStudentModalOpen] = useState(false);
-  const [isAssignSubgroupModalOpen, setAssignSubgroupModalOpen] = useState(false);
+
   const [isGlowChartModalOpen, setGlowChartModalOpen] = useState(false);
 
   const [selectedUserForGroup, setSelectedUserForGroup] = useState(null);
-  const [selectedGroupForSub, setSelectedGroupForSub] = useState(null);
+
   const [selectedGroupForChart, setSelectedGroupForChart] = useState(null);
   const [expandedUser, setExpandedUser] = useState(null);
 
   const [assignStudentData, setAssignStudentData] = useState({ groupId: '' });
-  const [assignSubgroupData, setAssignSubgroupData] = useState({ parentId: '' });
+
 
   const [editUserData, setEditUserData] = useState({ scholarship: 'NONE', academicScore: 0, _id: null });
 
@@ -133,36 +133,68 @@ const AdminDashboard = () => {
         headers['x-college-id'] = collegeId;
       }
 
-      const [usersRes, groupsRes, feesRes, catsRes, schRes, feeReqRes] = await Promise.all([
-        fetch('/api/admin/users', { headers }),
-        fetch('/api/admin/groups', { headers }),
-        fetch('/api/admin/fees', { headers }),
-        fetch('/api/admin/fee-types', { headers }),
-        fetch('/api/admin/scholarships', { headers }),
-        fetch('/api/admin/fee-requests', { headers })
-      ]);
-
-      if (usersRes.ok) setUsers(await usersRes.json());
-      if (groupsRes.ok) setGroups(await groupsRes.json());
-      if (feesRes.ok) setFees(await feesRes.json());
-      if (catsRes.ok) setFeeTypes(await catsRes.json());
-      if (schRes.ok) setScholarships(await schRes.json());
-      if (feeReqRes.ok) setFeeRequests(await feeReqRes.json());
-
-      const paymentRes = await fetch('/api/admin/college/payment-settings', { headers });
-      if (paymentRes.ok) {
-        const paymentData = await paymentRes.json();
-        setPaymentStatus(paymentData.paymentType);
+      const CACHE_KEY = `admin_data_${collegeId || 'default'}`;
+      const cachedData = sessionStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          if (parsed.users) setUsers(parsed.users);
+          if (parsed.groups) setGroups(parsed.groups);
+          if (parsed.fees) setFees(parsed.fees);
+          if (parsed.cats) setFeeTypes(parsed.cats);
+          if (parsed.sch) setScholarships(parsed.sch);
+          if (parsed.feeReq) setFeeRequests(parsed.feeReq);
+          if (parsed.paymentStatus) setPaymentStatus(parsed.paymentStatus);
+          if (parsed.monthlyPayments) setMonthlyPayments(parsed.monthlyPayments);
+        } catch (e) {}
       }
 
       const date = new Date();
       const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
       const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
-      const monthlyRes = await fetch(`/api/admin/reports/payments?startDate=${firstDay}&endDate=${lastDay}`, { headers });
+
+      const [usersRes, groupsRes, feesRes, catsRes, schRes, feeReqRes, paymentRes, monthlyRes] = await Promise.all([
+        fetch('/api/admin/users', { headers }),
+        fetch('/api/admin/groups', { headers }),
+        fetch('/api/admin/fees', { headers }),
+        fetch('/api/admin/fee-types', { headers }),
+        fetch('/api/admin/scholarships', { headers }),
+        fetch('/api/admin/fee-requests', { headers }),
+        fetch('/api/admin/college/payment-settings', { headers }),
+        fetch(`/api/admin/reports/payments?startDate=${firstDay}&endDate=${lastDay}`, { headers })
+      ]);
+
+      const [usersData, groupsData, feesData, catsData, schData, feeReqData] = await Promise.all([
+        usersRes.ok ? usersRes.json() : null,
+        groupsRes.ok ? groupsRes.json() : null,
+        feesRes.ok ? feesRes.json() : null,
+        catsRes.ok ? catsRes.json() : null,
+        schRes.ok ? schRes.json() : null,
+        feeReqRes.ok ? feeReqRes.json() : null
+      ]);
+
+      const newData = cachedData ? JSON.parse(cachedData) : {};
+      
+      if (usersData) { setUsers(usersData); newData.users = usersData; }
+      if (groupsData) { setGroups(groupsData); newData.groups = groupsData; }
+      if (feesData) { setFees(feesData); newData.fees = feesData; }
+      if (catsData) { setFeeTypes(catsData); newData.cats = catsData; }
+      if (schData) { setScholarships(schData); newData.sch = schData; }
+      if (feeReqData) { setFeeRequests(feeReqData); newData.feeReq = feeReqData; }
+      
+      if (paymentRes.ok) {
+        const paymentData = await paymentRes.json();
+        setPaymentStatus(paymentData.paymentType);
+        newData.paymentStatus = paymentData.paymentType;
+      }
+
       if (monthlyRes.ok) {
         const monthlyData = await monthlyRes.json();
         setMonthlyPayments(monthlyData.payments || []);
+        newData.monthlyPayments = monthlyData.payments || [];
       }
+      
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(newData));
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
@@ -287,7 +319,8 @@ const AdminDashboard = () => {
         body: JSON.stringify({
           name: editGroupData.name,
           description: editGroupData.description,
-          isGlobal: editGroupData.isGlobal
+          isGlobal: editGroupData.isGlobal,
+          parentId: editGroupData.parentId
         })
       });
       const data = await res.json();
@@ -338,7 +371,10 @@ const AdminDashboard = () => {
       setFeeMessage(res.ok ? 'Fee assigned successfully!' : (data.message || 'Failed to assign fee'));
       if (res.ok) {
         fetchData();
-        setTimeout(() => setFeeModalOpen(false), 1500);
+        setTimeout(() => {
+          setFeeModalOpen(false);
+          setFeeData({ title: '', amount: '', feeType: '', groupId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
+        }, 1500);
       }
     } catch (err) { setFeeMessage('Server error'); }
   };
@@ -353,6 +389,7 @@ const AdminDashboard = () => {
       });
       if (res.ok) {
         setAssignUserFeeModalOpen(false);
+        setUserFeeData({ title: '', amount: '', feeType: '', userId: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
         fetchData();
         showAlert('Fee assigned to student successfully!');
       } else {
@@ -413,20 +450,6 @@ const AdminDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleAssignSubgroup = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/admin/groups/assign-subgroup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ childId: selectedGroupForSub?._id, parentId: assignSubgroupData.parentId })
-      });
-      if (res.ok) {
-        fetchData();
-        setAssignSubgroupModalOpen(false);
-      }
-    } catch (err) { console.error(err); }
-  };
 
   const handleEditUserSubmit = async (e) => {
     e.preventDefault();
@@ -532,6 +555,36 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteGroup = async (id) => {
+    try {
+      const res = await fetch(`/api/admin/groups/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        fetchData();
+        showAlert('Group deleted successfully!');
+      } else {
+        const data = await res.json();
+        showAlert(`Cannot delete group: ${data.message}`);
+      }
+    } catch (err) {
+      showAlert('Error deleting group');
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        fetchData();
+        showAlert('User deleted successfully!');
+      } else {
+        const data = await res.json();
+        showAlert(`Cannot delete user: ${data.message}`);
+      }
+    } catch (err) {
+      showAlert('Error deleting user');
+    }
+  };
+
   return (
     <div className="app-container dashboard-layout">
 
@@ -573,45 +626,11 @@ const AdminDashboard = () => {
             </div>
           ))}
         </div>
-
-        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.3rem 1rem 0.3rem 0.3rem' : '0.4rem', display: 'flex', justifyContent: isSidebarOpen ? 'flex-start' : 'center', alignItems: 'center', gap: '0.8rem' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              border: '2px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 2px 5px rgba(242,92,5,0.3)',
-              flexShrink: 0,
-            }}>
-              <LogOut size={16} />
-            </div>
-            {isSidebarOpen && 'Logout'}
-          </NeoButton>
-        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        {/* Mobile Dashboard Tabs */}
-        {isMobile && (
-          <div className="mobile-dashboard-tabs">
-            {[...mainNavItems, ...managementNavItems].map(item => (
-              <div 
-                key={item.id} 
-                className={`mobile-tab-item ${activeTab === item.id ? 'active' : ''}`} 
-                onClick={() => handleNavClick(item.id)}
-              >
-                <item.icon size={16} /> {item.label}
-              </div>
-            ))}
-          </div>
-        )}
+
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
@@ -676,12 +695,12 @@ const AdminDashboard = () => {
           {activeTab === 'users' && (
             (users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
-              <UserManagement users={users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase()))} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} setAssignUserFeeModalOpen={setAssignUserFeeModalOpen} setUserFeeData={setUserFeeData} isReadOnly={isReadOnly} />
+              <UserManagement users={users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.username?.toLowerCase().includes(searchQuery.toLowerCase()))} expandedUser={expandedUser} setExpandedUser={setExpandedUser} setUserModalOpen={setUserModalOpen} setEditUserData={setEditUserData} setEditUserModalOpen={setEditUserModalOpen} setSelectedUserForGroup={setSelectedUserForGroup} setAssignStudentModalOpen={setAssignStudentModalOpen} setAssignUserFeeModalOpen={setAssignUserFeeModalOpen} setUserFeeData={setUserFeeData} handleDeleteUser={handleDeleteUser} isReadOnly={isReadOnly} />
           )}
           {activeTab === 'groups' && (
             (groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
-              <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} setSelectedGroupForSub={setSelectedGroupForSub} setAssignSubgroupModalOpen={setAssignSubgroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} isReadOnly={isReadOnly} />
+              <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} handleDeleteGroup={handleDeleteGroup} isReadOnly={isReadOnly} />
           )}
           {activeTab === 'finance' && (
             <FinanceManagement collegeId={collegeId || user?.collegeId} />
@@ -888,6 +907,17 @@ const AdminDashboard = () => {
             </label>
           </div>
 
+          <NeoSelect
+            value={editGroupData.parentId || ''}
+            onChange={val => setEditGroupData({ ...editGroupData, parentId: val })}
+            required={false}
+            placeholder="Assign to Parent Group (Optional)"
+            options={[
+              { value: '', label: 'No Parent' },
+              ...groups.filter(g => g._id !== editGroupData._id).map(g => ({ value: g._id, label: g.name }))
+            ]}
+          />
+
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Save Changes</NeoButton>
           {editGroupMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-mint)', textAlign: 'center' }}>{editGroupMessage}</p>}
         </form>
@@ -936,6 +966,42 @@ const AdminDashboard = () => {
             />
           </div>
 
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Deadline Date (Optional)</label>
+            <NeoInput 
+              type="date" 
+              value={feeData.deadlineDate || ''} 
+              onChange={e => setFeeData({...feeData, deadlineDate: e.target.value})} 
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Fine (₹)</label>
+              <NeoInput 
+                type="number" 
+                placeholder="Fine Amount" 
+                value={feeData.lateFeeFine || ''} 
+                onChange={e => setFeeData({...feeData, lateFeeFine: e.target.value})} 
+                min="0"
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Type</label>
+              <div style={{ position: 'relative' }}>
+                <NeoSelect 
+                  value={feeData.lateFeeFineType || 'total'}
+                  onChange={val => setFeeData({...feeData, lateFeeFineType: val})}
+                  options={[
+                    { value: 'total', label: 'Total (Fixed)' },
+                    { value: 'per day', label: 'Per Day' },
+                    { value: 'per month', label: 'Per Month' }
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
           <NeoButton variant="peach" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Assign Fee</NeoButton>
           {feeMessage && <p style={{ marginTop: '1rem', color: 'var(--clay-peach)', textAlign: 'center' }}>{feeMessage}</p>}
         </form>
@@ -957,7 +1023,44 @@ const AdminDashboard = () => {
               required={true}
               placeholder="Select Fee Type..."
               options={feeTypes.map(c => ({ value: c._id, label: c.name }))}
+              style={{ marginBottom: '1rem' }}
             />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Deadline Date (Optional)</label>
+            <NeoInput 
+              type="date" 
+              value={userFeeData.deadlineDate || ''} 
+              onChange={e => setUserFeeData({...userFeeData, deadlineDate: e.target.value})} 
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Fine (₹)</label>
+              <NeoInput 
+                type="number" 
+                placeholder="Fine Amount" 
+                value={userFeeData.lateFeeFine || ''} 
+                onChange={e => setUserFeeData({...userFeeData, lateFeeFine: e.target.value})} 
+                min="0"
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Type</label>
+              <div style={{ position: 'relative' }}>
+                <NeoSelect 
+                  value={userFeeData.lateFeeFineType || 'total'}
+                  onChange={val => setUserFeeData({...userFeeData, lateFeeFineType: val})}
+                  options={[
+                    { value: 'total', label: 'Total (Fixed)' },
+                    { value: 'per day', label: 'Per Day' },
+                    { value: 'per month', label: 'Per Month' }
+                  ]}
+                />
+              </div>
+            </div>
           </div>
 
           <NeoButton variant="mint" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Assign Fee</NeoButton>
@@ -983,22 +1086,6 @@ const AdminDashboard = () => {
       </NeoModal>
 
       {/* Assign Subgroup Modal */}
-      {/* Assign Subgroup Modal */}
-      <NeoModal isOpen={isAssignSubgroupModalOpen} onClose={() => setAssignSubgroupModalOpen(false)} title={`Set Parent for ${selectedGroupForSub?.name}`}>
-        <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
-          Make this group a "child" of another group. For example, "Section A" can be a child of "Computer Science Department".
-        </p>
-        <form onSubmit={handleAssignSubgroup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <NeoSelect
-            value={assignSubgroupData.parentId}
-            onChange={val => setAssignSubgroupData({ parentId: val })}
-            required={true}
-            placeholder="Select Parent Group..."
-            options={groups.filter(g => g._id !== selectedGroupForSub?._id).map(g => ({ value: g._id, label: g.name }))}
-          />
-          <NeoButton variant="pink" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Set Parent</NeoButton>
-        </form>
-      </NeoModal>
 
       {/* Edit User Modal */}
       {/* Edit User Modal */}

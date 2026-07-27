@@ -16,19 +16,19 @@ You detect the user's intent and extract relevant field values from their messag
 
 2. ADD_FEE_TO_GROUP - Add a fee assigned to a group/batch.
    Examples: "add tuition fee of 5000 to group"
-   Extract: title, amount
+   Extract: title, amount, groupName
 
 3. ADD_FEE_TO_USER - Add a fee assigned to a specific student.
    Examples: "add library fee 500 to student john"
-   Extract: title, amount
+   Extract: title, amount, studentName
 
 4. CREATE_GROUP - Create a new group or batch.
    Examples: "create a group named CSE"
    Extract: name, description
 
 5. ASSIGN_STUDENT_TO_GROUP - Assign a student/user to a group.
-   Examples: "assign student to CS-A group"
-   Extract: (user will select from dropdowns)
+   Examples: "assign student john to CS-A group"
+   Extract: studentName, groupName
 
 6. ASSIGN_SUBGROUP - Assign a group as a child/subgroup of another group.
    Examples: "assign CSE as subgroup of AI&DS"
@@ -55,24 +55,28 @@ You detect the user's intent and extract relevant field values from their messag
     Extract: (dropdown)
 
 12. UPDATE_USER_SCHOLARSHIP - Assign a scholarship to a student.
-    Examples: "assign merit scholarship to student"
-    Extract: (dropdown)\n`;
+    Examples: "assign merit scholarship to student john"
+    Extract: studentName
+    
+13. DELETE_GROUP - Delete an existing group.
+    Examples: "delete the group named gm-college"
+    Extract: groupName\n`;
   } else if (role === 'superadmin') {
     prompt += `
-13. TOGGLE_AI_ACCESS - Enable or disable the AI agent for a specific college.
+14. TOGGLE_AI_ACCESS - Enable or disable the AI agent for a specific college.
     Examples: "disable agent for kit", "turn off ai for default college", "enable chatbot for kitcbe"
     Extract: collegeQuery (the name or code of the college), action (either "enable" or "disable")
 
-14. CREATE_COLLEGE_ADMIN - Create an admin account for a specific college.
+15. CREATE_COLLEGE_ADMIN - Create an admin account for a specific college.
     Examples: "create admin john for kit with username johnkit and password pass123"
     Extract: collegeQuery, name, username, password
 
-15. CREATE_COLLEGE - Create a new college/tenant.
+16. CREATE_COLLEGE - Create a new college/tenant.
     Examples: "add a new college named XYZ College with code XYZ01 located in Mumbai"
     Extract: name, code, address
 
 === UNAUTHORIZED ACTIONS ===
-If the user asks to manage users, fees, groups, scholarships, loans, or perform ANY administrative action other than toggling AI access, you MUST politely refuse and state: "This action can only be done through the college Admin portal." Do NOT pretend that you have performed the action.\n`;
+If the user asks to manage users, fees, groups, scholarships, loans, or perform ANY administrative action other than toggling AI access, you MUST politely refuse and state: "for security Super admin can't alter the college portal details since its a financial work". Do NOT pretend that you have performed the action.\n`;
   } else {
     prompt += `
 1. CREATE_FEE_REQUEST - Request a fee waiver, reduction, or custom fee.
@@ -98,22 +102,36 @@ If user asks about payment, Razorpay, paying fees, or initiating payment → int
 
 === RESPONSE FORMAT (strict JSON only, no markdown) ===
 
-For detected intents:
+If the user wants to perform ONE OR MORE actions, return them in an "actions" array. 
+For example, if the user asks "create a user named john and assign a fee of 500", extract both intents:
 {
-  "intent": "<INTENT_NAME>",
-  "data": { <all extracted fields with their exact values, null for missing optional fields> },
+  "actions": [
+    {
+      "intent": "<INTENT_1>",
+      "data": { <fields...> }
+    },
+    {
+      "intent": "<INTENT_2>",
+      "data": { <fields...> }
+    }
+  ],
   "message": "<friendly 1-sentence summary of what you understood>"
 }
 
-For general conversation:
+For general conversation (no actionable intent):
 {
-  "intent": "CHAT",
+  "actions": [],
   "message": "<friendly helpful response>"
 }
 
 For payment requests:
 {
-  "intent": "PAYMENT_RESTRICTED",
+  "actions": [
+    {
+      "intent": "PAYMENT_RESTRICTED",
+      "data": {}
+    }
+  ],
   "message": "Payment processing is handled directly through the dashboard and cannot be initiated via the assistant."
 }
 
@@ -139,7 +157,7 @@ const chat = async (req, res) => {
       const college = await College.findById(req.user.collegeId);
       if (college && college.aiAccess === false) {
         return res.json({
-          intent: 'CHAT',
+          actions: [],
           message: 'AI Assistant access has been disabled for your institution. Please contact your administrator or the platform support team.'
         });
       }
@@ -234,18 +252,35 @@ const chat = async (req, res) => {
       // Strip possible markdown code fences
       const cleaned = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       parsed = JSON.parse(cleaned);
+      if (!parsed.actions && parsed.intent) {
+        // Fallback for older format if LLM ignores instructions
+        parsed.actions = parsed.intent === 'CHAT' ? [] : [{ intent: parsed.intent, data: parsed.data || {} }];
+      }
+      if (!parsed.actions) parsed.actions = [];
     } catch {
-      parsed = { intent: 'CHAT', message: rawContent };
+      parsed = { actions: [], message: rawContent };
     }
 
     // SERVER-SIDE SECURITY CHECK
     const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'superadmin');
-    if (!isAdmin && !['CHAT', 'PAYMENT_RESTRICTED', 'CREATE_FEE_REQUEST', 'EDIT_PROFILE'].includes(parsed.intent)) {
-      console.warn(`Blocked restricted intent '${parsed.intent}' for user role '${req.user?.role}'`);
-      parsed = {
-        intent: 'CHAT',
-        message: 'You do not have administrative permission to perform this action.'
-      };
+    
+    // Check all actions in the array
+    if (!isAdmin) {
+      let hasUnauthorized = false;
+      for (const action of parsed.actions) {
+        if (!['PAYMENT_RESTRICTED', 'CREATE_FEE_REQUEST', 'EDIT_PROFILE'].includes(action.intent)) {
+          console.warn(`Blocked restricted intent '${action.intent}' for user role '${req.user?.role}'`);
+          hasUnauthorized = true;
+          break;
+        }
+      }
+      
+      if (hasUnauthorized) {
+        parsed = {
+          actions: [],
+          message: 'You do not have administrative permission to perform this action.'
+        };
+      }
     }
 
     return res.json(parsed);

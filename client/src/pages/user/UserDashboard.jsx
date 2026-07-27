@@ -15,6 +15,7 @@ import UserApplyLoan from '../../components/user/UserApplyLoan';
 import UserPaidFees from '../../components/user/UserPaidFees';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
 import { useAlert } from '../../context/AlertContext';
 
 // PhonePe uses redirect-based checkout - no SDK script loading needed
@@ -77,7 +78,7 @@ const UserDashboard = () => {
     if (!merchantTransactionId || !feeId) return;
 
     // Clear URL params immediately so refresh doesn't re-trigger, but stay on pay-fees tab
-    navigate('/user/dashboard?tab=pay-fees', { replace: true });
+    navigate(`/user/${user.username}/dashboard?tab=pay-fees`, { replace: true });
 
     const verifyPhonePePayment = async () => {
       setPaymentVerifying(true);
@@ -132,6 +133,19 @@ const UserDashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
 
+      const CACHE_KEY = `user_data_${user?.collegeId || 'default'}`;
+      const cachedData = sessionStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          if (parsed.fees) setFees(parsed.fees);
+          if (parsed.profile) setProfile(parsed.profile);
+          if (parsed.studentFees) setStudentFees(parsed.studentFees);
+          if (parsed.requests) setFeeRequests(parsed.requests);
+          if (parsed.feeTypes) setFeeTypes(parsed.feeTypes);
+        } catch (e) {}
+      }
+
       const [feesRes, profileRes, studentFeesRes, requestsRes, feeTypesRes] = await Promise.all([
         fetch('/api/user/fees', { headers }),
         fetch('/api/user/profile', { headers }),
@@ -140,11 +154,23 @@ const UserDashboard = () => {
         fetch('/api/user/fee-types', { headers })
       ]);
 
-      if (feesRes.ok) setFees(await feesRes.json());
-      if (profileRes.ok) setProfile(await profileRes.json());
-      if (studentFeesRes.ok) setStudentFees(await studentFeesRes.json());
-      if (requestsRes.ok) setFeeRequests(await requestsRes.json());
-      if (feeTypesRes.ok) setFeeTypes(await feeTypesRes.json());
+      const [feesData, profileData, studentFeesData, requestsData, feeTypesData] = await Promise.all([
+        feesRes.ok ? feesRes.json() : null,
+        profileRes.ok ? profileRes.json() : null,
+        studentFeesRes.ok ? studentFeesRes.json() : null,
+        requestsRes.ok ? requestsRes.json() : null,
+        feeTypesRes.ok ? feeTypesRes.json() : null
+      ]);
+
+      const newData = cachedData ? JSON.parse(cachedData) : {};
+
+      if (feesData) { setFees(feesData); newData.fees = feesData; }
+      if (profileData) { setProfile(profileData); newData.profile = profileData; }
+      if (studentFeesData) { setStudentFees(studentFeesData); newData.studentFees = studentFeesData; }
+      if (requestsData) { setFeeRequests(requestsData); newData.requests = requestsData; }
+      if (feeTypesData) { setFeeTypes(feeTypesData); newData.feeTypes = feeTypesData; }
+
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(newData));
     } catch (err) {
       console.error('Failed to fetch data', err);
     }
@@ -277,24 +303,57 @@ const UserDashboard = () => {
     }
   };
 
-  const handleDownloadReceipt = (f) => {
+  const handleDownloadReceipt = async (f) => {
     const doc = new jsPDF();
 
+    try {
+      const img = new Image();
+      img.src = '/images/Logo.png';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      doc.addImage(img, 'PNG', 14, 12, 16, 16);
+    } catch (e) {
+      console.warn("Could not load logo for PDF", e);
+    }
+
+    // Add custom fonts
+    doc.addFileToVFS("Gagalin.ttf", gagalinBase64);
+    doc.addFont("Gagalin.ttf", "gagalin", "normal");
+    
+    doc.addFileToVFS("LilitaOne.ttf", lilitaOneBase64);
+    doc.addFont("LilitaOne.ttf", "lilitaOne", "normal");
+
     // Header
+    doc.setFont("helvetica", "normal"); // Back to old default font
     doc.setFontSize(22);
-    doc.setTextColor(20, 184, 166); // Mint color
-    doc.text("Paper Buddy", 14, 20);
+    doc.setTextColor(248, 116, 16); // Orange color
+    doc.text("Paper Buddy", 34, 22);
+
+    // Calculate width while font is still size 22
+    const titleWidth = doc.getTextWidth("Paper Buddy");
+
+    // Subtitle
+    doc.setFont("lilitaOne", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    const subtitleWidth = doc.getTextWidth("by E.D.I.T.H");
+    doc.text("by E.D.I.T.H", 34 + titleWidth - subtitleWidth, 26); // Aligned to the right end
+
+    // Reset font for the rest of the document
+    doc.setFont("helvetica", "normal");
 
     doc.setFontSize(14);
     doc.setTextColor(50, 50, 50);
-    doc.text("Official Fee Receipt", 14, 30);
+    doc.text("Official Fee Receipt", 34, 34);
 
     // User Details
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Student Name: ${user.name}`, 14, 42);
-    doc.text(`Username: @${user.username}`, 14, 48);
-    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 54);
+    doc.text(`Student Name: ${user.name}`, 14, 46);
+    doc.text(`Username: @${user.username}`, 14, 52);
+    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, 58);
 
     // Receipt Details
     const tableColumn = ["Description", "Details"];
@@ -307,11 +366,11 @@ const UserDashboard = () => {
     ];
 
     autoTable(doc, {
-      startY: 65,
+      startY: 68,
       head: [tableColumn],
       body: tableRows,
       theme: 'striped',
-      headStyles: { fillColor: [20, 184, 166] },
+      headStyles: { fillColor: [248, 116, 16] },
       styles: { fontSize: 11, cellPadding: 6 },
       columnStyles: {
         0: { fontStyle: 'bold', textColor: [80, 80, 80], cellWidth: 80 },
@@ -320,7 +379,7 @@ const UserDashboard = () => {
       didParseCell: function (data) {
         if (data.row.index === 3 && data.column.index === 1) { // Amount Paid value
           data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = [20, 184, 166];
+          data.cell.styles.textColor = [248, 116, 16];
         }
       }
     });
@@ -432,52 +491,11 @@ const UserDashboard = () => {
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>
 
-
-        <div className="sidebar-footer" style={{ marginTop: '2rem' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.3rem 1rem 0.3rem 0.3rem' : '0.4rem', display: 'flex', justifyContent: isSidebarOpen ? 'flex-start' : 'center', alignItems: 'center', gap: '0.8rem' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              border: '2px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 2px 5px rgba(242,92,5,0.3)',
-              flexShrink: 0,
-            }}>
-              <LogOut size={16} />
-            </div>
-            {isSidebarOpen && 'Logout'}
-          </NeoButton>
-        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        {/* Mobile Dashboard Tabs (Only visible on mobile via flex/display setup) */}
-        {isMobile && (
-          <div className="mobile-dashboard-tabs">
-            <div className={`mobile-tab-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => handleNavClick('dashboard')}>
-              <LayoutDashboard size={16} /> Dashboard
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'pay-fees' ? 'active' : ''}`} onClick={() => handleNavClick('pay-fees')}>
-              <IndianRupee size={16} /> Pay Fees
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'fee-requests' ? 'active' : ''}`} onClick={() => handleNavClick('fee-requests')}>
-              <PlusCircle size={16} /> Fee Requests
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'loan' ? 'active' : ''}`} onClick={() => handleNavClick('loan')}>
-              <Landmark size={16} /> Financial Aid
-            </div>
-            <div className={`mobile-tab-item ${activeTab === 'paid-fees' ? 'active' : ''}`} onClick={() => handleNavClick('paid-fees')}>
-              <FileText size={16} /> Payment History
-            </div>
 
-          </div>
-        )}
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
@@ -569,12 +587,11 @@ const UserDashboard = () => {
           />
           <NeoSelect
             value={feeRequestData.feeType}
-            onChange={e => setFeeRequestData({ ...feeRequestData, feeType: e.target.value })}
+            onChange={val => setFeeRequestData({ ...feeRequestData, feeType: val })}
+            options={feeTypes.map(c => ({ value: c._id, label: c.name }))}
+            placeholder="Select Fee Type"
             required
-          >
-            <option value="" disabled>Select Fee Type</option>
-            {feeTypes.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-          </NeoSelect>
+          />
           <textarea
             placeholder="Optional reason or context..."
             value={feeRequestData.reason}

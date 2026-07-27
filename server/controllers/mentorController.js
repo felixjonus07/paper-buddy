@@ -2,6 +2,7 @@ const Group = require('../models/Group');
 const User = require('../models/User');
 const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
+const { calculateDynamicFeeAmount } = require('../utils/feeUtils');
 
 // Get assigned groups for mentor
 const getMentorGroups = async (req, res) => {
@@ -21,14 +22,18 @@ const getGroupDashboardDataForMentor = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check access
-    const hasAccess = req.user.groups.some(gId => gId.toString() === id);
-    if (!hasAccess && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized to view this group' });
-    }
-
     const group = await Group.findById(id).populate('parentGroups', 'name');
     if (!group) return res.status(404).json({ message: 'Group not found' });
+
+    // Check access: user has the group directly, OR user has one of its parent groups
+    const hasDirectAccess = req.user.groups.some(gId => gId.toString() === id);
+    const hasParentAccess = group.parentGroups && group.parentGroups.some(parent => 
+      req.user.groups.some(gId => gId.toString() === parent._id.toString())
+    );
+    
+    if (!hasDirectAccess && !hasParentAccess && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Not authorized to view this group' });
+    }
     
     const users = await User.find({ groups: id }).select('-password').populate('scholarship', 'name');
     
@@ -40,16 +45,21 @@ const getGroupDashboardDataForMentor = async (req, res) => {
         path: 'studentId',
         select: 'name username academicScore scholarship',
         populate: { path: 'scholarship', select: 'name' }
-      });
+      }).populate('feeId').lean();
       payments = await Payment.find({ user: { $in: studentIds } });
     } else {
       studentFees = await StudentFee.find({ groupId: id }).populate({
         path: 'studentId',
         select: 'name username academicScore scholarship',
         populate: { path: 'scholarship', select: 'name' }
-      });
+      }).populate('feeId').lean();
       payments = await Payment.find({ group: id });
     }
+
+    studentFees = studentFees.map(sf => {
+      sf.finalAmount = calculateDynamicFeeAmount(sf);
+      return sf;
+    });
     
     const totalAssignedValue = studentFees.reduce((sum, sf) => sum + sf.finalAmount, 0);
     const amountCollected = payments.reduce((sum, p) => sum + p.amount, 0);

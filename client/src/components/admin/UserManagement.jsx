@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import NeoCard from '../UI/NeoCard';
 import NeoButton from '../UI/NeoButton';
 import NeoInput from '../UI/NeoInput';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 
 const UserManagement = ({
   users,
@@ -15,6 +15,7 @@ const UserManagement = ({
   setAssignStudentModalOpen,
   setAssignUserFeeModalOpen,
   setUserFeeData,
+  handleDeleteUser,
   isReadOnly
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,17 +49,32 @@ const UserManagement = ({
       <div className="card-grid">
         {filteredUsers.map(u => (
           <NeoCard key={u._id} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1.2rem', cursor: 'pointer' }} onClick={() => setExpandedUser(expandedUser === u._id ? null : u._id)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
               <div>
-                <h3 style={{ margin: 0 }}>{u.name}</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>@{u.username}</span>
+                <h3 style={{ margin: '0 0 0.2rem 0', color: 'var(--text-color)', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {u.name}
+                  {u.collegeId?.isPaymentActive && (
+                    <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', background: 'var(--primary)', color: 'white', borderRadius: '12px' }}>PRO</span>
+                  )}
+                </h3>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-light)' }}>@{u.username}</span>
               </div>
+              {!isReadOnly && handleDeleteUser && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); if (window.confirm('Are you sure you want to delete this user?')) handleDeleteUser(u._id); }}
+                  style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', padding: '0.2rem' }}
+                  title="Delete User"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ 
                 padding: '0.3rem 0.6rem', 
                 borderRadius: '12px', 
                 backgroundColor: u.role === 'admin' ? 'var(--clay-pink-light)' : 'var(--clay-mint-light)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
                 border: '1px solid rgba(255,255,255,0.4)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)',
                 color: u.role === 'admin' ? 'var(--primary-dark)' : 'var(--primary)',
@@ -81,10 +97,9 @@ const UserManagement = ({
             )}
 
             {u.role === 'user' && !isReadOnly && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem', flexWrap: 'wrap' }}>
-                <NeoButton variant="peach" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0, groupId: u.groups?.[0]?._id || '' }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
-                <NeoButton variant="mint" style={{ flex: 1, minWidth: '50px', padding: '0.5rem', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); setUserFeeData({ title: '', amount: '', feeType: '', userId: u._id }); setAssignUserFeeModalOpen(true); }}>Add Fee</NeoButton>
-                {/* <NeoButton variant="secondary" style={{ flex: '1 1 100%', padding: '0.5rem', fontSize: '0.8rem' }}  }}>Add Fee</NeoButton> */}
+              <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.1)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <NeoButton variant="peach" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setEditUserData({ _id: u._id, scholarship: u.scholarship?._id || 'NONE', academicScore: u.academicScore || 0, groupId: u.groups?.[0]?._id || '' }); setEditUserModalOpen(true); }}>Edit Profile</NeoButton>
+                <NeoButton variant="mint" style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }} onClick={(e) => { e.stopPropagation(); setUserFeeData({ title: '', amount: '', feeType: '', userId: u._id }); setAssignUserFeeModalOpen(true); }}>Add Fee</NeoButton>
               </div>
             )}
           </NeoCard>

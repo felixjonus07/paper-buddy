@@ -33,15 +33,15 @@ const ThemeToggle = ({ style }) => {
         background: hovered
           ? 'linear-gradient(135deg, rgba(248,116,16,0.25), rgba(248,116,16,0.15))'
           : 'rgba(248,116,16,0.12)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(248,116,16,0.2)',
+        border: 'none',
+        outline: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
         color: hovered ? '#e65c00' : 'var(--primary)',
         boxShadow: hovered
-          ? '0 4px 16px rgba(248,116,16,0.25), 0 0 0 1px rgba(248,116,16,0.2)'
+          ? '0 4px 16px rgba(248,116,16,0.25)'
           : '0 2px 8px rgba(248,116,16,0.1)',
         transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         flexShrink: 0,

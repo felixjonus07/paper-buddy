@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { bulkCreateUsers, uploadBulkUsers, createGroup, updateGroup, createGroupMentor, getGroups, assignFeeToGroup, assignFeeToUser, getUsers, updateUser, getAllFees, getLoans, updateLoanStatus, assignStudentToGroup, assignSubGroup, getGroupDashboardData, createFeeType, getFeeTypes, deleteFeeType, createScholarship, getScholarships, deleteScholarship, deleteFee, getFeeRequests, updateFeeRequestStatus, getPaymentReports, updatePaymentSettings, getPaymentSettings, getCashiers, getCashierLogs, getLedger, confirmSettlement } = require('../controllers/adminController');
+const { bulkCreateUsers, uploadBulkUsers, createGroup, updateGroup, deleteGroup, createGroupMentor, getGroups, assignFeeToGroup, assignFeeToUser, getUsers, updateUser, deleteUser, getAllFees, getLoans, updateLoanStatus, assignStudentToGroup, assignSubGroup, getGroupDashboardData, createFeeType, getFeeTypes, deleteFeeType, createScholarship, getScholarships, deleteScholarship, deleteFee, getFeeRequests, updateFeeRequestStatus, getPaymentReports, updatePaymentSettings, getPaymentSettings, getCashiers, getCashierLogs, getLedger, confirmSettlement } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -25,8 +25,10 @@ router.post('/bulk-users', bulkCreateUsers);
 router.post('/bulk-upload', upload.single('file'), uploadBulkUsers);
 router.get('/users', getUsers);
 router.put('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 router.post('/groups', createGroup);
 router.put('/groups/:id', updateGroup);
+router.delete('/groups/:id', deleteGroup);
 router.post('/groups/:groupId/mentor', createGroupMentor);
 router.get('/groups', getGroups);
 router.post('/fees/group', assignFeeToGroup);

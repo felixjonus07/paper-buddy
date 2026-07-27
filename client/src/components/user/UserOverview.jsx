@@ -78,38 +78,7 @@ const UserOverview = ({ user, studentFees, loans, profile }) => {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '15px' }}>
-        <NeoCard style={{ flex: '1', minWidth: '350px' }}>
-          <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Loan History</h3>
-          <div className="table-container">
-            <table style={{ backgroundColor: 'transparent' }}>
-              <thead>
-                <tr>
-                  <th style={{ color: 'var(--text-color)' }}>Amount</th>
-                  <th style={{ color: 'var(--text-color)' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loans.map(l => (
-                  <tr key={l._id}>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>₹{l.amount}</td>
-                    <td style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}>
-                      <span style={{
-                        padding: '0.3rem 0.6rem', borderRadius: '10px', fontSize: '0.8rem',
-                        backgroundColor: l.status === 'pending' ? 'var(--clay-peach-light)' : l.status === 'approved' ? 'var(--clay-mint-light)' : 'var(--clay-pink-light)',
-                        color: l.status === 'pending' ? '#9a3412' : l.status === 'approved' ? '#115e59' : '#831843'
-                      }}>
-                        {l.status.toUpperCase()}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {loans.length === 0 && <tr><td colSpan="2" style={{ textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.4)' }}>No loans found</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </NeoCard>
-      </div>
+
     </div>
   );
 };

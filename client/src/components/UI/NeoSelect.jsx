@@ -18,11 +18,17 @@ const NeoSelect = ({ value, onChange, options, placeholder, required, style }) =
     
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const shouldDropUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+      
       setDropdownStyle({
         position: 'fixed',
-        top: rect.bottom + 8,
         left: rect.left,
         width: rect.width,
+        ...(shouldDropUp 
+          ? { bottom: window.innerHeight - rect.top + 8 } 
+          : { top: rect.bottom + 8 }),
         zIndex: 999999,
       });
       

@@ -5,9 +5,11 @@ import NeoCard from '../../components/UI/NeoCard';
 import NeoInput from '../../components/UI/NeoInput';
 import NeoButton from '../../components/UI/NeoButton';
 import NeoSelect from '../../components/UI/NeoSelect';
+import NeoModal from '../../components/UI/NeoModal';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
 import { useAlert } from '../../context/AlertContext';
 import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 
@@ -67,7 +69,7 @@ const CashierDashboard = () => {
 
   // Add fee modal
   const [showAddFee, setShowAddFee] = useState(false);
-  const [addFeeData, setAddFeeData] = useState({ title: '', amount: '', feeType: '' });
+  const [addFeeData, setAddFeeData] = useState({ title: '', amount: '', feeType: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
   const [addFeeMsg, setAddFeeMsg] = useState('');
   const [feeTypes, setFeeTypes] = useState([]);
 
@@ -135,22 +137,56 @@ const CashierDashboard = () => {
     } catch { /* ignore */ }
   };
 
-  const handleDownloadReceipt = (feeInfo, studentInfo, paymentDate) => {
+  const handleDownloadReceipt = async (feeInfo, studentInfo, paymentDate) => {
     const doc = new jsPDF();
 
+    try {
+      const img = new Image();
+      img.src = '/images/Logo.png';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      doc.addImage(img, 'PNG', 14, 12, 16, 16);
+    } catch (e) {
+      console.warn("Could not load logo for PDF", e);
+    }
+
+    // Add custom fonts
+    doc.addFileToVFS("Gagalin.ttf", gagalinBase64);
+    doc.addFont("Gagalin.ttf", "gagalin", "normal");
+    
+    doc.addFileToVFS("LilitaOne.ttf", lilitaOneBase64);
+    doc.addFont("LilitaOne.ttf", "lilitaOne", "normal");
+
+    // Header
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(22);
     doc.setTextColor(248, 116, 16); // Orange primary color
-    doc.text("Paper Buddy", 14, 20);
+    doc.text("Paper Buddy", 34, 22);
+    
+    // Calculate width while font is still size 22
+    const titleWidth = doc.getTextWidth("Paper Buddy");
+
+    // Subtitle
+    doc.setFont("lilitaOne", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    const subtitleWidth = doc.getTextWidth("by E.D.I.T.H");
+    doc.text("by E.D.I.T.H", 34 + titleWidth - subtitleWidth, 26);
+
+    // Reset font for the rest of the document
+    doc.setFont("helvetica", "normal");
 
     doc.setFontSize(14);
     doc.setTextColor(50, 50, 50);
-    doc.text("Official Fee Receipt", 14, 30);
+    doc.text("Official Fee Receipt", 34, 34);
 
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Student Name: ${studentInfo.name}`, 14, 42);
-    doc.text(`Username: @${studentInfo.username}`, 14, 48);
-    doc.text(`Date of Payment: ${new Date(paymentDate).toLocaleDateString()}`, 14, 54);
+    doc.text(`Student Name: ${studentInfo.name}`, 14, 46);
+    doc.text(`Username: @${studentInfo.username}`, 14, 52);
+    doc.text(`Date of Payment: ${new Date(paymentDate).toLocaleDateString()}`, 14, 58);
 
     const tableColumn = ["Description", "Details"];
     const tableRows = [
@@ -162,7 +198,7 @@ const CashierDashboard = () => {
     ];
 
     autoTable(doc, {
-      startY: 65,
+      startY: 68,
       head: [tableColumn],
       body: tableRows,
       theme: 'striped',
@@ -238,7 +274,7 @@ const CashierDashboard = () => {
       const data = await res.json();
       if (res.ok) {
         setAddFeeMsg('✅ Fee added!');
-        setAddFeeData({ title: '', amount: '', feeType: '' });
+        setAddFeeData({ title: '', amount: '', feeType: '', deadlineDate: '', lateFeeFine: '', lateFeeFineType: 'total' });
         // Refresh pending fees
         const feesRes = await fetch(`/api/cashier/students/${selectedStudent._id}/fees`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -356,45 +392,11 @@ const CashierDashboard = () => {
             </div>
           ))}
         </div>
-
-        <div className="sidebar-footer" style={{ marginTop: 'auto' }}>
-          <NeoButton variant="secondary" onClick={handleLogout} style={{ width: '100%', padding: isSidebarOpen ? '0.3rem 1rem 0.3rem 0.3rem' : '0.4rem', display: 'flex', justifyContent: isSidebarOpen ? 'flex-start' : 'center', alignItems: 'center', gap: '0.8rem' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              border: '2px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 2px 5px rgba(242,92,5,0.3)',
-              flexShrink: 0,
-            }}>
-              <LogOut size={16} />
-            </div>
-            {isSidebarOpen && 'Logout'}
-          </NeoButton>
-        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
-        {/* Mobile Dashboard Tabs */}
-        {isMobile && (
-          <div className="mobile-dashboard-tabs">
-            {TABS.map(item => (
-              <div 
-                key={item.key} 
-                className={`mobile-tab-item ${activeTab === item.key ? 'active' : ''}`} 
-                onClick={() => setActiveTab(item.key)}
-              >
-                <item.icon size={16} /> {item.label}
-              </div>
-            ))}
-          </div>
-        )}
+
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
@@ -512,6 +514,11 @@ const CashierDashboard = () => {
                                 Base: {fmt(fee.baseAmount)}
                                 {fee.discountAmount > 0 && <span style={{ color: 'var(--clay-mint)', marginLeft: '0.5rem' }}> · Discount: {fmt(fee.discountAmount)}</span>}
                               </p>
+                              {fee.feeId?.deadlineDate && (
+                                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                                  Due: {new Date(fee.feeId.deadlineDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </p>
+                              )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                               <div style={{ textAlign: 'right' }}>
@@ -556,33 +563,75 @@ const CashierDashboard = () => {
                 )}
 
                 {/* Add Fee Modal */}
-                {showAddFee && selectedStudent && (
-                  <div style={{
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <NeoCard style={{ width: '100%', maxWidth: '420px', position: 'relative' }}>
-                      <button onClick={() => setShowAddFee(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}><X size={20} /></button>
-                      <h3 style={{ color: 'var(--primary)', marginBottom: '0.3rem' }}>Add Fee to Student</h3>
-                      <p style={{ color: 'var(--text-light)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                        Manually create and assign a one-off fee for <strong>{selectedStudent.name}</strong>.
-                      </p>
-                      <form onSubmit={handleAddFee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <NeoInput type="text" placeholder="Fee Title (e.g. Lab Fee)" value={addFeeData.title} onChange={e => setAddFeeData({ ...addFeeData, title: e.target.value })} required />
-                        <NeoInput type="number" placeholder="Amount (₹)" value={addFeeData.amount} onChange={e => setAddFeeData({ ...addFeeData, amount: e.target.value })} required />
-                        <NeoSelect
-                          value={addFeeData.feeType}
-                          onChange={v => setAddFeeData({ ...addFeeData, feeType: v })}
-                          placeholder="Select Fee Type..."
-                          options={feeTypes.map(ft => ({ value: ft._id, label: ft.name }))}
-                          required
+                <NeoModal 
+                  isOpen={showAddFee && selectedStudent} 
+                  onClose={() => setShowAddFee(false)} 
+                  title="Add Fee to Student"
+                  maxWidth="420px"
+                >
+                  <p style={{ color: 'var(--text-light)', fontSize: '0.85rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
+                    Manually create and assign a one-off fee for <strong>{selectedStudent?.name}</strong>.
+                  </p>
+                  <form onSubmit={handleAddFee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Fee Title</label>
+                      <NeoInput type="text" placeholder="Fee Title (e.g. Lab Fee)" value={addFeeData.title} onChange={e => setAddFeeData({ ...addFeeData, title: e.target.value })} required />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Amount (₹)</label>
+                      <NeoInput type="number" placeholder="Amount (₹)" value={addFeeData.amount} onChange={e => setAddFeeData({ ...addFeeData, amount: e.target.value })} required min="0" />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Fee Type</label>
+                      <NeoSelect
+                        value={addFeeData.feeType}
+                        onChange={v => setAddFeeData({ ...addFeeData, feeType: v })}
+                        placeholder="Select Fee Type..."
+                        options={feeTypes.map(ft => ({ value: ft._id, label: ft.name }))}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Deadline Date (Optional)</label>
+                      <NeoInput 
+                        type="date" 
+                        value={addFeeData.deadlineDate || ''} 
+                        onChange={e => setAddFeeData({...addFeeData, deadlineDate: e.target.value})} 
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Fine (₹)</label>
+                        <NeoInput 
+                          type="number" 
+                          placeholder="Fine Amount" 
+                          value={addFeeData.lateFeeFine || ''} 
+                          onChange={e => setAddFeeData({...addFeeData, lateFeeFine: e.target.value})} 
+                          min="0"
                         />
-                        <NeoButton variant="primary" type="submit" style={{ width: '100%' }}>Add Fee</NeoButton>
-                        {addFeeMsg && <p style={{ textAlign: 'center', color: addFeeMsg.startsWith('✅') ? 'var(--clay-mint)' : 'var(--clay-peach)' }}>{addFeeMsg}</p>}
-                      </form>
-                    </NeoCard>
-                  </div>
-                )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold', marginLeft: '0.5rem' }}>Late Fee Type</label>
+                        <NeoSelect 
+                          value={addFeeData.lateFeeFineType || 'total'}
+                          onChange={val => setAddFeeData({...addFeeData, lateFeeFineType: val})}
+                          options={[
+                            { value: 'total', label: 'Total (Fixed)' },
+                            { value: 'per day', label: 'Per Day' },
+                            { value: 'per month', label: 'Per Month' }
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    <NeoButton variant="primary" type="submit" style={{ width: '100%', marginTop: '1rem' }}>Add Fee</NeoButton>
+                    {addFeeMsg && <p style={{ textAlign: 'center', marginTop: '1rem', color: addFeeMsg.startsWith('✅') ? 'var(--clay-mint)' : 'var(--clay-peach)' }}>{addFeeMsg}</p>}
+                  </form>
+                </NeoModal>
 
                 {/* Recently Accessed / Serviced Students */}
                 {!selectedStudent && todayLog.length > 0 && (

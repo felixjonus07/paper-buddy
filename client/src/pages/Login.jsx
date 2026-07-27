@@ -153,8 +153,8 @@ const Login = () => {
   };
 
   return (
-    <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '90vh', position: 'relative', padding: '2rem' }}>
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'stretch', width: '100%', maxWidth: '1200px' }}>
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '90vh', position: 'relative', padding: '2rem', flex: '1 0 auto' }}>
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'stretch', width: '100%', maxWidth: '1200px', margin: 'auto' }}>
         
         {/* Login Form Card */}
         <NeoCard style={{ flex: '1 1 400px', maxWidth: '400px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
