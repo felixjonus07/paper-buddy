@@ -52,6 +52,70 @@ const applyFeeRules = async (student, fee) => {
   };
 };
 
+const getAllAncestorGroups = async (groupId) => {
+  const ancestors = new Set();
+  const queue = [groupId.toString()];
+  
+  while (queue.length > 0) {
+    const currentId = queue.shift();
+    const group = await Group.findById(currentId).select('parentGroups');
+    if (group && group.parentGroups && group.parentGroups.length > 0) {
+      for (const p of group.parentGroups) {
+        if (!ancestors.has(p.toString())) {
+          ancestors.add(p.toString());
+          queue.push(p.toString());
+        }
+      }
+    }
+  }
+  return Array.from(ancestors);
+};
+
+const assignGroupsAndFeesToUsers = async (userIds, targetGroupId, collegeId) => {
+  if (!targetGroupId || userIds.length === 0) return;
+  
+  const ancestorGroupIds = await getAllAncestorGroups(targetGroupId);
+  const allGroupIds = [targetGroupId.toString(), ...ancestorGroupIds];
+  
+  const fees = await Fee.find({ assignedToGroup: { $in: allGroupIds }, collegeId });
+  const allNewStudentFees = [];
+  
+  for (const userId of userIds) {
+    const user = await User.findById(userId).populate('scholarship');
+    if (!user) continue;
+    
+    let userModified = false;
+    for (const gid of allGroupIds) {
+      if (!user.groups.includes(gid)) {
+        user.groups.push(gid);
+        userModified = true;
+      }
+    }
+    if (userModified) await user.save();
+    
+    for (const fee of fees) {
+      const existingStudentFee = await StudentFee.findOne({ studentId: user._id, feeId: fee._id });
+      if (!existingStudentFee) {
+        const { baseAmount, discountAmount, finalAmount } = await applyFeeRules(user, fee);
+        allNewStudentFees.push({
+          studentId: user._id,
+          groupId: fee.assignedToGroup,
+          feeId: fee._id,
+          baseAmount,
+          discountAmount,
+          finalAmount,
+          status: 'PENDING',
+          collegeId
+        });
+      }
+    }
+  }
+  
+  if (allNewStudentFees.length > 0) {
+    await StudentFee.insertMany(allNewStudentFees, { ordered: false }).catch(() => {});
+  }
+};
+
 // Create multiple student users at once
 const bulkCreateUsers = async (req, res) => {
   try {
@@ -86,28 +150,29 @@ const bulkCreateUsers = async (req, res) => {
         // Save the college ID so these students belong to the admin's college
         collegeId: req.user.collegeId,
         mustChangePassword: true,
-        groups: groupId ? [groupId] : []
+        groups: []
       });
     }
 
-    // Insert ignoring duplicates (if someone already exists, we can use ordered: false to continue inserting the rest)
-    const result = await User.insertMany(newUsers, { ordered: false });
-    
-    if (groupId && result.length > 0) {
-      const createdUserIds = result.map(u => u._id);
-      await Group.findByIdAndUpdate(groupId, {
-        $push: { studentIds: { $each: createdUserIds } }
-      });
+    let createdUsers = [];
+    try {
+      createdUsers = await User.insertMany(newUsers, { ordered: false });
+    } catch (error) {
+      if (error.code === 11000) {
+        createdUsers = error.insertedDocs || [];
+      } else {
+        throw error;
+      }
+    }
+
+    if (groupId && createdUsers.length > 0) {
+      const createdUserIds = createdUsers.map(u => u._id);
+      await assignGroupsAndFeesToUsers(createdUserIds, groupId, req.user.collegeId);
     }
     
-    res.status(201).json({ message: `Successfully created ${result.length} users.`, users: result });
+    res.status(201).json({ message: `Successfully created ${createdUsers.length} users.`, users: createdUsers });
   } catch (error) {
-    if (error.code === 11000) {
-       // Duplicate key error from insertMany(ordered: false)
-       res.status(201).json({ message: `Bulk creation finished, but some users were skipped because they already existed.`, insertedCount: error.insertedDocs?.length || 0 });
-    } else {
-       res.status(500).json({ message: error.message });
-    }
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -169,7 +234,7 @@ const uploadBulkUsers = async (req, res) => {
         role: 'user',
         collegeId: req.user.collegeId,
         mustChangePassword: true,
-        groups: groupId ? [groupId] : []
+        groups: []
       });
     }
 
@@ -177,31 +242,29 @@ const uploadBulkUsers = async (req, res) => {
       return res.status(400).json({ message: 'No valid users found in the file. Make sure you have a "Username" column.' });
     }
 
-    // Insert into DB
-    const result = await User.insertMany(newUsers, { ordered: false });
+    let createdUsers = [];
+    try {
+      createdUsers = await User.insertMany(newUsers, { ordered: false });
+    } catch (error) {
+      if (error.code === 11000) {
+        createdUsers = error.insertedDocs || [];
+      } else {
+        throw error;
+      }
+    }
 
-    // If a groupId was provided, add these newly created users to the group
-    if (groupId) {
-      const createdUserIds = result.map(u => u._id);
-      await Group.findByIdAndUpdate(groupId, {
-        $push: { studentIds: { $each: createdUserIds } }
-      });
+    if (groupId && createdUsers.length > 0) {
+      const createdUserIds = createdUsers.map(u => u._id);
+      await assignGroupsAndFeesToUsers(createdUserIds, groupId, req.user.collegeId);
     }
     
     res.status(201).json({ 
-      message: `Successfully created ${result.length} users. ${skippedCount > 0 ? `Skipped ${skippedCount} invalid rows.` : ''}`, 
-      users: result 
+      message: `Successfully created ${createdUsers.length} users. ${skippedCount > 0 ? `Skipped ${skippedCount} invalid rows.` : ''}`, 
+      users: createdUsers 
     });
   } catch (error) {
-    if (error.code === 11000) {
-      res.status(201).json({ 
-        message: `Bulk upload finished. Some users were skipped because they already exist.`, 
-        insertedCount: error.insertedDocs?.length || 0 
-      });
-    } else {
-      console.error('Upload Error:', error);
-      res.status(500).json({ message: error.message });
-    }
+    console.error('Upload Error:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -370,36 +433,7 @@ const assignStudentToGroup = async (req, res) => {
       return res.status(400).json({ message: 'User ID(s) and Group ID are required' });
     }
     
-    const fees = await Fee.find({ assignedToGroup: groupId });
-    const allNewStudentFees = [];
-    
-    for (const id of idsToProcess) {
-      const user = await User.findOne({ _id: id, collegeId: req.user.collegeId });
-      if (!user) continue; // Skip if user not found
-      
-      if (!user.groups.includes(groupId)) {
-        user.groups.push(groupId);
-        await user.save();
-        
-        // Generate StudentFee records for existing fees in this group
-        for (const fee of fees) {
-          const { baseAmount, discountAmount, finalAmount } = await applyFeeRules(user, fee);
-          allNewStudentFees.push({
-            studentId: user._id,
-            groupId: groupId,
-            feeId: fee._id,
-            baseAmount,
-            discountAmount,
-            finalAmount,
-            status: 'PENDING'
-          });
-        }
-      }
-    }
-    
-    if (allNewStudentFees.length > 0) {
-      await StudentFee.insertMany(allNewStudentFees);
-    }
+    await assignGroupsAndFeesToUsers(idsToProcess, groupId, req.user.collegeId);
     
     res.status(200).json({ message: 'Student(s) assigned successfully' });
   } catch (error) {
@@ -534,7 +568,7 @@ const assignFeeToGroup = async (req, res) => {
 const getUsers = async (req, res) => {
   try {
     // Only find users where collegeId matches the logged-in admin's collegeId
-    const users = await User.find({ collegeId: req.user.collegeId }).select('-password').populate('groups', 'name');
+    const users = await User.find({ collegeId: req.user.collegeId, role: { $in: ['user', 'mentor', 'cashier'] } }).select('-password').populate('groups', 'name');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -624,13 +658,17 @@ const getGroupDashboardData = async (req, res) => {
     const group = await Group.findOne({ _id: id, collegeId: req.user.collegeId }).populate('parentGroups', 'name');
     if (!group) return res.status(404).json({ message: 'Group not found or unauthorized' });
     
-    const users = await User.find({ groups: id }).select('-password').populate('scholarship', 'name');
-    const fees = await Fee.find({ assignedToGroup: id }).populate('feeType', 'name');
+    // Find child groups to aggregate data
+    const childGroups = await Group.find({ parentGroups: id }).select('_id');
+    const allGroupIds = [id, ...childGroups.map(g => g._id)];
+
+    const users = await User.find({ groups: { $in: allGroupIds } }).select('-password').populate('scholarship', 'name');
+    const fees = await Fee.find({ assignedToGroup: { $in: allGroupIds } }).populate('feeType', 'name');
     
     let payments, studentFees;
     
+    const studentIds = users.map(u => u._id);
     if (group.isGlobal) {
-      const studentIds = users.map(u => u._id);
       studentFees = await StudentFee.find({ studentId: { $in: studentIds } }).populate({
         path: 'studentId',
         select: 'name username academicScore scholarship',
@@ -638,12 +676,22 @@ const getGroupDashboardData = async (req, res) => {
       }).populate('feeId').lean();
       payments = await Payment.find({ user: { $in: studentIds } });
     } else {
-      studentFees = await StudentFee.find({ groupId: id }).populate({
+      studentFees = await StudentFee.find({ 
+        $or: [
+          { groupId: { $in: allGroupIds } },
+          { studentId: { $in: studentIds }, groupId: null }
+        ]
+      }).populate({
         path: 'studentId',
         select: 'name username academicScore scholarship',
         populate: { path: 'scholarship', select: 'name' }
       }).populate('feeId').lean();
-      payments = await Payment.find({ group: id });
+      payments = await Payment.find({ 
+        $or: [
+          { group: { $in: allGroupIds } },
+          { user: { $in: studentIds }, group: null }
+        ]
+      });
     }
 
     studentFees = studentFees.map(sf => {
@@ -660,9 +708,24 @@ const getGroupDashboardData = async (req, res) => {
     
     // Aggregate ledger data for frontend table
     const ledgerByStudent = {};
+    
+    // Initialize ledger for ALL users in the group so they always appear in the table
+    for (const u of users) {
+      const sId = u._id.toString();
+      ledgerByStudent[sId] = {
+        student: u,
+        baseTotal: 0,
+        discountTotal: 0,
+        netPayable: 0,
+        amountPaid: 0,
+        amountPending: 0,
+        status: 'NONE'
+      };
+    }
+
     for (const sf of studentFees) {
       if (!sf.studentId) continue;
-      const sId = sf.studentId._id.toString();
+      const sId = (sf.studentId._id || sf.studentId).toString();
       if (!ledgerByStudent[sId]) {
         ledgerByStudent[sId] = {
           student: sf.studentId,

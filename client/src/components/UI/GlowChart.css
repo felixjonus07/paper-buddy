@@ -63,6 +63,11 @@
   padding-top: 0;
 }
 
+/* Hide empty ul elements to prevent dangling lines */
+.tree ul:empty {
+  display: none;
+}
+
 /* Vertical line from parent to children */
 .tree ul ul::before {
   content: '';

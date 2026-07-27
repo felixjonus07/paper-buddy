@@ -48,12 +48,23 @@ const getGroupDashboardDataForMentor = async (req, res) => {
       }).populate('feeId').lean();
       payments = await Payment.find({ user: { $in: studentIds } });
     } else {
-      studentFees = await StudentFee.find({ groupId: id }).populate({
+      const studentIds = users.map(u => u._id);
+      studentFees = await StudentFee.find({ 
+        $or: [
+          { groupId: id },
+          { studentId: { $in: studentIds }, groupId: null }
+        ]
+      }).populate({
         path: 'studentId',
         select: 'name username academicScore scholarship',
         populate: { path: 'scholarship', select: 'name' }
       }).populate('feeId').lean();
-      payments = await Payment.find({ group: id });
+      payments = await Payment.find({ 
+        $or: [
+          { group: id },
+          { user: { $in: studentIds }, group: null }
+        ]
+      });
     }
 
     studentFees = studentFees.map(sf => {
@@ -69,9 +80,24 @@ const getGroupDashboardDataForMentor = async (req, res) => {
     
     // Aggregate ledger data for frontend table
     const ledgerByStudent = {};
+    
+    // Initialize ledger for all users in the group so they always appear in the table
+    for (const u of users) {
+      const sId = u._id.toString();
+      ledgerByStudent[sId] = {
+        student: u,
+        baseTotal: 0,
+        discountTotal: 0,
+        netPayable: 0,
+        amountPaid: 0,
+        amountPending: 0,
+        status: 'NONE'
+      };
+    }
+
     for (const sf of studentFees) {
       if (!sf.studentId) continue;
-      const sId = sf.studentId._id.toString();
+      const sId = (sf.studentId._id || sf.studentId).toString();
       if (!ledgerByStudent[sId]) {
         ledgerByStudent[sId] = {
           student: sf.studentId,

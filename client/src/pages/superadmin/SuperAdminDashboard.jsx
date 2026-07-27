@@ -4,7 +4,7 @@ import NeoButton from '../../components/UI/NeoButton';
 import NeoInput from '../../components/UI/NeoInput';
 import NeoModal from '../../components/UI/NeoModal';
 import ThemeToggle from '../../components/UI/ThemeToggle';
-import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, LogOut, Bot, CreditCard, Menu, Trash2 } from 'lucide-react';
+import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCircle, ChevronLeft, ChevronRight, LogOut, Bot, CreditCard, Menu, Trash2, MessageCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AgentManagement from '../../components/superadmin/AgentManagement';
 import BillingOverview from '../../components/superadmin/BillingOverview';
@@ -265,12 +265,38 @@ const SuperAdminDashboard = () => {
 
           </div>
         </div>
-      </div>
-      <div className="dashboard-content">
-
 
         <div className="dashboard-scroll-area">
-
+          {/* --------------------------------------------- */}
+          {/* Help Banner - "What is this page for?"        */}
+          {/* --------------------------------------------- */}
+          <div style={{
+            background: 'var(--bg-secondary)',
+            borderRadius: '15px',
+            padding: '1rem 1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: 'inset 5px 5px 10px rgba(0, 0, 0, 0.05), inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            borderLeft: '4px solid var(--primary)'
+          }}>
+            <div style={{ color: 'var(--primary)', marginTop: '0.2rem' }}>
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--text-color)', fontSize: '1rem' }}>What is this page for?</h4>
+              <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                {activeTab === 'analytics' && 'This is the master dashboard providing a high-level overview of total colleges, students, and overall system processing volume.'}
+                {activeTab === 'colleges' && 'This page manages the multi-tenant system. You can onboard new colleges and manage their subscriptions.'}
+                {activeTab === 'admins' && 'Here you can view and manage the system administrators assigned to each institution.'}
+                {activeTab === 'logs' && 'View global audit logs for critical system actions and errors across all institutions.'}
+                {activeTab === 'agent' && 'Configure and monitor the behavior, usage, and permissions of the integrated AI agent.'}
+                {activeTab === 'billing' && 'Monitor all billing metrics and platform revenue.'}
+              </p>
+            </div>
+          </div>
+          {/* --------------------------------------------- */}
           {activeTab === 'analytics' && analytics && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
               <NeoCard>

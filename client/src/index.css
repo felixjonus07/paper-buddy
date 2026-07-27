@@ -4223,8 +4223,10 @@ select:focus {
     opacity: 0;
     transform: translateX(20px);
   }
-  max-width: 600px;
-  margin: 0 auto;
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .saas-hero-button {

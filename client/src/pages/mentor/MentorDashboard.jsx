@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NeoButton from '../../components/UI/NeoButton';
-import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight, Menu, User } from 'lucide-react';
+import { LogOut, LayoutDashboard, ChevronLeft, ChevronRight, Menu, User, MessageCircle } from 'lucide-react';
 import MentorGroups from '../../components/mentor/MentorGroups';
 import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 
@@ -102,6 +102,32 @@ const MentorDashboard = () => {
 
 
         <div className="dashboard-scroll-area">
+          {/* --------------------------------------------- */}
+          {/* Help Banner - "What is this page for?"        */}
+          {/* --------------------------------------------- */}
+          <div style={{
+            background: 'var(--bg-secondary)',
+            borderRadius: '15px',
+            padding: '1rem 1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: 'inset 5px 5px 10px rgba(0, 0, 0, 0.05), inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            borderLeft: '4px solid var(--primary)'
+          }}>
+            <div style={{ color: 'var(--primary)', marginTop: '0.2rem' }}>
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--text-color)', fontSize: '1rem' }}>What is this page for?</h4>
+              <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                {activeTab === 'groups' && 'This is your main dashboard. It lists all the student groups assigned to you for mentoring and tracking.'}
+                {activeTab === 'profile' && 'Manage your personal profile and account settings.'}
+              </p>
+            </div>
+          </div>
+          {/* --------------------------------------------- */}
           {activeTab === 'groups' && (
             <>
               <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>My Assigned Groups</h2>

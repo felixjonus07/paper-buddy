@@ -19,7 +19,7 @@ const searchStudents = async (req, res) => {
         { username: { $regex: query, $options: 'i' } },
         { registerNumber: { $regex: query, $options: 'i' } }
       ]
-    }).select('-password').limit(10);
+    }).select('-password').limit(200);
 
     res.json(students);
   } catch (error) {
