@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings, Users, Layers, IndianRupee, FileText, PlusCircle, UserCog, TrendingUp, CreditCard, Scan, Building, Database, Bot } from 'lucide-react';
+import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings, Users, Layers, IndianRupee, FileText, PlusCircle, UserCog, TrendingUp, CreditCard, Scan, Building, Database, Bot, Download } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const GlobalNavbar = () => {
@@ -10,6 +10,8 @@ const GlobalNavbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
   
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -20,6 +22,26 @@ const GlobalNavbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -146,6 +168,31 @@ const GlobalNavbar = () => {
 
       {/* Actions Section */}
       <div className="navbar-actions">
+        {isInstallable && (
+          <button
+            onClick={handleInstallClick}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
+            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+          >
+            <Download size={16} />
+            <span className="desktop-install-text">App</span>
+          </button>
+        )}
+        
         {token && user ? (
           <div ref={dropdownRef} className="desktop-avatar" style={{ position: 'relative' }}>
             <div 
@@ -351,6 +398,21 @@ const GlobalNavbar = () => {
 
           {/* Mobile Links */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {isInstallable && (
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); handleInstallClick(); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                  background: 'var(--primary)', color: 'white', border: 'none', 
+                  borderRadius: '12px', padding: '0.65rem 1rem', fontSize: '1rem', 
+                  fontWeight: '700', cursor: 'pointer', justifyContent: 'center',
+                  marginBottom: '0.5rem'
+                }}
+              >
+                <Download size={18} />
+                Download App
+              </button>
+            )}
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-color)', textDecoration: 'none' }}>
               Home
             </Link>
