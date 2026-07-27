@@ -36,6 +36,12 @@ const AdminDashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const handleNavClick = useCallback((tab) => {
     setActiveTab(tab);
     if (isMobile) setMobileSidebarOpen(false);
@@ -625,32 +631,14 @@ const AdminDashboard = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="dashboard-content">
-
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-                {[...mainNavItems, ...managementNavItems].find(n => n.id === activeTab)?.label || 'Dashboard'}
-              </h2>
-            </div>
-            <div className="header-actions">
-              {isReadOnly && (
-                <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
-                  Back to Home
-                </NeoButton>
-              )}
-            </div>
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-content">
 
         <div className="dashboard-scroll-area">
 

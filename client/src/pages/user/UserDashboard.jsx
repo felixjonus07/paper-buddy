@@ -40,6 +40,12 @@ const UserDashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const handleNavClick = useCallback((tab) => {
     setActiveTab(tab);
     if (isMobile) setMobileSidebarOpen(false);
@@ -492,38 +498,17 @@ const UserDashboard = () => {
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>
 
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
 
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <h2 style={{ margin: 0, color: 'var(--text-color)', lineHeight: '1.2' }}>
-              {activeTab === 'dashboard' && <>Student <br /> Dashboard</>}
-              {activeTab === 'pay-fees' && 'Pay Fees'}
-              {activeTab === 'fee-requests' && 'Fee Requests'}
-              {activeTab === 'loan' && 'Financial Aid'}
-              {activeTab === 'paid-fees' && 'Payment History'}
-              {activeTab === 'profile' && 'My Profile'}
-              {activeTab === 'settings' && 'Account Settings'}
-            </h2>
-            <div className="header-actions">
-              <NeoButton 
-                variant="secondary" 
-                onClick={() => navigate('/')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '12px' }}
-              >
-                <span>Back to Home</span>
-              </NeoButton>
-            </div>
-          </div>
-        </div>
+
 
         <div className="dashboard-scroll-area">
 

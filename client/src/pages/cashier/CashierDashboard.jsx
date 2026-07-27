@@ -47,9 +47,16 @@ const CashierDashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'pay';
   const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
+
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useAlert();
@@ -358,7 +365,7 @@ const CashierDashboard = () => {
   });
 
   return (
-    <div className="app-container dashboard-layout">
+    <div className="app-container dashboard-layout" style={{marginTop: '1.5rem', marginBottom: '1.5rem'}}>
       {/* Fluffy Sidebar Navigation */}
       <div className={`sidebar ${isSidebarOpen ? '' : 'collapsed'}`}>
         <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--text-light)', position: 'relative', minHeight: '60px' }}>
@@ -391,25 +398,17 @@ const CashierDashboard = () => {
             </div>
           ))}
         </div>
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
 
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-                {TABS.find(t => t.key === activeTab)?.label}
-              </h2>
-            </div>
-          </div>
-        </div>
+
 
         <div className="dashboard-scroll-area">
           <div style={{ animation: 'slideUp 0.3s ease-out', display: 'flex', flexDirection: 'column', gap: '2rem' }}>

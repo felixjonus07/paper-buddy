@@ -25,6 +25,12 @@ const SuperAdminDashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
   const [analytics, setAnalytics] = useState(null);
   const [colleges, setColleges] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -180,12 +186,7 @@ const SuperAdminDashboard = () => {
   return (
     <div className="app-container dashboard-layout">
 
-      {/* Mobile sidebar toggle */}
-      {isMobile && !isMobileSidebarOpen && (
-        <button className="mobile-sidebar-toggle" onClick={() => setMobileSidebarOpen(true)}>
-          <Menu size={20} />
-        </button>
-      )}
+
 
       {/* Mobile sidebar backdrop */}
       <div className={`sidebar-backdrop ${isMobile && isMobileSidebarOpen ? 'visible' : ''}`} onClick={() => setMobileSidebarOpen(false)} />
@@ -234,32 +235,14 @@ const SuperAdminDashboard = () => {
           <CreditCard size={20} /> <span className="nav-text">Payments</span>
         </div>
 
-      </div>
-      <div className="dashboard-content">
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-                {activeTab === 'analytics' && 'Global Analytics'}
-                {activeTab === 'colleges' && 'Manage Colleges'}
-                {activeTab === 'admins' && 'Manage Admins'}
-                {activeTab === 'logs' && 'Audit Logs'}
-                {activeTab === 'agent' && 'Agent Management'}
-                {activeTab === 'billing' && 'Payments'}
-              </h2>
-            </div>
-            <div className="header-actions">
-              <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
-                Back to Desktop
-              </NeoButton>
-            </div>
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
           </div>
         </div>
+      </div>
+      <div className="dashboard-content">
+
 
         <div className="dashboard-scroll-area">
 
