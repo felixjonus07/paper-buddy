@@ -163,9 +163,15 @@ const chat = async (req, res) => {
       }
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ message: 'Groq API key not configured on server' });
+    const apiKeys = [
+      process.env.GROQ_API_KEY,
+      process.env.GROQ_API_KEY2,
+      process.env.GROQ_API_KEY3,
+      process.env.GROQ_API_KEY4
+    ].filter(Boolean);
+
+    if (apiKeys.length === 0) {
+      return res.status(500).json({ message: 'Groq API keys not configured on server' });
     }
 
     let userContextStr = 'Unknown User';
@@ -217,24 +223,40 @@ const chat = async (req, res) => {
       ...messages.map(m => ({ role: m.role, content: m.content }))
     ];
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: groqMessages,
-        temperature: 0.4,
-        max_tokens: 1024
-      })
-    });
+    let response = null;
+    let errorText = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Groq API error:', errorText);
-      return res.status(502).json({ message: 'Failed to get response from AI', detail: errorText });
+    for (const apiKey of apiKeys) {
+      try {
+        response = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: groqMessages,
+            temperature: 0.4,
+            max_tokens: 1024
+          })
+        });
+
+        if (response.ok) {
+          break; // Success, break out of loop
+        } else {
+          errorText = await response.text();
+          console.error('Groq API error with key:', errorText);
+          // Continue to next key on error (e.g. rate limit)
+        }
+      } catch (err) {
+        console.error('Groq API network error:', err);
+        errorText = err.message;
+      }
+    }
+
+    if (!response || !response.ok) {
+      return res.status(502).json({ message: 'Failed to get response from AI after trying all keys', detail: errorText });
     }
 
     const data = await response.json();

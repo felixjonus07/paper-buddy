@@ -936,13 +936,7 @@ const ChatBot = () => {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const location = useLocation();
 
-  const initialMessage = getUserRole() === 'admin' || getUserRole() === 'superadmin'
-    ? ' Hi Im buddy agent integrated to do anything inside the website\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
-    : ' Hi Im buddy agent integrated to do anything inside the website';
-
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: initialMessage }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -965,17 +959,31 @@ const ChatBot = () => {
   useEffect(() => {
     const token = getToken();
     if (!token) {
+      setIsVisible(false);
       setCheckingStatus(false);
+      setMessages([]);
       return;
     }
+    
+    // Set initial message dynamically based on actual logged in role
+    const role = getUserRole();
+    const initMsg = role === 'admin' || role === 'superadmin'
+      ? ' Hi Im buddy agent integrated to do anything inside the website\n\nTry saying:\n• "Add tuition fee of ₹5000 to a group"\n• "Create a new group"\n• "Approve a loan"\n• "Assign scholarship to student"'
+      : ' Hi Im buddy agent integrated to do anything inside the website';
+    
+    setMessages([{ role: 'assistant', content: initMsg }]);
+
     fetch(`${API_BASE}/chatbot/status`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
         setIsVisible(d.enabled);
         setCheckingStatus(false);
       })
-      .catch(() => setCheckingStatus(false));
-  }, []);
+      .catch(() => {
+        setIsVisible(false);
+        setCheckingStatus(false);
+      });
+  }, [location.pathname]);
 
   const showNotification = (msg, type = 'success') => {
     setNotification({ msg, type });

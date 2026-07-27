@@ -23,6 +23,10 @@ const GlowChartNode = ({ node, allNodes, targetLineage = [], isTargetOrDescendan
     children = children.filter(child => targetLineage.includes(child._id));
   }
 
+  // Filter out children that are already visited to prevent rendering empty <ul> blocks
+  // which would otherwise draw a dangling vertical line in the CSS.
+  children = children.filter(child => !currentVisited.includes(child._id));
+
   // Check if current node is the target group to visually highlight it
   const isTarget = node._id === targetGroupId;
 

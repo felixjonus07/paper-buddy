@@ -537,7 +537,35 @@ const UserDashboard = () => {
 
 
         <div className="dashboard-scroll-area">
-
+          {/* --------------------------------------------- */}
+          {/* Help Banner - "What is this page for?"        */}
+          {/* --------------------------------------------- */}
+          <div style={{
+            background: 'var(--bg-secondary)',
+            borderRadius: '15px',
+            padding: '1rem 1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: 'inset 5px 5px 10px rgba(0, 0, 0, 0.05), inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            borderLeft: '4px solid var(--primary)'
+          }}>
+            <div style={{ color: 'var(--primary)', marginTop: '0.2rem' }}>
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--text-color)', fontSize: '1rem' }}>What is this page for?</h4>
+              <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                {activeTab === 'dashboard' && 'This is your main dashboard. It gives you a quick overview of your pending fees and recent payment activity.'}
+                {activeTab === 'pay-fees' && 'This page lists all the fees assigned to you. You can view the details and proceed to pay them online.'}
+                {activeTab === 'fee-requests' && 'If you need a fee concession, extension, or special arrangement, you can submit a formal request to the administration here.'}
+                {activeTab === 'paid-fees' && 'Here you can view a complete history of all your successful payments and download printable receipts.'}
+                {activeTab === 'profile' && 'Manage your personal profile and account settings.'}
+              </p>
+            </div>
+          </div>
+          {/* --------------------------------------------- */}
           {activeTab === 'dashboard' && <UserOverview user={user} studentFees={filteredStudentFees} loans={filteredLoans} profile={profile} />}
           {activeTab === 'profile' && <ProfileAndSettingsView />}
           {activeTab === 'pay-fees' && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, LogOut, IndianRupee, Clock, Download, TrendingUp, PlusCircle, X, CheckCircle, AlertCircle, FileText, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { Search, LogOut, IndianRupee, Clock, Download, TrendingUp, PlusCircle, X, CheckCircle, AlertCircle, FileText, ChevronLeft, ChevronRight, Menu, MessageCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NeoCard from '../../components/UI/NeoCard';
 import NeoInput from '../../components/UI/NeoInput';
@@ -412,6 +412,34 @@ const CashierDashboard = () => {
 
 
         <div className="dashboard-scroll-area">
+          {/* --------------------------------------------- */}
+          {/* Help Banner - "What is this page for?"        */}
+          {/* --------------------------------------------- */}
+          <div style={{
+            background: 'var(--bg-secondary)',
+            borderRadius: '15px',
+            padding: '1rem 1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: 'inset 5px 5px 10px rgba(0, 0, 0, 0.05), inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            borderLeft: '4px solid var(--primary)'
+          }}>
+            <div style={{ color: 'var(--primary)', marginTop: '0.2rem' }}>
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--text-color)', fontSize: '1rem' }}>What is this page for?</h4>
+              <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                {activeTab === 'pay' && 'This page is for recording physical cash payments. Search for a student and record the amount they paid in cash.'}
+                {activeTab === 'log' && 'Here you can view all the cash payments you collected today.'}
+                {activeTab === 'report' && 'Generate and download financial reports of the cash payments collected over a specific period.'}
+                {activeTab === 'receipt' && 'Search past payments to view or download a printable receipt.'}
+              </p>
+            </div>
+          </div>
+          {/* --------------------------------------------- */}
           <div style={{ animation: 'slideUp 0.3s ease-out', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
             {/* ===== TAB: COLLECT FEE ===== */}
@@ -436,8 +464,9 @@ const CashierDashboard = () => {
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
                         background: 'var(--clay-base)', borderRadius: '16px', marginTop: '0.5rem',
+                        backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)',
                         boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid var(--border)',
-                        overflow: 'hidden'
+                        maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden'
                       }}>
                         {suggestions.map(s => (
                           <div

@@ -232,10 +232,10 @@ const Login = () => {
                 <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
                   Or click a button below to auto-login:
                 </p>
-                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={{ width: '100%' }}>Super Admin</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin123')} style={{ width: '100%' }}>Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={{ width: '100%' }}>Super Admin (Paper Buddy)</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin123')} style={{ width: '100%' }}>Admin (Institution)</NeoButton>
                 <NeoButton type="button" onClick={() => handleAutoLogin('cashier', 'cashier123')} style={{ width: '100%' }}>Cashier</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('aidsa', 'aidsa123')} style={{ width: '100%' }}>Group Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('aids', 'aids123')} style={{ width: '100%' }}>Group Admin</NeoButton>
                 <NeoButton type="button" onClick={() => handleAutoLogin('student', 'student123')} style={{ width: '100%' }}>Student</NeoButton>
               </div>
 
@@ -244,9 +244,9 @@ const Login = () => {
                 <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-color)', fontSize: '1.1rem' }}>RBA Architecture</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                  <div style={{ ...demoBtnStyle, cursor: 'default' }}>Super Admin</div>
+                  <div style={{ ...demoBtnStyle, cursor: 'default' }}>Super Admin (Paper Buddy)</div>
                   <div style={{ borderLeft: '2px solid var(--primary)', height: '20px' }}></div>
-                  <div style={{ ...demoBtnStyle, cursor: 'default' }}>Admin</div>
+                  <div style={{ ...demoBtnStyle, cursor: 'default' }}>Admin (Institution)</div>
                   <div style={{ borderLeft: '2px solid var(--primary)', height: '20px' }}></div>
                   
                   <div style={{ width: '60%', borderTop: '2px solid var(--primary)', display: 'flex', justifyContent: 'space-between' }}>
