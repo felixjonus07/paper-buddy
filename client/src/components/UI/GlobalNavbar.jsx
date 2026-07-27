@@ -283,7 +283,6 @@ const GlobalNavbar = () => {
                         Profile
                       </div>
                       <div style={{ height: '1px', background: 'rgba(128,128,128,0.2)', margin: '0.5rem 0' }} />
-<<<<<<< HEAD
                       <div 
                         onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
                         style={{
@@ -297,21 +296,6 @@ const GlobalNavbar = () => {
                         <LogOut size={18} />
                         Logout
                       </div>
-=======
-                  <div 
-                    onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
-                      cursor: 'pointer', borderRadius: '8px', color: '#ef4444', fontWeight: '600',
-                      transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--clay-base)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <LogOut size={18} />
-                    Logout
-                  </div>
->>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
                 </div>
               </div>
             )}
@@ -474,15 +458,12 @@ const GlobalNavbar = () => {
                     >
                       <User size={20} /> Profile
                     </div>
-<<<<<<< HEAD
                     <div 
                       onClick={() => { setIsMobileMenuOpen(false); navigate(`${dashboardPath}?tab=settings`); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
                     >
                       <Settings size={20} /> Settings
                     </div>
-=======
->>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
                 <div 
                   onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
