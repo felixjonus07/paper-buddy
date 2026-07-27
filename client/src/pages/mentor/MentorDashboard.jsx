@@ -14,8 +14,7 @@ const MentorDashboard = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'dashboard';
+
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -86,11 +85,7 @@ const MentorDashboard = () => {
           </button>
         </div>
 
-<<<<<<< HEAD
-        <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setSearchParams({ tab: 'dashboard' })}>
-=======
-        <div className={`nav-item ${activeTab === 'groups' ? 'active' : ''}`} onClick={() => { setActiveTab('groups'); if (isMobile) setMobileSidebarOpen(false); }}>
->>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
+        <div className={`nav-item ${activeTab === 'groups' || activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setSearchParams({ tab: 'groups' })}>
           <LayoutDashboard size={20} />
           <span className="nav-text">My Groups</span>
         </div>

@@ -507,9 +507,7 @@ const UserDashboard = () => {
       {/* Main Content Area */}
       <div className="dashboard-content">
 
-<<<<<<< HEAD
 
-=======
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
@@ -536,7 +534,7 @@ const UserDashboard = () => {
             </div>
           </div>
         </div>
->>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
+
 
         <div className="dashboard-scroll-area">
 

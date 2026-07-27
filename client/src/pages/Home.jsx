@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Clock, Calendar, Users, GraduationCap, IndianRupee } from 'lucide-react';
+import { Check, Clock, Calendar, Users, GraduationCap, IndianRupee, Download } from 'lucide-react';
 import Typewriter from 'typewriter-effect';
 
 /* ── Avatar Stack ─────────────────────────── */
@@ -23,6 +23,29 @@ const AvatarStack = () => (
 
 const Home = () => {
   const navigate = useNavigate();
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
+
   return (
     <div className="lp-root">
       <section className="lp-hero">
@@ -129,6 +152,16 @@ const Home = () => {
               </svg>
               GitHub
             </a>
+            {isInstallable && (
+              <button 
+                onClick={handleInstallClick}
+                className="lp-cta" 
+                style={{ background: '#f25c05', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 24px rgba(242, 92, 5, 0.4)' }}
+              >
+                <Download size={20} />
+                Download App
+              </button>
+            )}
           </div>
         </div>
 
