@@ -14,6 +14,8 @@ const MentorDashboard = () => {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -23,6 +25,12 @@ const MentorDashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -47,12 +55,7 @@ const MentorDashboard = () => {
 
   return (
     <div className="dashboard-layout">
-      {/* Mobile sidebar toggle */}
-      {isMobile && !isMobileSidebarOpen && (
-        <button className="mobile-sidebar-toggle" onClick={() => setMobileSidebarOpen(true)}>
-          <Menu size={20} />
-        </button>
-      )}
+
 
       {/* Mobile sidebar backdrop */}
       <div className={`sidebar-backdrop ${isMobile && isMobileSidebarOpen ? 'visible' : ''}`} onClick={() => setMobileSidebarOpen(false)} />
@@ -82,20 +85,21 @@ const MentorDashboard = () => {
           </button>
         </div>
 
-        <div className={`nav-item ${activeTab === 'groups' ? 'active' : ''}`} onClick={() => { setActiveTab('groups'); if (isMobile) setMobileSidebarOpen(false); }}>
+        <div className={`nav-item ${activeTab === 'groups' || activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setSearchParams({ tab: 'groups' })}>
           <LayoutDashboard size={20} />
           <span className="nav-text">My Groups</span>
+        </div>
+        
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="dashboard-content">
-        <div className="dashboard-header">
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-color)' }}>Mentor Portal</h1>
-            <p style={{ margin: 0, color: 'var(--text-light)' }}>Manage your assigned groups and students.</p>
-          </div>
-        </div>
+
 
         <div className="dashboard-scroll-area">
           {activeTab === 'groups' && (
