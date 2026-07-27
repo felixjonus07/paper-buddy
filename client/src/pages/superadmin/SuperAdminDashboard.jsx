@@ -26,6 +26,12 @@ const SuperAdminDashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
   const [analytics, setAnalytics] = useState(null);
   const [colleges, setColleges] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -181,12 +187,7 @@ const SuperAdminDashboard = () => {
   return (
     <div className="app-container dashboard-layout">
 
-      {/* Mobile sidebar toggle */}
-      {isMobile && !isMobileSidebarOpen && (
-        <button className="mobile-sidebar-toggle" onClick={() => setMobileSidebarOpen(true)}>
-          <Menu size={20} />
-        </button>
-      )}
+
 
       {/* Mobile sidebar backdrop */}
       <div className={`sidebar-backdrop ${isMobile && isMobileSidebarOpen ? 'visible' : ''}`} onClick={() => setMobileSidebarOpen(false)} />
@@ -235,6 +236,11 @@ const SuperAdminDashboard = () => {
           <CreditCard size={20} /> <span className="nav-text">Payments</span>
         </div>
 
+<<<<<<< HEAD
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
+=======
       </div>
       <div className="dashboard-content">
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
@@ -260,8 +266,12 @@ const SuperAdminDashboard = () => {
                 Back to Home
               </NeoButton>
             </div>
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
           </div>
         </div>
+      </div>
+      <div className="dashboard-content">
+
 
         <div className="dashboard-scroll-area">
 

@@ -1116,21 +1116,21 @@ const ChatBot = () => {
           flex-direction: column;
           overflow: hidden;
           flex-shrink: 0;
-          z-index: 9999;
+          z-index: 900;
           animation: chatSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @media (max-width: 768px) {
           .chatbot-window {
             position: fixed;
             top: auto;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            margin: 0;
-            width: 100%;
-            height: 85vh;
-            max-height: 85vh;
-            border-radius: 28px 28px 0 0;
+            bottom: 5.5rem;
+            left: 1rem;
+            right: 1rem;
+            margin: 0 auto;
+            width: calc(100vw - 2rem);
+            height: 70vh;
+            max-height: 70vh;
+            border-radius: 24px;
           }
         }
         .chatbot-input:focus { border-color: rgba(248,116,16,0.5) !important; }
@@ -1332,40 +1332,7 @@ const ChatBot = () => {
 
       {/* FAB Container (Only visible when chatbot is closed) */}
       {!open && (
-        <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9998, display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
-          {/* Agent Popup Bubble */}
-          <div style={{
-            background: 'var(--clay-base-solid)',
-            border: '1px solid var(--border)',
-            borderRadius: '16px',
-            padding: '0.85rem 1.25rem',
-            color: 'var(--text-color)',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-            position: 'relative',
-            animation: 'slideInRightFade 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 0.5s',
-            opacity: 0,
-            transform: 'translateX(20px) translateZ(0)',
-            willChange: 'transform',
-            WebkitBackfaceVisibility: 'hidden',
-            backfaceVisibility: 'hidden',
-            marginBottom: '0.5rem'
-          }}>
-            I'm  Buddy, I can do anything for U ✨
-            {/* Triangle pointing to FAB */}
-            <div style={{
-              position: 'absolute',
-              right: '-6px',
-              bottom: '20px',
-              width: '12px',
-              height: '12px',
-              background: 'var(--clay-base)',
-              borderRight: '1px solid var(--border)',
-              borderBottom: '1px solid var(--border)',
-              transform: 'rotate(-45deg)'
-            }} />
-          </div>
+        <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 900, display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
 
           <button
             className="chatbot-fab"

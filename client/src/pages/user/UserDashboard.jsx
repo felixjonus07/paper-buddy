@@ -39,6 +39,12 @@ const UserDashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const handleNavClick = useCallback((tab) => {
     setActiveTab(tab);
     if (isMobile) setMobileSidebarOpen(false);
@@ -491,11 +497,19 @@ const UserDashboard = () => {
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>
 
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
 
+<<<<<<< HEAD
+
+=======
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
             backgroundColor: 'var(--clay-base)',
@@ -522,6 +536,7 @@ const UserDashboard = () => {
             </div>
           </div>
         </div>
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
 
         <div className="dashboard-scroll-area">
 

@@ -13,20 +13,13 @@ import CollegeDetail from './pages/superadmin/CollegeDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatBot from './components/UI/ChatBot';
 import GlobalNavbar from './components/UI/GlobalNavbar';
-import Footer from './components/UI/Footer';
+
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
 
 import { AlertProvider } from './context/AlertContext';
 
-const ConditionalFooter = () => {
-  const location = useLocation();
-  const publicRoutes = ['/', '/login'];
-  if (publicRoutes.includes(location.pathname)) {
-    return <Footer />;
-  }
-  return null;
-};
+
 
 function App() {
   return (
@@ -112,7 +105,7 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ErrorBoundary>
-            <ConditionalFooter />
+
           </div>
           <ChatBot />
         </div>

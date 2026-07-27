@@ -99,9 +99,20 @@ const AgentManagement = ({ token }) => {
         }
         .toggle-btn:hover { transform: scale(1.15); }
         .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .college-header {
+          display: grid;
+          grid-template-columns: 1fr 80px 110px 120px 120px 110px;
+          gap: 1rem;
+          padding: 0.5rem 1.5rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
         .college-row {
           display: grid;
-          grid-template-columns: 1fr 80px 110px 120px 110px;
+          grid-template-columns: 1fr 80px 110px 120px 120px 110px;
           align-items: center;
           gap: 1rem;
           padding: 1rem 1.5rem;
@@ -111,9 +122,9 @@ const AgentManagement = ({ token }) => {
           transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
         .college-row:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-        @media (max-width: 700px) {
-          .college-row { grid-template-columns: 1fr 80px; }
-          .college-row .hide-mobile { display: none; }
+        @media (max-width: 768px) {
+          .college-header, .college-row { grid-template-columns: 1fr 110px; }
+          .hide-mobile { display: none !important; }
         }
       `}</style>
 
@@ -195,17 +206,7 @@ const AgentManagement = ({ token }) => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {/* Column labels */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 80px 110px 120px 120px 110px',
-            gap: '1rem',
-            padding: '0.5rem 1.5rem',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            color: 'var(--text-secondary)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em'
-          }}>
+          <div className="college-header">
             <span>College</span>
             <span className="hide-mobile">Code</span>
             <span className="hide-mobile">Prompts</span>
@@ -215,7 +216,7 @@ const AgentManagement = ({ token }) => {
           </div>
 
           {colleges.map(college => (
-            <div key={college._id} className="college-row" style={{ gridTemplateColumns: '1fr 80px 110px 120px 120px 110px' }}>
+            <div key={college._id} className="college-row">
               {/* Name */}
               <div>
                 <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-color)' }}>{college.name}</p>

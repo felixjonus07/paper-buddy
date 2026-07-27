@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings, Users, Layers, IndianRupee, FileText, PlusCircle, UserCog, TrendingUp, CreditCard, Scan, Building, Database, Bot } from 'lucide-react';
+import { GraduationCap, ChevronDown, LogOut, LayoutDashboard, Menu, X, User, Settings, Users, Layers, IndianRupee, FileText, PlusCircle, UserCog, TrendingUp, CreditCard, Scan, Building, Database, Bot, Download, Clock } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const GlobalNavbar = () => {
@@ -10,6 +10,8 @@ const GlobalNavbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
   
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -20,6 +22,26 @@ const GlobalNavbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -70,7 +92,6 @@ const GlobalNavbar = () => {
       ];
     } else if (user.role === 'admin') {
       dashboardTabs = [
-        { name: 'Dashboard', path: `/admin/${u}/dashboard?tab=dashboard`, icon: <LayoutDashboard size={18} /> },
         { name: 'Students', path: `/admin/${u}/dashboard?tab=users`, icon: <Users size={18} /> },
         { name: 'Groups', path: `/admin/${u}/dashboard?tab=groups`, icon: <Layers size={18} /> },
         { name: 'Finance', path: `/admin/${u}/dashboard?tab=finance`, icon: <IndianRupee size={18} /> },
@@ -91,7 +112,7 @@ const GlobalNavbar = () => {
       ];
     } else if (user.role === 'mentor') {
       dashboardTabs = [
-        { name: 'Dashboard', path: `/mentor/${u}/dashboard?tab=dashboard`, icon: <LayoutDashboard size={18} /> }
+        { name: 'Dashboard', path: `/mentor/${u}/dashboard?tab=my_groups`, icon: <LayoutDashboard size={18} /> }
       ];
     } else { // user
       dashboardTabs = [
@@ -111,8 +132,8 @@ const GlobalNavbar = () => {
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-color)', textDecoration: 'none' }}>
           <img src="/images/Logo.png" alt="Paper Buddy Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '2px' }}>
-            <span style={{ fontWeight: 'normal', fontSize: '1.4rem', letterSpacing: '0.5px', fontFamily: '"Cooper Black", serif', color: 'var(--primary)', lineHeight: '1' }}>Paper Buddy</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-light)', fontFamily: "'Lilita One', cursive", marginTop: '2px' }}>by E.D.I.T.H</span>
+            <span style={{ fontWeight: 'bolder', fontSize: '1.4rem', letterSpacing: '0.5px', color: 'var(--primary)', lineHeight: '1' }}>Paper Buddy</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-light)', marginTop: '2px', }}>by E.D.I.T.H</span>
           </div>
         </Link>
       </div>
@@ -146,6 +167,32 @@ const GlobalNavbar = () => {
 
       {/* Actions Section */}
       <div className="navbar-actions">
+        {isInstallable && (
+          <button
+            className="desktop-app-install-btn"
+            onClick={handleInstallClick}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
+            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+          >
+            <Download size={16} />
+            <span className="desktop-install-text">Download App</span>
+          </button>
+        )}
+        
         {token && user ? (
           <div ref={dropdownRef} className="desktop-avatar" style={{ position: 'relative' }}>
             <div 
@@ -236,6 +283,21 @@ const GlobalNavbar = () => {
                         Profile
                       </div>
                       <div style={{ height: '1px', background: 'rgba(128,128,128,0.2)', margin: '0.5rem 0' }} />
+<<<<<<< HEAD
+                      <div 
+                        onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem',
+                          cursor: 'pointer', borderRadius: '8px', color: '#ef4444', fontWeight: '600',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <LogOut size={18} />
+                        Logout
+                      </div>
+=======
                   <div 
                     onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
                     style={{
@@ -249,6 +311,7 @@ const GlobalNavbar = () => {
                     <LogOut size={18} />
                     Logout
                   </div>
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
                 </div>
               </div>
             )}
@@ -275,32 +338,7 @@ const GlobalNavbar = () => {
           </Link>
         )}
 
-        {/* Desktop Logout Button */}
-        {token && user && (
-          <button 
-            className="desktop-logout-btn"
-            onClick={handleLogout}
-            title="Logout"
-            style={{
-              background: 'var(--clay-base)',
-              border: 'none',
-              outline: 'none',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ef4444',
-              cursor: 'pointer',
-              transition: 'transform 0.2s, background 0.2s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'var(--clay-base)'; }}
-          >
-            <LogOut size={20} />
-          </button>
-        )}
+
 
         <ThemeToggle />
         
@@ -351,14 +389,48 @@ const GlobalNavbar = () => {
 
           {/* Mobile Links */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-color)', textDecoration: 'none' }}>
-              Home
-            </Link>
+            {isInstallable && (
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); handleInstallClick(); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                  background: 'var(--primary)', color: 'white', border: 'none', 
+                  borderRadius: '12px', padding: '0.65rem 1rem', fontSize: '1rem', 
+                  fontWeight: '700', cursor: 'pointer', justifyContent: 'center',
+                  marginBottom: '0.5rem'
+                }}
+              >
+                <Download size={18} />
+                Download App
+              </button>
+            )}
+            <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-light)', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Explore
+            </div>
+            {(() => {
+              const isHomeActive = location.pathname === '/';
+              return (
+                <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ 
+                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                  fontSize: '1rem', fontWeight: isHomeActive ? '700' : '500', 
+                  color: isHomeActive ? 'var(--primary)' : 'var(--text-color)', 
+                  textDecoration: 'none', padding: '0.65rem 1rem', borderRadius: '12px',
+                  background: isHomeActive ? 'var(--clay-primary-bg)' : 'transparent',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <LayoutDashboard size={18} />
+                  Home
+                </Link>
+              );
+            })()}
 
             {/* Dashboard Tabs for logged-in user */}
             {token && user && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.2rem' }}>
-                {dashboardTabs.map(tab => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '1rem' }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-light)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Dashboard
+                </div>
+                {(dashboardTabs || []).map(tab => {
                   const isActive = location.pathname + location.search === tab.path;
                   return (
                     <Link 
@@ -402,6 +474,15 @@ const GlobalNavbar = () => {
                     >
                       <User size={20} /> Profile
                     </div>
+<<<<<<< HEAD
+                    <div 
+                      onClick={() => { setIsMobileMenuOpen(false); navigate(`${dashboardPath}?tab=settings`); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                      <Settings size={20} /> Settings
+                    </div>
+=======
+>>>>>>> b36e89b4eb6a3e5d3408c39595a04aa1811bd107
                 <div 
                   onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
