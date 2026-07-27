@@ -6,7 +6,7 @@ import NeoModal from '../../components/UI/NeoModal';
 import NeoSelect from '../../components/UI/NeoSelect';
 import ThemeToggle from '../../components/UI/ThemeToggle';
 import GlowChart from '../../components/UI/GlowChart';
-import { Users, FileText, MessageCircle, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard, TrendingUp, UserCog, Menu } from 'lucide-react';
+import { Users, FileText, MessageCircle, Activity, IndianRupee, LayoutDashboard, Settings, Plus, LogOut, Layers, GraduationCap, ChevronLeft, ChevronRight, CreditCard, TrendingUp, UserCog, Menu, Search } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import DashboardOverview from '../../components/admin/DashboardOverview';
 import UserManagement from '../../components/admin/UserManagement';
@@ -101,6 +101,7 @@ const AdminDashboard = () => {
 
   const [groupData, setGroupData] = useState({ name: '', description: '', studentIds: [], isGlobal: false });
   const [groupMessage, setGroupMessage] = useState('');
+  const [createGroupSearchQuery, setCreateGroupSearchQuery] = useState('');
 
   const [editGroupData, setEditGroupData] = useState({ _id: null, name: '', description: '', isGlobal: false });
   const [editGroupMessage, setEditGroupMessage] = useState('');
@@ -844,6 +845,14 @@ const AdminDashboard = () => {
 
           <div style={{ position: 'relative' }}>
             <label style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '0.5rem', display: 'block' }}>Assign Students (Optional)</label>
+            <div style={{ marginBottom: '1rem' }}>
+              <NeoInput 
+                Icon={Search} 
+                placeholder="Search by name or username..." 
+                value={createGroupSearchQuery}
+                onChange={(e) => setCreateGroupSearchQuery(e.target.value)}
+              />
+            </div>
             <div style={{
               maxHeight: '150px',
               overflowY: 'auto',
@@ -855,7 +864,10 @@ const AdminDashboard = () => {
               flexDirection: 'column',
               gap: '0.8rem'
             }}>
-              {users.filter(u => u.role === 'user').map(u => (
+              {users.filter(u => u.role === 'user' && (
+                u.name.toLowerCase().includes(createGroupSearchQuery.toLowerCase()) || 
+                u.username.toLowerCase().includes(createGroupSearchQuery.toLowerCase())
+              )).map(u => (
                 <div key={u._id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }} onClick={() => {
                   const current = groupData.studentIds || [];
                   const next = current.includes(u._id) ? current.filter(id => id !== u._id) : [...current, u._id];
@@ -865,7 +877,10 @@ const AdminDashboard = () => {
                   <span style={{ color: 'var(--text-color)' }}>{u.name} ({u.username})</span>
                 </div>
               ))}
-              {users.filter(u => u.role === 'user').length === 0 && <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>No students available.</span>}
+              {users.filter(u => u.role === 'user' && (
+                u.name.toLowerCase().includes(createGroupSearchQuery.toLowerCase()) || 
+                u.username.toLowerCase().includes(createGroupSearchQuery.toLowerCase())
+              )).length === 0 && <span style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>No students found matching "{createGroupSearchQuery}".</span>}
             </div>
           </div>
 

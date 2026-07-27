@@ -1,6 +1,8 @@
 import React from 'react';
 import NeoModal from '../UI/NeoModal';
 import NeoButton from '../UI/NeoButton';
+import NeoInput from '../UI/NeoInput';
+import { Search } from 'lucide-react';
 
 const AddStudentModal = ({
   isAddStudentsModalOpen,
@@ -16,6 +18,12 @@ const AddStudentModal = ({
 }) => {
   if (!isAddStudentsModalOpen) return null;
 
+  const availableUsers = allSystemUsers.filter(u => !u.groups.some(g => g?._id === group?._id));
+  const filteredUsers = availableUsers.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <NeoModal isOpen={isAddStudentsModalOpen} onClose={() => setIsAddStudentsModalOpen(false)} title="Add Students to Group">
       <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center', lineHeight: '1.4' }}>
@@ -23,40 +31,31 @@ const AddStudentModal = ({
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         
-        <input 
-          type="text" 
+        <NeoInput 
+          Icon={Search}
           placeholder="Search students..." 
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
-          style={{
-            padding: '0.8rem',
-            borderRadius: '15px',
-            border: 'none',
-            backgroundColor: 'var(--clay-base)',
-            boxShadow: 'inset 5px 5px 10px rgba(163, 177, 198, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.8)',
-            outline: 'none',
-            width: '100%'
-          }}
         />
         
         <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.5rem' }}>
-          {allSystemUsers
-            .filter(u => !u.groups.some(g => g._id === group._id)) // Hide users already in group
-            .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.username.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map(u => (
+          {filteredUsers.map(u => (
               <div key={u._id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem', backgroundColor: 'var(--clay-base)', borderRadius: '15px', cursor: 'pointer' }} onClick={() => {
                 setSelectedStudentIds(prev => prev.includes(u._id) ? prev.filter(id => id !== u._id) : [...prev, u._id]);
               }}>
-                <input type="checkbox" checked={selectedStudentIds.includes(u._id)} readOnly style={{ accentColor: 'var(--primary)' }} />
+                <input type="checkbox" checked={selectedStudentIds.includes(u._id)} readOnly style={{ accentColor: 'var(--primary)', transform: 'scale(1.2)' }} />
                 <div>
-                  <strong>{u.name}</strong> <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>({u.username})</span>
+                  <strong style={{ color: 'var(--text-color)' }}>{u.name}</strong> <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>({u.username})</span>
                 </div>
               </div>
           ))}
-          {allSystemUsers.length > 0 && allSystemUsers.filter(u => !u.groups.some(g => g._id === group._id)).length === 0 && (
+          {allSystemUsers.length > 0 && availableUsers.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--text-light)' }}>All available students are already in this group.</p>
           )}
-          {isAddingStudents && <p style={{ textAlign: 'center' }}>Loading users...</p>}
+          {availableUsers.length > 0 && filteredUsers.length === 0 && (
+            <p style={{ textAlign: 'center', color: 'var(--text-light)' }}>No students found matching "{searchTerm}".</p>
+          )}
+          {isAddingStudents && <p style={{ textAlign: 'center', color: 'var(--text-light)' }}>Loading users...</p>}
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>

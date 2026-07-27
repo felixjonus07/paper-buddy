@@ -132,8 +132,8 @@ const GlobalNavbar = () => {
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-color)', textDecoration: 'none' }}>
           <img src="/images/Logo.png" alt="Paper Buddy Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '2px' }}>
-            <span style={{ fontWeight: 'bolder', fontSize: '1.4rem', letterSpacing: '0.5px', color: 'var(--primary)', lineHeight: '1' }}>Paper Buddy</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-light)', marginTop: '2px', }}>by E.D.I.T.H</span>
+            <span style={{ fontWeight: 'bolder', fontSize: '1.4rem', letterSpacing: '0.5px', color: 'var(--primary)', lineHeight: '1', whiteSpace: 'nowrap' }}>Paper Buddy</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-light)', marginTop: '2px', whiteSpace: 'nowrap' }}>by E.D.I.T.H</span>
           </div>
         </Link>
       </div>

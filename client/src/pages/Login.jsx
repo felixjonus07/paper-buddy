@@ -232,11 +232,11 @@ const Login = () => {
                 <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
                   Or click a button below to auto-login:
                 </p>
-                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={{ width: '100%' }}>Super Admin (Paper Buddy)</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin123')} style={{ width: '100%' }}>Admin (Institution)</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('cashier', 'cashier123')} style={{ width: '100%' }}>Cashier</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('aids', 'aids123')} style={{ width: '100%' }}>Group Admin</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('student', 'student123')} style={{ width: '100%' }}>Student</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin@2007')} style={{ width: '100%' }}>Super Admin (Paper Buddy)</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin@2007')} style={{ width: '100%' }}>Admin (Institution)</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('cashier', 'cashier@2007')} style={{ width: '100%' }}>Cashier</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('aids', 'aids@2007')} style={{ width: '100%' }}>Group Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('student', 'student@2007')} style={{ width: '100%' }}>Student</NeoButton>
               </div>
 
               {/* Right Column: Flowchart */}
