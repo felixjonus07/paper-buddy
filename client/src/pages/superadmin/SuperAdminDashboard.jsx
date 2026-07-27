@@ -8,6 +8,7 @@ import { Building, Users, Activity, Settings, Database, Plus, CheckCircle, XCirc
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AgentManagement from '../../components/superadmin/AgentManagement';
 import BillingOverview from '../../components/superadmin/BillingOverview';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 import { useAlert } from '../../context/AlertContext';
 
 const SuperAdminDashboard = () => {
@@ -251,11 +252,12 @@ const SuperAdminDashboard = () => {
                 {activeTab === 'logs' && 'Audit Logs'}
                 {activeTab === 'agent' && 'Agent Management'}
                 {activeTab === 'billing' && 'Payments'}
+                {activeTab === 'profile' && 'Profile & Settings'}
               </h2>
             </div>
             <div className="header-actions">
               <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
-                Back to Desktop
+                Back to Home
               </NeoButton>
             </div>
           </div>
@@ -489,6 +491,10 @@ const SuperAdminDashboard = () => {
 
           {activeTab === 'billing' && (
             <BillingOverview token={token} />
+          )}
+
+          {activeTab === 'profile' && (
+            <ProfileAndSettingsView />
           )}
 
         </div>

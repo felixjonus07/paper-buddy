@@ -5,7 +5,7 @@ import NeoInput from '../UI/NeoInput';
 
 const UserSettings = ({ handleChangePassword, passwordData, setPasswordData, passwordMessage }) => {
   return (
-    <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ animation: 'slideUp 0.3s ease-out', maxWidth: '800px', margin: '0 auto' }}>
       <NeoCard>
         <h2 style={{ color: 'var(--primary)', marginBottom: '2rem', textAlign: 'center' }}>Account Settings</h2>
         <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

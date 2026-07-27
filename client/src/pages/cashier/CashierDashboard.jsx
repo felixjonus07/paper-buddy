@@ -11,6 +11,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
 import { useAlert } from '../../context/AlertContext';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 
 const TABS = [
   { key: 'pay', label: 'Collect Fee', icon: IndianRupee },
@@ -1004,6 +1005,10 @@ const CashierDashboard = () => {
                   </NeoCard>
                 )}
               </>
+            )}
+
+            {activeTab === 'profile' && (
+              <ProfileAndSettingsView />
             )}
 
           </div>
