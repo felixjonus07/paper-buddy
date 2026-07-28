@@ -4553,9 +4553,6 @@ select:focus {
   .mobile-bottom-nav {
     display: flex;
   }
-  .hamburger-btn {
-    display: none !important;
-  }
   .global-layout {
     padding-bottom: 70px;
   }
