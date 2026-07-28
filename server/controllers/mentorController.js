@@ -22,7 +22,11 @@ const getGroupDashboardDataForMentor = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const group = await Group.findById(id).populate('parentGroups', 'name');
+    const [group, allGroups] = await Promise.all([
+      Group.findById(id).populate('parentGroups', 'name').lean(),
+      Group.find().select('_id name parentGroups description').populate('parentGroups', 'name').lean()
+    ]);
+
     if (!group) return res.status(404).json({ message: 'Group not found' });
 
     // Check access: user has the group directly, OR user has one of its parent groups
@@ -35,31 +39,22 @@ const getGroupDashboardDataForMentor = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this group' });
     }
     
-    const users = await User.find({ groups: id }).select('-password').populate('scholarship', 'name');
+    const users = await User.find({ groups: id }).select('-password').populate('scholarship', 'name').lean();
     
-    let payments, studentFees;
+    const studentIds = users.map(u => u._id);
+    let studentFeesQuery, paymentsQuery;
     
     if (group.isGlobal) {
-      const studentIds = users.map(u => u._id);
-      studentFees = await StudentFee.find({ studentId: { $in: studentIds } }).populate({
-        path: 'studentId',
-        select: 'name username academicScore scholarship',
-        populate: { path: 'scholarship', select: 'name' }
-      }).populate('feeId').lean();
-      payments = await Payment.find({ user: { $in: studentIds } });
+      studentFeesQuery = StudentFee.find({ studentId: { $in: studentIds } });
+      paymentsQuery = Payment.find({ user: { $in: studentIds } });
     } else {
-      const studentIds = users.map(u => u._id);
-      studentFees = await StudentFee.find({ 
+      studentFeesQuery = StudentFee.find({ 
         $or: [
           { groupId: id },
           { studentId: { $in: studentIds }, groupId: null }
         ]
-      }).populate({
-        path: 'studentId',
-        select: 'name username academicScore scholarship',
-        populate: { path: 'scholarship', select: 'name' }
-      }).populate('feeId').lean();
-      payments = await Payment.find({ 
+      });
+      paymentsQuery = Payment.find({ 
         $or: [
           { group: id },
           { user: { $in: studentIds }, group: null }
@@ -67,7 +62,16 @@ const getGroupDashboardDataForMentor = async (req, res) => {
       });
     }
 
-    studentFees = studentFees.map(sf => {
+    const [studentFeesRaw, payments] = await Promise.all([
+      studentFeesQuery.populate({
+        path: 'studentId',
+        select: 'name username academicScore scholarship',
+        populate: { path: 'scholarship', select: 'name' }
+      }).populate('feeId').lean(),
+      paymentsQuery.lean()
+    ]);
+
+    let studentFees = studentFeesRaw.map(sf => {
       sf.finalAmount = calculateDynamicFeeAmount(sf);
       return sf;
     });
@@ -75,8 +79,6 @@ const getGroupDashboardDataForMentor = async (req, res) => {
     const totalAssignedValue = studentFees.reduce((sum, sf) => sum + sf.finalAmount, 0);
     const amountCollected = payments.reduce((sum, p) => sum + p.amount, 0);
     const amountPending = Math.max(0, totalAssignedValue - amountCollected);
-    
-    const allGroups = await Group.find().populate('parentGroups', 'name');
     
     // Aggregate ledger data for frontend table
     const ledgerByStudent = {};
