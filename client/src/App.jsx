@@ -4,11 +4,12 @@ import Home from './pages/Home';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import ChatBot from './components/UI/ChatBot';
 import GlobalNavbar from './components/UI/GlobalNavbar';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
 import { AlertProvider } from './context/AlertContext';
+
+const ChatBot = lazy(() => import('./components/UI/ChatBot'));
 
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -105,7 +106,9 @@ function App() {
               </Suspense>
             </ErrorBoundary>
           </div>
-          <ChatBot />
+          <Suspense fallback={null}>
+            <ChatBot />
+          </Suspense>
         </div>
       </Router>
     </AlertProvider>
