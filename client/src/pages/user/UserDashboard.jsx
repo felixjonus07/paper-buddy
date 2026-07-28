@@ -508,32 +508,7 @@ const UserDashboard = () => {
       <div className="dashboard-content">
 
 
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <h2 style={{ margin: 0, color: 'var(--text-color)', lineHeight: '1.2' }}>
-              {activeTab === 'dashboard' && <>Student <br /> Dashboard</>}
-              {activeTab === 'pay-fees' && 'Pay Fees'}
-              {activeTab === 'fee-requests' && 'Fee Requests'}
-              {activeTab === 'loan' && 'Financial Aid'}
-              {activeTab === 'paid-fees' && 'Payment History'}
-              {activeTab === 'profile' && 'Profile & Settings'}
-            </h2>
-            <div className="header-actions">
-              <NeoButton 
-                variant="secondary" 
-                onClick={() => navigate('/')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '12px' }}
-              >
-                <span>Back to Home</span>
-              </NeoButton>
-            </div>
-          </div>
-        </div>
+
 
 
         <div className="dashboard-scroll-area">

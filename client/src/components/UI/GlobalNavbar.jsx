@@ -458,12 +458,7 @@ const GlobalNavbar = () => {
                     >
                       <User size={20} /> Profile
                     </div>
-                    <div 
-                      onClick={() => { setIsMobileMenuOpen(false); navigate(dashboardPath + '?tab=profile'); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: 'var(--text-color)', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      <User size={20} /> Profile
-                    </div>
+
                 <div 
                   onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.5rem 0', color: '#ef4444', fontWeight: '600', cursor: 'pointer' }}
