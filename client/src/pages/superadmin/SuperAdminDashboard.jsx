@@ -251,32 +251,7 @@ const SuperAdminDashboard = () => {
 
       </div>
       <div className="dashboard-content">
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-                {activeTab === 'analytics' && 'Global Analytics'}
-                {activeTab === 'colleges' && 'Manage Colleges'}
-                {activeTab === 'admins' && 'Manage Admins'}
-                {activeTab === 'logs' && 'Audit Logs'}
-                {activeTab === 'agent' && 'Agent Management'}
-                {activeTab === 'billing' && 'Payments'}
-                {activeTab === 'profile' && 'Profile & Settings'}
-              </h2>
-            </div>
-            <div className="header-actions">
-              <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
-                Back to Home
-              </NeoButton>
-            </div>
 
-          </div>
-        </div>
 
         <div className="dashboard-scroll-area">
           {/* --------------------------------------------- */}

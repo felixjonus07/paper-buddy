@@ -268,22 +268,24 @@ const GroupDashboard = () => {
           </div>
           {group?.description && <p style={{ margin: 0, marginTop: '0.3rem', color: 'var(--text-light)' }}>{group.description}</p>}
         </div>
-        <NeoButton variant="mint" onClick={() => setIsHierarchyModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Network size={18} />
-          View Hierarchy
-        </NeoButton>
-        <NeoButton variant="primary" onClick={() => openAddFeeModal(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <PlusCircle size={18} />
-          Add Fee
-        </NeoButton>
-        <NeoButton variant="mint" onClick={() => setIsFeeRequestsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Activity size={18} />
-          Fee Requests
-        </NeoButton>
-        <NeoButton variant="primary" onClick={openAddStudentsModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <UserPlus size={18} />
-          Add Students
-        </NeoButton>
+        <div className="hide-mobile" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <NeoButton variant="mint" onClick={() => setIsHierarchyModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Network size={18} />
+            View Hierarchy
+          </NeoButton>
+          <NeoButton variant="primary" onClick={() => openAddFeeModal(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <PlusCircle size={18} />
+            Add Fee
+          </NeoButton>
+          <NeoButton variant="mint" onClick={() => setIsFeeRequestsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Activity size={18} />
+            Fee Requests
+          </NeoButton>
+          <NeoButton variant="primary" onClick={openAddStudentsModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <UserPlus size={18} />
+            Add Students
+          </NeoButton>
+        </div>
       </div>
 
       {/* --- SIMPLE DESCRIPTION FOR NEW USERS --- */}
@@ -349,6 +351,26 @@ const GroupDashboard = () => {
           </div>
         </NeoModal>
       )}
+
+      {/* Mobile Bottom Navigation (visible only on mobile via CSS) */}
+      <div className="mobile-bottom-nav">
+        <div className="mobile-bottom-nav-item" onClick={() => setIsHierarchyModalOpen(true)}>
+          <Network size={20} />
+          <span>Hierarchy</span>
+        </div>
+        <div className="mobile-bottom-nav-item" onClick={() => openAddFeeModal(null)}>
+          <PlusCircle size={20} />
+          <span>Add Fee</span>
+        </div>
+        <div className="mobile-bottom-nav-item" onClick={() => setIsFeeRequestsModalOpen(true)}>
+          <Activity size={20} />
+          <span>Requests</span>
+        </div>
+        <div className="mobile-bottom-nav-item" onClick={openAddStudentsModal}>
+          <UserPlus size={20} />
+          <span>Students</span>
+        </div>
+      </div>
     </div>
   );
 };
