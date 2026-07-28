@@ -913,8 +913,9 @@ const CashierDashboard = () => {
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
                         background: 'var(--clay-base)', borderRadius: '16px', marginTop: '0.5rem',
+                        backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)',
                         boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid var(--border)',
-                        overflow: 'hidden'
+                        maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden'
                       }}>
                         {suggestions.map(s => (
                           <div
