@@ -47,38 +47,50 @@ const SuperAdminDashboard = () => {
 
   const token = localStorage.getItem('token');
 
-  const fetchGlobalData = async () => {
+  const fetchDataForTab = async (tab, force = false) => {
     try {
       setLoading(true);
-      const [analyticsRes, collegesRes, logsRes, adminsRes] = await Promise.all([
-        fetch('/api/superadmin/analytics', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/superadmin/colleges', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/superadmin/audit-logs', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/superadmin/admins', { headers: { Authorization: `Bearer ${token}` } })
-      ]);
+      const headers = { Authorization: `Bearer ${token}` };
 
-      const isUnauthorized = [analyticsRes, collegesRes, logsRes, adminsRes].some(res => res.status === 401 || res.status === 403);
-      
-      if (isUnauthorized) {
-        localStorage.clear();
-        window.location.href = '/login';
-        return;
+      const fetchAndSet = async (url, setter) => {
+        const res = await fetch(url, { headers });
+        if (res.status === 401 || res.status === 403) {
+          localStorage.clear();
+          window.location.href = '/login';
+          return;
+        }
+        if (res.ok) {
+          setter(await res.json());
+        }
+      };
+
+      const promises = [];
+      if (tab === 'analytics' && (!analytics || force)) {
+        promises.push(fetchAndSet('/api/superadmin/analytics', setAnalytics));
+      }
+      if ((tab === 'colleges' || tab === 'admins') && (colleges.length === 0 || force)) {
+        promises.push(fetchAndSet('/api/superadmin/colleges', setColleges));
+      }
+      if (tab === 'admins' && (admins.length === 0 || force)) {
+        promises.push(fetchAndSet('/api/superadmin/admins', setAdmins));
+      }
+      if (tab === 'logs' && (auditLogs.length === 0 || force)) {
+        promises.push(fetchAndSet('/api/superadmin/audit-logs', setAuditLogs));
       }
 
-      if (analyticsRes.ok) setAnalytics(await analyticsRes.json());
-      if (collegesRes.ok) setColleges(await collegesRes.json());
-      if (logsRes.ok) setAuditLogs(await logsRes.json());
-      if (adminsRes.ok) setAdmins(await adminsRes.json());
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
     } catch (err) {
-      setError('Failed to fetch global data');
+      setError('Failed to fetch data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGlobalData();
-  }, [token]);
+    fetchDataForTab(activeTab);
+  }, [activeTab, token]);
 
   const handleCreateCollege = async (e) => {
     e.preventDefault();
@@ -92,7 +104,7 @@ const SuperAdminDashboard = () => {
         showAlert('College Created Successfully');
         setNewCollege({ name: '', code: '', address: '', phone: '', email: '', administratorName: '', strength: '', subscriptionStatus: 'active' });
         setIsAddCollegeModalOpen(false);
-        fetchGlobalData();
+        fetchDataForTab(activeTab, true);
       } else {
         if (res.status === 401 || res.status === 403) {
           localStorage.clear();
@@ -119,7 +131,7 @@ const SuperAdminDashboard = () => {
         showAlert('Admin Created Successfully');
         setNewAdmin({ collegeId: '', name: '', username: '', password: '' });
         setIsAddAdminModalOpen(false);
-        fetchGlobalData();
+        fetchDataForTab(activeTab, true);
       } else {
         if (res.status === 401 || res.status === 403) {
           localStorage.clear();
@@ -145,7 +157,7 @@ const SuperAdminDashboard = () => {
       });
       if (res.ok) {
         showAlert('Admin Deleted Successfully');
-        fetchGlobalData();
+        fetchDataForTab(activeTab, true);
       } else {
         if (res.status === 401 || res.status === 403) {
           localStorage.clear();
@@ -169,7 +181,7 @@ const SuperAdminDashboard = () => {
         body: JSON.stringify({ subscriptionStatus: newStatus })
       });
       if (res.ok) {
-        fetchGlobalData();
+        fetchDataForTab(activeTab, true);
       } else {
         if (res.status === 401 || res.status === 403) {
           localStorage.clear();
