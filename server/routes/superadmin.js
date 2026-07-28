@@ -23,13 +23,17 @@ router.use(protect, superadminOnly);
 // Global Analytics
 router.get('/analytics', async (req, res) => {
   try {
-    const totalColleges = await College.countDocuments();
-    const activeSubscriptions = await College.countDocuments({ subscriptionStatus: 'active' });
-    const totalStudents = await User.countDocuments({ role: 'user' });
+    const [totalColleges, activeSubscriptions, totalStudents, paymentAgg] = await Promise.all([
+      College.countDocuments(),
+      College.countDocuments({ subscriptionStatus: 'active' }),
+      User.countDocuments({ role: 'user' }),
+      Payment.aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ])
+    ]);
 
-    // Calculate total revenue processed (if Payment model has amounts)
-    const payments = await Payment.find({ status: 'completed' });
-    const totalRevenueProcessed = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+    const totalRevenueProcessed = paymentAgg.length > 0 ? paymentAgg[0].total : 0;
 
     res.json({
       totalColleges,
@@ -45,7 +49,7 @@ router.get('/analytics', async (req, res) => {
 // Get all colleges
 router.get('/colleges', async (req, res) => {
   try {
-    const colleges = await College.find().sort({ createdAt: -1 });
+    const colleges = await College.find().sort({ createdAt: -1 }).lean();
     res.json(colleges);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -170,7 +174,8 @@ router.get('/admins', async (req, res) => {
     const admins = await User.find({ role: 'admin' })
       .populate('collegeId', 'name code')
       .select('-password')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(admins);
   } catch (error) {
     res.status(500).json({ message: error.message });
