@@ -42,48 +42,52 @@ const UserProfile = ({ profile, openProfileEdit }) => {
           </div>
         </NeoCard>
 
-        <NeoCard>
-          <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Academic Profile</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Class / Year:</span>
-              <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>
-                {profile.studentClass ? `${profile.studentClass}` : '-'} {profile.year ? `(${profile.year})` : ''}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Section:</span>
-              <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.section || '-'}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Current Score:</span>
-              <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-color)' }}>{profile.academicScore || 0}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Scholarship:</span>
-              {profile.scholarship ? (
-                 <span style={{ backgroundColor: 'var(--clay-mint-light)', color: 'var(--primary)', padding: '0.3rem 0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                   {profile.scholarship.name} ({profile.scholarship.discountPercentage}%)
-                 </span>
-              ) : (
-                 <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>None</span>
-              )}
-            </div>
-          </div>
-        </NeoCard>
+        {profile.role === 'student' && (
+          <>
+            <NeoCard>
+              <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Academic Profile</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Class / Year:</span>
+                  <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>
+                    {profile.studentClass ? `${profile.studentClass}` : '-'} {profile.year ? `(${profile.year})` : ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Section:</span>
+                  <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{profile.section || '-'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Current Score:</span>
+                  <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-color)' }}>{profile.academicScore || 0}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Scholarship:</span>
+                  {profile.scholarship ? (
+                     <span style={{ backgroundColor: 'var(--clay-mint-light)', color: 'var(--primary)', padding: '0.3rem 0.6rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                       {profile.scholarship.name} ({profile.scholarship.discountPercentage}%)
+                     </span>
+                  ) : (
+                     <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>None</span>
+                  )}
+                </div>
+              </div>
+            </NeoCard>
 
-        <NeoCard>
-          <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Enrolled Groups</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
-            {profile.groups && profile.groups.length > 0 ? profile.groups.map(g => (
-              <span key={g._id} style={{ padding: '0.5rem 1rem', borderRadius: '15px', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)', fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold' }}>
-                {g.name}
-              </span>
-            )) : (
-              <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>Not enrolled in any groups</span>
-            )}
-          </div>
-        </NeoCard>
+            <NeoCard>
+              <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)', borderBottom: '2px solid rgba(128,128,128,0.1)', paddingBottom: '0.5rem' }}>Enrolled Groups</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
+                {profile.groups && profile.groups.length > 0 ? profile.groups.map(g => (
+                  <span key={g._id} style={{ padding: '0.5rem 1rem', borderRadius: '15px', backgroundColor: 'var(--bg-color)', boxShadow: 'var(--clay-outer)', fontSize: '0.9rem', color: 'var(--text-color)', fontWeight: 'bold' }}>
+                    {g.name}
+                  </span>
+                )) : (
+                  <span style={{ fontStyle: 'italic', color: 'var(--text-light)' }}>Not enrolled in any groups</span>
+                )}
+              </div>
+            </NeoCard>
+          </>
+        )}
       </div>
     </div>
   );

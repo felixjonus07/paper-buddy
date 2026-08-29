@@ -20,6 +20,7 @@ import { useAlert } from '../../context/AlertContext';
 import PaymentSettings from '../../components/admin/PaymentSettings';
 import CashierManagement from '../../components/admin/CashierManagement';
 import FinanceManagement from '../../components/admin/FinanceManagement';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,6 +36,12 @@ const AdminDashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   const handleNavClick = useCallback((tab) => {
     setActiveTab(tab);
@@ -625,32 +632,14 @@ const AdminDashboard = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="dashboard-content">
-
-        <div style={{ flexShrink: 0, padding: '0.5rem' }}>
-          <div className="dashboard-header" style={{
-            backgroundColor: 'var(--clay-base)',
-            padding: '1rem 2rem',
-            borderRadius: '50px',
-            boxShadow: 'var(--clay-outer)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, color: 'var(--text-color)' }}>
-                {[...mainNavItems, ...managementNavItems].find(n => n.id === activeTab)?.label || 'Dashboard'}
-              </h2>
-            </div>
-            <div className="header-actions">
-              {isReadOnly && (
-                <NeoButton variant="secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => navigate('/')}>
-                  Back to Home
-                </NeoButton>
-              )}
-            </div>
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
           </div>
         </div>
+      </div>
+
+      <div className="dashboard-content">
 
         <div className="dashboard-scroll-area">
 
@@ -684,6 +673,7 @@ const AdminDashboard = () => {
                 {activeTab === 'scholarships' && 'This page is for creating standard "Scholarships". You can define rules like "50% off if the student has a high academic score".'}
                 {activeTab === 'cashiers' && 'This page helps you track your Cashiers. You can see who is assigned, view their daily collected cash logs, and download reports.'}
                 {activeTab === 'reports' && 'This page helps you generate detailed financial reports. You can select dates and see all successful payments made by students.'}
+                {activeTab === 'profile' && 'Manage your personal profile and account settings.'}
               </p>
             </div>
           </div>
@@ -700,7 +690,10 @@ const AdminDashboard = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
               <GroupManagement groups={groups.filter(g => g.name?.toLowerCase().includes(searchQuery.toLowerCase()))} navigate={navigate} setGroupModalOpen={setGroupModalOpen} setEditGroupData={setEditGroupData} setEditGroupModalOpen={setEditGroupModalOpen} mentorData={mentorData} setMentorData={setMentorData} setCreateMentorModalOpen={setCreateMentorModalOpen} handleDeleteGroup={handleDeleteGroup} isReadOnly={isReadOnly} />
           )}
-          {activeTab === 'finance' && <FinanceManagement />}
+          {activeTab === 'finance' && (
+            <FinanceManagement collegeId={collegeId || user?.collegeId} />
+          )}
+          {activeTab === 'profile' && <ProfileAndSettingsView />}
           {activeTab === 'fees' && (
             (fees.filter(f => f.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :

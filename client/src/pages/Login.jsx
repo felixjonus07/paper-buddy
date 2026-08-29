@@ -227,9 +227,21 @@ const Login = () => {
           <NeoCard style={{ flex: '1 1 500px', maxWidth: '600px' }}>
             <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               
-              {/* Left Column: Flowchart */}
-              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-color)', fontSize: '1.1rem' }}>Quick Demo Logins</h3>
+              {/* Left Column: Clickable Buttons */}
+              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
+                  Or click a button below to auto-login:
+                </p>
+                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={{ width: '100%' }}>Super Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin123')} style={{ width: '100%' }}>Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('cashier', 'cashier123')} style={{ width: '100%' }}>Cashier</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('aidsa', 'aidsa123')} style={{ width: '100%' }}>Group Admin</NeoButton>
+                <NeoButton type="button" onClick={() => handleAutoLogin('student', 'student123')} style={{ width: '100%' }}>Student</NeoButton>
+              </div>
+
+              {/* Right Column: Flowchart */}
+              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', borderLeft: window.innerWidth > 600 ? '1px solid rgba(128,128,128,0.2)' : 'none', paddingLeft: window.innerWidth > 600 ? '1.5rem' : '0' }}>
+                <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-color)', fontSize: '1.1rem' }}>RBA Architecture</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                   <div style={{ ...demoBtnStyle, cursor: 'default' }}>Super Admin</div>
@@ -253,18 +265,6 @@ const Login = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Right Column: Clickable Buttons */}
-              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', borderLeft: window.innerWidth > 600 ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingLeft: window.innerWidth > 600 ? '1.5rem' : '0' }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text-light)' }}>
-                  Or click a button below to auto-login:
-                </p>
-                <NeoButton type="button" onClick={() => handleAutoLogin('superadmin', 'superadmin123')} style={{ width: '100%' }}>Super Admin</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('admin', 'admin123')} style={{ width: '100%' }}>Admin</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('cashier', 'cashier123')} style={{ width: '100%' }}>Cashier</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('aidsa', 'aidsa123')} style={{ width: '100%' }}>Group Admin</NeoButton>
-                <NeoButton type="button" onClick={() => handleAutoLogin('student', 'student123')} style={{ width: '100%' }}>Student</NeoButton>
               </div>
 
             </div>

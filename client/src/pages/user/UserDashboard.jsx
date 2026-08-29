@@ -8,12 +8,11 @@ import ThemeToggle from '../../components/UI/ThemeToggle';
 import { IndianRupee, FileText, User, Settings, LayoutDashboard, LogOut, Download, Edit, PlusCircle, MessageCircle, Home, ChevronLeft, ChevronRight, Menu, Landmark } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import UserOverview from '../../components/user/UserOverview';
-import UserProfile from '../../components/user/UserProfile';
+import ProfileAndSettingsView from '../../components/user/ProfileAndSettingsView';
 import UserPayFees from '../../components/user/UserPayFees';
 import UserFeeRequests from '../../components/user/UserFeeRequests';
 import UserApplyLoan from '../../components/user/UserApplyLoan';
 import UserPaidFees from '../../components/user/UserPaidFees';
-import UserSettings from '../../components/user/UserSettings';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { lilitaOneBase64, gagalinBase64 } from '../../utils/fonts';
@@ -39,6 +38,12 @@ const UserDashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const scrollArea = document.querySelector('.dashboard-scroll-area');
+    if (scrollArea) scrollArea.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   const handleNavClick = useCallback((tab) => {
     setActiveTab(tab);
@@ -492,10 +497,16 @@ const UserDashboard = () => {
           <FileText size={20} /> <span className="nav-text">Payment History</span>
         </div>
 
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+          <div className="nav-item" onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+            <LogOut size={20} /> <span className="nav-text">Logout</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="dashboard-content">
+
 
         <div style={{ flexShrink: 0, padding: '0.5rem' }}>
           <div className="dashboard-header" style={{
@@ -510,8 +521,7 @@ const UserDashboard = () => {
               {activeTab === 'fee-requests' && 'Fee Requests'}
               {activeTab === 'loan' && 'Financial Aid'}
               {activeTab === 'paid-fees' && 'Payment History'}
-              {activeTab === 'profile' && 'My Profile'}
-              {activeTab === 'settings' && 'Account Settings'}
+              {activeTab === 'profile' && 'Profile & Settings'}
             </h2>
             <div className="header-actions">
               <NeoButton 
@@ -525,10 +535,11 @@ const UserDashboard = () => {
           </div>
         </div>
 
+
         <div className="dashboard-scroll-area">
 
           {activeTab === 'dashboard' && <UserOverview user={user} studentFees={filteredStudentFees} loans={filteredLoans} profile={profile} />}
-          {activeTab === 'profile' && <UserProfile profile={profile} openProfileEdit={openProfileEdit} />}
+          {activeTab === 'profile' && <ProfileAndSettingsView />}
           {activeTab === 'pay-fees' && (
             (filteredFees.length === 0 && filteredStudentFees.length === 0 && searchQuery) ?
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
@@ -545,7 +556,6 @@ const UserDashboard = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No results found</p> :
               <UserPaidFees studentFees={filteredStudentFees} handleDownloadReceipt={handleDownloadReceipt} />
           )}
-          {activeTab === 'settings' && <UserSettings handleChangePassword={handleChangePassword} passwordData={passwordData} setPasswordData={setPasswordData} passwordMessage={passwordMessage} />}
         </div>
       </div>
 
