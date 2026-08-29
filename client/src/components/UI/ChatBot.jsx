@@ -932,7 +932,7 @@ const successMessages = {
 // ─── Main ChatBot Widget ───────────────────────────────────────────────────────
 const ChatBot = () => {
   const [open, setOpen] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const location = useLocation();
 
@@ -976,11 +976,14 @@ const ChatBot = () => {
     fetch(`${API_BASE}/chatbot/status`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
-        setIsVisible(d.enabled);
+        if (typeof d.enabled === 'boolean') {
+          setIsVisible(d.enabled);
+        }
         setCheckingStatus(false);
       })
       .catch(() => {
-        setIsVisible(false);
+      .catch(() => {
+        setIsVisible(true);
         setCheckingStatus(false);
       });
   }, [location.pathname]);
@@ -1078,7 +1081,8 @@ const ChatBot = () => {
 
   if (!getToken() || location.pathname === '/login') return null;
   if (checkingStatus) return null;
-  if (!isVisible && getUserRole() !== 'superadmin') return null;
+  const userRole = getUserRole();
+  if (!isVisible && userRole !== 'superadmin' && userRole !== 'admin') return null;
 
   return (
     <>
