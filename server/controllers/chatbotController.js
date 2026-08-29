@@ -217,24 +217,53 @@ const chat = async (req, res) => {
       ...messages.map(m => ({ role: m.role, content: m.content }))
     ];
 
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: groqMessages,
-        temperature: 0.4,
-        max_tokens: 1024
-      })
-    });
+    const modelsToTry = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'groq/compound', 'qwen/qwen3.8-27b'];
+    let response;
+    let lastErrorText = '';
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Groq API error:', errorText);
-      return res.status(502).json({ message: 'Failed to get response from AI', detail: errorText });
+    for (const modelName of modelsToTry) {
+      try {
+        response = await fetch(GROQ_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: groqMessages,
+            temperature: 0.4,
+            max_tokens: 1024
+          })
+        });
+
+        if (response.ok) {
+          break;
+        }
+
+        lastErrorText = await response.text();
+        console.error(`Groq API error with model ${modelName}:`, lastErrorText);
+
+        // If the key itself is invalid or expired, no model will work; stop immediately
+        if (lastErrorText.includes('expired_api_key') || lastErrorText.includes('invalid_api_key')) {
+          break;
+        }
+      } catch (err) {
+        lastErrorText = err.message;
+        console.error(`Groq fetch error with model ${modelName}:`, err);
+      }
+    }
+
+    if (!response || !response.ok) {
+      let userFriendlyMessage = 'Failed to get response from AI';
+      if (lastErrorText.includes('expired_api_key')) {
+        userFriendlyMessage = 'The Groq API key configured in server/.env has expired. Please create a new key at console.groq.com and update GROQ_API_KEY in server/.env.';
+      } else if (lastErrorText.includes('invalid_api_key')) {
+        userFriendlyMessage = 'The Groq API key configured in server/.env is invalid. Please check GROQ_API_KEY in server/.env.';
+      } else if (lastErrorText.includes('rate_limit_exceeded') || lastErrorText.includes('quota_exceeded')) {
+        userFriendlyMessage = 'Groq API rate limit or quota exceeded. Please wait a moment or upgrade your Groq plan.';
+      }
+      return res.status(502).json({ message: userFriendlyMessage, detail: lastErrorText });
     }
 
     const data = await response.json();
@@ -292,17 +321,17 @@ const chat = async (req, res) => {
 
 const getStatus = async (req, res) => {
   try {
-    if (req.user && req.user.role === 'superadmin') {
+    if (req.user && (req.user.role === 'superadmin' || req.user.role === 'admin')) {
       return res.json({ enabled: true });
     }
     if (req.user && req.user.collegeId) {
       const College = require('../models/College');
       const college = await College.findById(req.user.collegeId);
-      return res.json({ enabled: college ? college.aiAccess : false });
+      return res.json({ enabled: college ? (college.aiAccess !== false) : true });
     }
-    res.json({ enabled: false });
+    res.json({ enabled: true });
   } catch (error) {
-    res.status(500).json({ enabled: false });
+    res.json({ enabled: true });
   }
 };
 
