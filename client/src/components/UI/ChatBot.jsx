@@ -982,7 +982,6 @@ const ChatBot = () => {
         setCheckingStatus(false);
       })
       .catch(() => {
-      .catch(() => {
         setIsVisible(true);
         setCheckingStatus(false);
       });
