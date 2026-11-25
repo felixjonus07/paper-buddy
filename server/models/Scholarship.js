@@ -1,36 +1,19 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, refArray, createdAt } = require('./_columns');
 
-const scholarshipSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  description: {
-    type: String
-  },
+const Scholarship = sequelize.define('scholarships', {
+  ...id(),
+  name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT },
   discountPercentage: {
-    type: Number,
-    required: true,
-    min: 0,
-    max: 100
+    type: DataTypes.DOUBLE,
+    allowNull: false,
+    validate: { min: 0, max: 100 },
   },
-  applicableFeeTypes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'FeeType'
-  }],
-  minAcademicScore: {
-    type: Number,
-    default: 0
-  },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+  applicableFeeTypes: refArray(), // UUID[] of FeeType._id
+  minAcademicScore: { type: DataTypes.DOUBLE, defaultValue: 0 },
+  collegeId: ref(false),
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('Scholarship', scholarshipSchema);
+module.exports = Scholarship;

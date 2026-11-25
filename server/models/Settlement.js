@@ -1,30 +1,17 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref } = require('./_columns');
 
-const settlementSchema = new mongoose.Schema({
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  },
-  amount: {
-    type: Number,
-    required: true
-  },
+const Settlement = sequelize.define('settlements', {
+  ...id(),
+  collegeId: ref(false),
+  amount: { type: DataTypes.DOUBLE, allowNull: false },
   status: {
-    type: String,
-    enum: ['PENDING_ADMIN_CONFIRMATION', 'COMPLETED'],
-    default: 'PENDING_ADMIN_CONFIRMATION'
+    type: DataTypes.ENUM('PENDING_ADMIN_CONFIRMATION', 'COMPLETED'),
+    defaultValue: 'PENDING_ADMIN_CONFIRMATION',
   },
-  reference: {
-    type: String
-  },
-  initiatedAt: {
-    type: Date,
-    default: Date.now
-  },
-  completedAt: {
-    type: Date
-  }
+  reference: { type: DataTypes.STRING },
+  initiatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  completedAt: { type: DataTypes.DATE },
 });
 
-module.exports = mongoose.model('Settlement', settlementSchema);
+module.exports = Settlement;

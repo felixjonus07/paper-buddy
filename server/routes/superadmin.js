@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Payment = require('../models/Payment');
 const Settlement = require('../models/Settlement');
 const { protect } = require('../middleware/authMiddleware');
+const { populate, toPlain, isUUID } = require('../utils/populate');
 const bcrypt = require('bcryptjs');
 
 // Super Admin Middleware inline check (ensure role is superadmin)
@@ -23,17 +24,14 @@ router.use(protect, superadminOnly);
 // Global Analytics
 router.get('/analytics', async (req, res) => {
   try {
-    const [totalColleges, activeSubscriptions, totalStudents, paymentAgg] = await Promise.all([
-      College.countDocuments(),
-      College.countDocuments({ subscriptionStatus: 'active' }),
-      User.countDocuments({ role: 'user' }),
-      Payment.aggregate([
-        { $match: { status: 'completed' } },
-        { $group: { _id: null, total: { $sum: "$amount" } } }
-      ])
+    const [totalColleges, activeSubscriptions, totalStudents, totalRevenue] = await Promise.all([
+      College.count(),
+      College.count({ where: { subscriptionStatus: 'active' } }),
+      User.count({ where: { role: 'user' } }),
+      Payment.sum('amount', { where: { status: 'SUCCESS' } })
     ]);
 
-    const totalRevenueProcessed = paymentAgg.length > 0 ? paymentAgg[0].total : 0;
+    const totalRevenueProcessed = totalRevenue || 0;
 
     res.json({
       totalColleges,
@@ -49,7 +47,7 @@ router.get('/analytics', async (req, res) => {
 // Get all colleges
 router.get('/colleges', async (req, res) => {
   try {
-    const colleges = await College.find().sort({ createdAt: -1 }).lean();
+    const colleges = await College.findAll({ order: [['createdAt', 'DESC']], raw: true });
     res.json(colleges);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -59,13 +57,20 @@ router.get('/colleges', async (req, res) => {
 // Get a specific college details
 router.get('/colleges/:id', async (req, res) => {
   try {
-    const college = await College.findById(req.params.id);
+    if (!isUUID(req.params.id)) {
+      return res.status(404).json({ message: 'College not found' });
+    }
+    const college = await College.findByPk(req.params.id, { raw: true });
     if (!college) {
       return res.status(404).json({ message: 'College not found' });
     }
 
-    const admins = await User.find({ collegeId: college._id, role: 'admin' }).select('-password');
-    const totalStudents = await User.countDocuments({ collegeId: college._id, role: 'user' });
+    const admins = await User.findAll({
+      where: { collegeId: college._id, role: 'admin' },
+      attributes: { exclude: ['password'] },
+      raw: true
+    });
+    const totalStudents = await User.count({ where: { collegeId: college._id, role: 'user' } });
 
     res.json({
       college,
@@ -82,15 +87,14 @@ router.post('/colleges', async (req, res) => {
   try {
     const { name, code, address, phone, email, administratorName, strength, subscriptionStatus } = req.body;
 
-    const existingCollege = await College.findOne({ code });
+    const existingCollege = await College.findOne({ where: { code }, raw: true });
     if (existingCollege) {
       return res.status(400).json({ message: 'College code already exists' });
     }
 
-    const college = new College({ 
-      name, code, address, phone, email, administratorName, strength, subscriptionStatus 
+    const college = await College.create({
+      name, code, address, phone, email, administratorName, strength, subscriptionStatus
     });
-    await college.save();
 
     await AuditLog.create({
       action: 'CREATED_COLLEGE',
@@ -108,10 +112,14 @@ router.post('/colleges', async (req, res) => {
 // Toggle subscription status
 router.put('/colleges/:id', async (req, res) => {
   try {
+    if (!isUUID(req.params.id)) {
+      return res.status(404).json({ message: 'College not found' });
+    }
     const { subscriptionStatus } = req.body;
-    const college = await College.findByIdAndUpdate(req.params.id, { subscriptionStatus }, { new: true });
+    const college = await College.findByPk(req.params.id);
 
     if (college) {
+      await college.update({ subscriptionStatus });
       await AuditLog.create({
         action: 'UPDATED_COLLEGE_STATUS',
         details: `Updated subscription to ${subscriptionStatus} for college: ${college.name}`,
@@ -130,10 +138,14 @@ router.put('/colleges/:id', async (req, res) => {
 // Toggle AI access for a college
 router.put('/colleges/:id/ai-access', async (req, res) => {
   try {
+    if (!isUUID(req.params.id)) {
+      return res.status(404).json({ message: 'College not found' });
+    }
     const { aiAccess } = req.body;
-    const college = await College.findByIdAndUpdate(req.params.id, { aiAccess }, { new: true });
+    const college = await College.findByPk(req.params.id);
 
     if (college) {
+      await college.update({ aiAccess });
       await AuditLog.create({
         action: 'UPDATED_AI_ACCESS',
         details: `AI access ${aiAccess ? 'enabled' : 'disabled'} for college: ${college.name}`,
@@ -152,12 +164,12 @@ router.put('/colleges/:id/ai-access', async (req, res) => {
 // Reset prompt count for a college
 router.put('/colleges/:id/reset-prompts', async (req, res) => {
   try {
-    const college = await College.findByIdAndUpdate(
-      req.params.id,
-      { promptCount: 0, tokenCount: 0 },
-      { new: true }
-    );
+    if (!isUUID(req.params.id)) {
+      return res.status(404).json({ message: 'College not found' });
+    }
+    const college = await College.findByPk(req.params.id);
     if (college) {
+      await college.update({ promptCount: 0, tokenCount: 0 });
       res.json(college);
     } else {
       res.status(404).json({ message: 'College not found' });
@@ -167,30 +179,38 @@ router.put('/colleges/:id/reset-prompts', async (req, res) => {
   }
 });
 
-
 // Get all provisioned admins
 router.get('/admins', async (req, res) => {
   try {
-    const admins = await User.find({ role: 'admin' })
-      .populate('collegeId', 'name code')
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .lean();
+    const rawAdmins = await User.findAll({
+      where: { role: 'admin' },
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+      raw: true
+    });
+    const admins = await populate(rawAdmins, 'collegeId', College, ['name', 'code']);
     res.json(admins);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
 // Delete an Admin
 router.delete('/admins/:id', async (req, res) => {
   try {
-    const admin = await User.findByIdAndDelete(req.params.id);
+    if (!isUUID(req.params.id)) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const admin = await User.findByPk(req.params.id);
     if (admin) {
+      const username = admin.username;
+      const collegeId = admin.collegeId;
+      await admin.destroy();
       await AuditLog.create({
         action: 'DELETED_ADMIN',
-        details: `Deleted admin account: ${admin.username}`,
+        details: `Deleted admin account: ${username}`,
         performedBy: req.user._id,
-        collegeId: admin.collegeId
+        collegeId
       });
       res.json({ message: 'Admin deleted successfully' });
     } else {
@@ -206,7 +226,7 @@ router.post('/admins', async (req, res) => {
   try {
     const { collegeId, name, username, password } = req.body;
 
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ where: { username }, raw: true });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
@@ -214,7 +234,7 @@ router.post('/admins', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const admin = new User({
+    await User.create({
       name,
       username,
       password: hashedPassword,
@@ -222,8 +242,6 @@ router.post('/admins', async (req, res) => {
       collegeId,
       mustChangePassword: true
     });
-
-    await admin.save();
 
     await AuditLog.create({
       action: 'PROVISIONED_ADMIN',
@@ -241,11 +259,13 @@ router.post('/admins', async (req, res) => {
 // Get Audit Logs
 router.get('/audit-logs', async (req, res) => {
   try {
-    const logs = await AuditLog.find()
-      .populate('performedBy', 'name')
-      .populate('collegeId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const rawLogs = await AuditLog.findAll({
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+      raw: true
+    });
+    let logs = await populate(rawLogs, 'performedBy', User, ['name']);
+    logs = await populate(logs, 'collegeId', College, ['name']);
     res.json(logs);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -255,15 +275,17 @@ router.get('/audit-logs', async (req, res) => {
 // Billing Overview - centralized vs decentralized payments per college
 router.get('/billing-overview', async (req, res) => {
   try {
-    const colleges = await College.find().sort({ createdAt: -1 });
+    const colleges = await College.findAll({ order: [['createdAt', 'DESC']], raw: true });
 
     const overviewData = await Promise.all(colleges.map(async (college) => {
       const isCentralized = (college.paymentType || 'CENTRALIZED') === 'CENTRALIZED';
 
-      // All SUCCESS payments for this college
-      const allPayments = await Payment.find({
-        collegeId: college._id,
-        status: 'SUCCESS'
+      const allPayments = await Payment.findAll({
+        where: {
+          collegeId: college._id,
+          status: 'SUCCESS'
+        },
+        raw: true
       });
 
       const onlinePayments = allPayments.filter(p => p.paymentMethod !== 'CASH');
@@ -273,13 +295,10 @@ router.get('/billing-overview', async (req, res) => {
       const cashTotal = cashPayments.reduce((sum, p) => sum + p.amount, 0);
       const total = onlineTotal + cashTotal;
 
-      // If CENTRALIZED college: online payments go to platform account
-      // If DECENTRALIZED college: online payments go to college's own gateway account
       const platformAmount = isCentralized ? onlineTotal : 0;
       const ownGatewayAmount = !isCentralized ? onlineTotal : 0;
 
-      // Settlement totals
-      const settlements = await Settlement.find({ collegeId: college._id });
+      const settlements = await Settlement.findAll({ where: { collegeId: college._id }, raw: true });
       const totalSettled = settlements.filter(s => s.status === 'COMPLETED').reduce((sum, s) => sum + s.amount, 0);
       const pendingSettlement = settlements.filter(s => s.status === 'PENDING_ADMIN_CONFIRMATION').reduce((sum, s) => sum + s.amount, 0);
 
@@ -290,16 +309,13 @@ router.get('/billing-overview', async (req, res) => {
         paymentType: college.paymentType || 'CENTRALIZED',
         subscriptionStatus: college.subscriptionStatus,
         totalCollected: total,
-        // Money credited to PLATFORM account (centralized online)
         platformAmount,
         totalSettled,
         pendingSettlement,
         balanceOwed: platformAmount - totalSettled - pendingSettlement,
         platformCount: isCentralized ? onlinePayments.length : 0,
-        // Money credited to COLLEGE's OWN gateway (decentralized online)
         ownGatewayAmount,
         ownGatewayCount: !isCentralized ? onlinePayments.length : 0,
-        // Cash collected directly by college's cashiers
         cashAmount: cashTotal,
         cashCount: cashPayments.length,
         transactionCount: allPayments.length
@@ -310,9 +326,6 @@ router.get('/billing-overview', async (req, res) => {
     const grandPlatform = overviewData.reduce((sum, c) => sum + c.platformAmount, 0);
     const grandOwnGateway = overviewData.reduce((sum, c) => sum + c.ownGatewayAmount, 0);
     const grandCash = overviewData.reduce((sum, c) => sum + c.cashAmount, 0);
-
-    console.log('--- BILLING OVERVIEW DEBUG ---');
-    console.log(JSON.stringify(overviewData, null, 2));
 
     res.json({
       colleges: overviewData,

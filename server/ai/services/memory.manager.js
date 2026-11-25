@@ -1,14 +1,5 @@
-const mongoose = require('mongoose');
-
-// Simple Mongoose schema for persisting conversations later
-const MessageSchema = new mongoose.Schema({
-  conversationId: String,
-  role: String, // system, user, assistant
-  content: String,
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Message = mongoose.models.Message || mongoose.model('Message', MessageSchema);
+const Message = require('../../models/Message');
+const { isConnected } = require('../../config/db');
 
 class MemoryManager {
   constructor() {
@@ -18,7 +9,7 @@ class MemoryManager {
 
   async addMessage(conversationId, role, content) {
     try {
-      if (mongoose.connection.readyState === 1) {
+      if (isConnected()) {
         await Message.create({ conversationId, role, content });
       }
     } catch (e) {
@@ -32,11 +23,13 @@ class MemoryManager {
   }
 
   async getHistory(conversationId, limit = 50) {
-    if (mongoose.connection.readyState === 1) {
-      const msgs = await Message.find({ conversationId })
-        .sort({ createdAt: 1 })
-        .limit(limit)
-        .lean();
+    if (isConnected()) {
+      const msgs = await Message.findAll({
+        where: { conversationId },
+        order: [['createdAt', 'ASC']],
+        limit,
+        raw: true,
+      });
       if (msgs.length > 0) {
         return msgs.map(m => ({ role: m.role, content: m.content }));
       }
@@ -45,8 +38,8 @@ class MemoryManager {
   }
 
   async clearHistory(conversationId) {
-    if (mongoose.connection.readyState === 1) {
-      await Message.deleteMany({ conversationId });
+    if (isConnected()) {
+      await Message.destroy({ where: { conversationId } });
     }
     this.cache.delete(conversationId);
   }

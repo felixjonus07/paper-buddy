@@ -1,11 +1,15 @@
+const { Op } = require('sequelize');
 const Fee = require('../models/Fee');
 const User = require('../models/User');
+const Group = require('../models/Group');
 const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
 const FeeRequest = require('../models/FeeRequest');
 const FeeType = require('../models/FeeType');
 const Scholarship = require('../models/Scholarship');
+const College = require('../models/College');
 const { calculateDynamicFeeAmount } = require('../utils/feeUtils');
+const { populate, toPlain, isUUID } = require('../utils/populate');
 const bcrypt = require('bcryptjs');
 
 const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('pg-sdk-node');
@@ -13,10 +17,9 @@ const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('pg-
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 const getPhonePeClient = async (collegeId) => {
-  if (collegeId) {
-    const College = require('../models/College');
+  if (collegeId && isUUID(collegeId)) {
     const { decrypt } = require('../utils/encryption');
-    const college = await College.findById(collegeId);
+    const college = await College.findByPk(collegeId, { raw: true });
     if (college && college.paymentType === 'DECENTRALIZED' && college.paymentCredentials?.merchantId) {
       return StandardCheckoutClient.getInstance(
         college.paymentCredentials.merchantId,
@@ -36,16 +39,19 @@ const getPhonePeClient = async (collegeId) => {
 
 const getMyFees = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('groups');
-    const groupIds = user.groups.map(g => g._id);
+    const user = await User.findByPk(req.user._id, { raw: true });
+    const groupIds = user?.groups || [];
 
-    // Get fees assigned to the user directly, or assigned to any of their groups
-    const fees = await Fee.find({
-      $or: [
-        { assignedToUser: req.user._id },
-        { assignedToGroup: { $in: groupIds } }
-      ]
-    }).populate('assignedToGroup', 'name');
+    const orClauses = [{ assignedToUser: req.user._id }];
+    if (groupIds.length > 0) {
+      orClauses.push({ assignedToGroup: { [Op.in]: groupIds } });
+    }
+
+    const rawFees = await Fee.findAll({
+      where: { [Op.or]: orClauses },
+      raw: true
+    });
+    const fees = await populate(rawFees, 'assignedToGroup', Group, ['name']);
 
     res.json(fees);
   } catch (error) {
@@ -55,9 +61,9 @@ const getMyFees = async (req, res) => {
 
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate('groups')
-      .populate('scholarship');
+    const rawUser = await User.findByPk(req.user._id, { raw: true });
+    let user = await populate(rawUser, 'groups', Group);
+    user = await populate(user, 'scholarship', Scholarship);
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -67,10 +73,10 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { phoneNumber, studentClass, section, year, personalEmail, collegeEmail, registerNumber } = req.body;
-    
-    const user = await User.findById(req.user._id);
+
+    const user = await User.findByPk(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    
+
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
     if (studentClass !== undefined) user.studentClass = studentClass;
     if (section !== undefined) user.section = section;
@@ -78,11 +84,11 @@ const updateProfile = async (req, res) => {
     if (personalEmail !== undefined) user.personalEmail = personalEmail;
     if (collegeEmail !== undefined) user.collegeEmail = collegeEmail;
     if (registerNumber !== undefined) user.registerNumber = registerNumber;
-    
+
     await user.save();
-    
-    // Return populated user
-    const updatedUser = await User.findById(req.user._id).populate('groups').populate('scholarship');
+
+    let updatedUser = await populate(toPlain(user), 'groups', Group);
+    updatedUser = await populate(updatedUser, 'scholarship', Scholarship);
     res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -91,11 +97,13 @@ const updateProfile = async (req, res) => {
 
 const getStudentFees = async (req, res) => {
   try {
-    const studentFees = await StudentFee.find({ studentId: req.user._id })
-      .populate('feeId')
-      .sort({ createdAt: -1 })
-      .lean();
-    
+    const rawFees = await StudentFee.findAll({
+      where: { studentId: req.user._id },
+      order: [['createdAt', 'DESC']],
+      raw: true
+    });
+    const studentFees = await populate(rawFees, 'feeId', Fee);
+
     // Dynamically calculate late fees
     const updatedStudentFees = studentFees.map(sf => {
       sf.finalAmount = calculateDynamicFeeAmount(sf);
@@ -111,31 +119,33 @@ const getStudentFees = async (req, res) => {
 const payFee = async (req, res) => {
   try {
     const studentFeeId = req.params.id;
-    const studentFee = await StudentFee.findOne({ _id: studentFeeId, studentId: req.user._id });
+    if (!isUUID(studentFeeId)) {
+      return res.status(404).json({ message: 'Fee record not found' });
+    }
+    const studentFee = await StudentFee.findOne({ where: { _id: studentFeeId, studentId: req.user._id } });
 
     if (!studentFee) {
       return res.status(404).json({ message: 'Fee record not found' });
     }
-    
+
     if (studentFee.status === 'PAID') {
       return res.status(400).json({ message: 'Fee is already paid' });
     }
 
+    const populatedSf = await populate(toPlain(studentFee), 'feeId', Fee);
+    const dynamicFinalAmount = calculateDynamicFeeAmount(populatedSf);
+
     studentFee.status = 'PAID';
-    
-    // Dynamically calculate the final amount with late fees
-    const dynamicFinalAmount = calculateDynamicFeeAmount(studentFee);
-    studentFee.finalAmount = dynamicFinalAmount; // update the stored finalAmount to lock in the late fee
+    studentFee.finalAmount = dynamicFinalAmount;
     await studentFee.save();
 
-    const payment = new Payment({
+    const payment = await Payment.create({
       user: req.user._id,
       group: studentFee.groupId,
       fee: studentFee.feeId,
       amount: dynamicFinalAmount,
       collegeId: req.user.collegeId
     });
-    await payment.save();
 
     res.json({ message: 'Fee paid successfully', payment });
   } catch (error) {
@@ -146,52 +156,49 @@ const payFee = async (req, res) => {
 const payNewFee = async (req, res) => {
   try {
     const feeId = req.params.id;
-    const fee = await Fee.findById(feeId);
+    if (!isUUID(feeId)) return res.status(404).json({ message: 'Fee not found' });
+    const fee = await Fee.findByPk(feeId, { raw: true });
     if (!fee) return res.status(404).json({ message: 'Fee not found' });
 
-    const user = await User.findById(req.user._id);
-    const isAssigned = fee.assignedToUser?.toString() === user._id.toString() || 
-                       user.groups.some(g => g.toString() === fee.assignedToGroup?.toString());
-    
+    const user = await User.findByPk(req.user._id, { raw: true });
+    const isAssigned = String(fee.assignedToUser) === String(user._id) ||
+      (user.groups || []).some(g => String(g) === String(fee.assignedToGroup));
+
     if (!isAssigned) return res.status(403).json({ message: 'Not authorized for this fee' });
 
-    let studentFee = await StudentFee.findOne({ feeId: fee._id, studentId: user._id });
+    let studentFee = await StudentFee.findOne({ where: { feeId: fee._id, studentId: user._id } });
     if (studentFee && studentFee.status === 'PAID') {
       return res.status(400).json({ message: 'Fee is already paid' });
     }
 
     if (!studentFee) {
-      studentFee = new StudentFee({
+      const dummySf = { finalAmount: fee.amount, feeId: fee, status: 'PENDING' };
+      const finalAmount = calculateDynamicFeeAmount(dummySf);
+      studentFee = await StudentFee.create({
         studentId: user._id,
         groupId: fee.assignedToGroup || null,
         feeId: fee._id,
         baseAmount: fee.amount,
         discountAmount: 0,
-        finalAmount: fee.amount,
-        status: 'PENDING' // Set as pending briefly to calculate late fee
+        finalAmount,
+        status: 'PAID',
+        collegeId: req.user.collegeId || fee.collegeId
       });
-      // populate feeId for dynamic calculation
-      studentFee.feeId = fee;
-      studentFee.finalAmount = calculateDynamicFeeAmount(studentFee);
-      studentFee.feeId = fee._id; // revert back to ObjectId
-      studentFee.status = 'PAID';
     } else {
-      studentFee.feeId = fee; // inject populated fee temporarily
-      studentFee.finalAmount = calculateDynamicFeeAmount(studentFee);
-      studentFee.feeId = fee._id; // revert back to ObjectId
+      const sfPlain = toPlain(studentFee);
+      sfPlain.feeId = fee;
+      studentFee.finalAmount = calculateDynamicFeeAmount(sfPlain);
       studentFee.status = 'PAID';
+      await studentFee.save();
     }
-    
-    await studentFee.save();
 
-    const payment = new Payment({
+    const payment = await Payment.create({
       user: req.user._id,
       group: fee.assignedToGroup || null,
       fee: fee._id,
       amount: studentFee.finalAmount,
-      collegeId: req.user.collegeId
+      collegeId: req.user.collegeId || fee.collegeId
     });
-    await payment.save();
 
     res.json({ message: 'Fee paid successfully', payment });
   } catch (error) {
@@ -199,29 +206,27 @@ const payNewFee = async (req, res) => {
   }
 };
 
-const axios = require('axios');
-
 const createPaymentOrder = async (req, res) => {
   try {
     const { id, isMissing } = req.body;
+    if (!isUUID(id)) return res.status(404).json({ message: 'Fee record not found' });
     let amountToPay = 0;
 
     if (isMissing) {
-      const fee = await Fee.findById(id);
+      const fee = await Fee.findByPk(id, { raw: true });
       if (!fee) return res.status(404).json({ message: 'Fee not found' });
-      // Create a dummy studentFee to calculate dynamic amount for missing fee
       const dummySf = { finalAmount: fee.amount, feeId: fee, status: 'PENDING' };
       amountToPay = calculateDynamicFeeAmount(dummySf);
     } else {
-      const studentFee = await StudentFee.findById(id).populate('feeId');
-      if (!studentFee) return res.status(404).json({ message: 'Fee record not found' });
+      const rawSf = await StudentFee.findByPk(id, { raw: true });
+      if (!rawSf) return res.status(404).json({ message: 'Fee record not found' });
+      const studentFee = await populate(rawSf, 'feeId', Fee);
       if (studentFee.status === 'PAID') return res.status(400).json({ message: 'Already paid' });
       amountToPay = calculateDynamicFeeAmount(studentFee);
     }
 
     const merchantOrderId = `MT${Date.now()}${id.substring(0, 6)}`;
     const amountInPaise = Math.round(amountToPay * 100);
-    // Ensure CLIENT_URL doesn't have a trailing slash for clean URLs
     const baseUrl = CLIENT_URL.endsWith('/') ? CLIENT_URL.slice(0, -1) : CLIENT_URL;
     const redirectUrl = `${baseUrl}/user/${req.user.username}/dashboard?merchantOrderId=${merchantOrderId}&feeId=${id}&isMissing=${isMissing}`;
 
@@ -238,14 +243,15 @@ const createPaymentOrder = async (req, res) => {
       checkoutPageUrl = response?.redirectUrl;
     } catch (apiError) {
       console.warn('PhonePe API failed (likely sandbox timeout). Using simulated redirect URL.', apiError.message);
-      // Fallback: Directly return the redirectUrl so the frontend continues to verification
       checkoutPageUrl = redirectUrl + '&simulated=true';
     }
 
     if (checkoutPageUrl) {
-      // Store a pending payment record for tracking
-      const feeDoc = isMissing ? await Fee.findById(id) : await StudentFee.findById(id);
-      const payment = new Payment({
+      const feeDoc = isMissing
+        ? await Fee.findByPk(id, { raw: true })
+        : await StudentFee.findByPk(id, { raw: true });
+
+      await Payment.create({
         user: req.user._id,
         group: isMissing ? feeDoc?.assignedToGroup : feeDoc?.groupId,
         fee: isMissing ? id : feeDoc?.feeId,
@@ -255,7 +261,6 @@ const createPaymentOrder = async (req, res) => {
         status: 'PENDING',
         collegeId: req.user.collegeId,
       });
-      await payment.save();
 
       res.json({ redirectUrl: checkoutPageUrl, merchantTransactionId: merchantOrderId });
     } else {
@@ -271,9 +276,9 @@ const verifyPayment = async (req, res) => {
   try {
     const { merchantTransactionId, feeId, isMissing, simulated } = req.body;
 
-    let paymentState = 'COMPLETED'; // Default to completed for simulated flow
+    let paymentState = 'COMPLETED';
     let statusResponse = null;
-    
+
     if (simulated !== 'true' && simulated !== true) {
       try {
         const client = await getPhonePeClient(req.user.collegeId);
@@ -286,8 +291,7 @@ const verifyPayment = async (req, res) => {
     }
 
     if (paymentState === 'COMPLETED') {
-      // Update the pending payment record
-      const payment = await Payment.findOne({ merchantTransactionId });
+      const payment = await Payment.findOne({ where: { merchantTransactionId } });
       if (payment) {
         payment.status = 'SUCCESS';
         payment.providerTransactionId = statusResponse?.paymentDetails?.[0]?.transactionId || null;
@@ -295,24 +299,24 @@ const verifyPayment = async (req, res) => {
         await payment.save();
       }
 
-      // Mark fee as paid
       if (isMissing === 'true' || isMissing === true) {
-        const fee = await Fee.findById(feeId);
-        if (fee) {
-          const studentFee = new StudentFee({
-            studentId: req.user._id,
-            groupId: fee.assignedToGroup || null,
-            feeId: fee._id,
-            baseAmount: fee.amount,
-            discountAmount: 0,
-            finalAmount: fee.amount,
-            status: 'PAID',
-            collegeId: req.user.collegeId
-          });
-          await studentFee.save();
+        if (isUUID(feeId)) {
+          const fee = await Fee.findByPk(feeId, { raw: true });
+          if (fee) {
+            await StudentFee.create({
+              studentId: req.user._id,
+              groupId: fee.assignedToGroup || null,
+              feeId: fee._id,
+              baseAmount: fee.amount,
+              discountAmount: 0,
+              finalAmount: fee.amount,
+              status: 'PAID',
+              collegeId: req.user.collegeId
+            });
+          }
         }
-      } else {
-        const studentFee = await StudentFee.findById(feeId);
+      } else if (isUUID(feeId)) {
+        const studentFee = await StudentFee.findByPk(feeId);
         if (studentFee) {
           studentFee.status = 'PAID';
           await studentFee.save();
@@ -323,8 +327,7 @@ const verifyPayment = async (req, res) => {
     } else if (paymentState === 'PENDING') {
       res.json({ success: false, message: 'Payment is still pending', status: 'PENDING' });
     } else {
-      // Update payment as failed
-      const payment = await Payment.findOne({ merchantTransactionId });
+      const payment = await Payment.findOne({ where: { merchantTransactionId } });
       if (payment) {
         payment.status = 'FAILED';
         await payment.save();
@@ -341,7 +344,7 @@ const phonepeCallback = async (req, res) => {
   try {
     const { authorization, response: responseBody } = req.headers;
     const base64Response = req.body.response || responseBody;
-    
+
     let merchantId = null;
     let decodedEvent = null;
     if (base64Response) {
@@ -356,14 +359,18 @@ const phonepeCallback = async (req, res) => {
 
     let client = await getPhonePeClient(null);
     if (merchantId && merchantId !== process.env.PHONEPE_CLIENT_ID) {
-      const College = require('../models/College');
-      const college = await College.findOne({ 'paymentCredentials.merchantId': merchantId, paymentType: 'DECENTRALIZED' });
+      const college = await College.findOne({
+        where: {
+          paymentType: 'DECENTRALIZED',
+          paymentCredentials: { [Op.contains]: { merchantId } }
+        },
+        raw: true
+      });
       if (college) {
         client = await getPhonePeClient(college._id);
       }
     }
 
-    // Validate the webhook payload using the SDK
     const isValid = client.validateWebhookPayload(
       authorization,
       base64Response || JSON.stringify(req.body)
@@ -378,7 +385,7 @@ const phonepeCallback = async (req, res) => {
 
     if (event?.type === 'checkout.order.completed' || event?.code === 'PAYMENT_SUCCESS') {
       const merchantOrderId = event?.payload?.merchantOrderId || event?.data?.merchantTransactionId;
-      const payment = await Payment.findOne({ merchantTransactionId: merchantOrderId });
+      const payment = await Payment.findOne({ where: { merchantTransactionId: merchantOrderId } });
 
       if (payment && payment.status !== 'SUCCESS') {
         payment.status = 'SUCCESS';
@@ -391,7 +398,7 @@ const phonepeCallback = async (req, res) => {
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('PhonePe callback error:', error.message);
-    res.status(200).json({ success: true }); // Always return 200 to PhonePe
+    res.status(200).json({ success: true });
   }
 };
 
@@ -401,7 +408,7 @@ const createFeeRequest = async (req, res) => {
     if (!requestedFeeTitle || !amount || !feeType) {
       return res.status(400).json({ message: 'Fee title, amount, and fee type are required' });
     }
-    const request = new FeeRequest({
+    const request = await FeeRequest.create({
       studentId: req.user._id,
       collegeId: req.user.collegeId,
       requestedFeeTitle,
@@ -409,7 +416,6 @@ const createFeeRequest = async (req, res) => {
       feeType,
       reason
     });
-    await request.save();
     res.status(201).json(request);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -418,7 +424,11 @@ const createFeeRequest = async (req, res) => {
 
 const getMyFeeRequests = async (req, res) => {
   try {
-    const requests = await FeeRequest.find({ studentId: req.user._id }).sort({ createdAt: -1 });
+    const requests = await FeeRequest.findAll({
+      where: { studentId: req.user._id },
+      order: [['createdAt', 'DESC']],
+      raw: true
+    });
     res.json(requests);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -427,7 +437,7 @@ const getMyFeeRequests = async (req, res) => {
 
 const getFeeTypes = async (req, res) => {
   try {
-    const feeTypes = await FeeType.find();
+    const feeTypes = await FeeType.findAll({ raw: true });
     res.json(feeTypes);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -437,7 +447,7 @@ const getFeeTypes = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user._id);
+    const user = await User.findByPk(req.user._id);
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 

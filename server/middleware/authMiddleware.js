@@ -12,7 +12,11 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
 
-      req.user = await User.findById(decoded.id).select('-password');
+      // Plain object (no password) so handlers can read/override fields freely
+      req.user = await User.findByPk(decoded.id, {
+        attributes: { exclude: ['password'] },
+        raw: true,
+      });
       
       // Allow superadmin to impersonate a college for admin dashboard views
       if (req.user && req.user.role === 'superadmin' && req.headers['x-college-id']) {

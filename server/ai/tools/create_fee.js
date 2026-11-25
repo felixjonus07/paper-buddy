@@ -1,5 +1,7 @@
+const { Op } = require('sequelize');
 const Fee = require('../../models/Fee');
 const FeeType = require('../../models/FeeType');
+const { likeEscape } = require('../../utils/populate');
 
 module.exports = {
   name: 'create_fee',
@@ -20,22 +22,33 @@ module.exports = {
   outputSchema: { type: 'OBJECT' },
   executor: async (args, userContext) => {
     try {
-      let feeType = await FeeType.findOne({ name: { $regex: new RegExp(`^${args.typeName}$`, 'i') } });
+      const collegeId = userContext?.collegeId;
+      const whereType = { name: { [Op.iLike]: likeEscape(args.typeName) } };
+      if (collegeId) whereType.collegeId = collegeId;
+
+      let feeType = await FeeType.findOne({ where: whereType });
       let feeTypeCreated = false;
-      
+
       if (!feeType) {
-        feeType = new FeeType({ name: args.typeName, description: `Auto-created fee type: ${args.typeName}` });
-        await feeType.save();
+        feeType = await FeeType.create({
+          name: args.typeName,
+          description: `Auto-created fee type: ${args.typeName}`,
+          collegeId
+        });
         feeTypeCreated = true;
       }
 
-      const newFee = new Fee({ title: args.title, amount: args.amount, feeType: feeType._id });
-      await newFee.save();
-      
-      return { 
-        message: 'Fee created successfully', 
-        feeId: newFee._id.toString(),
-        feeTypeId: feeTypeCreated ? feeType._id.toString() : null // Used for rollback
+      const newFee = await Fee.create({
+        title: args.title,
+        amount: args.amount,
+        feeType: feeType._id,
+        collegeId
+      });
+
+      return {
+        message: 'Fee created successfully',
+        feeId: String(newFee._id),
+        feeTypeId: feeTypeCreated ? String(feeType._id) : null
       };
     } catch (error) {
       throw new Error(`Failed to create fee: ${error.message}`);
@@ -43,7 +56,7 @@ module.exports = {
   },
   rollbackHandler: async (args, result, userContext) => {
     console.log(`[create_fee] Rolling back fee creation: ${result.feeId}`);
-    if (result.feeId) await Fee.findByIdAndDelete(result.feeId);
-    if (result.feeTypeId) await FeeType.findByIdAndDelete(result.feeTypeId);
+    if (result.feeId) await Fee.destroy({ where: { _id: result.feeId } });
+    if (result.feeTypeId) await FeeType.destroy({ where: { _id: result.feeTypeId } });
   }
 };

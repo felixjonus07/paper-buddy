@@ -1,57 +1,19 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref } = require('./_columns');
 
-const paymentSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  group: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group',
-    required: false,
-  },
-  fee: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Fee',
-    required: true,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  merchantTransactionId: {
-    type: String,
-    default: null,
-  },
-  providerTransactionId: {
-    type: String,
-    default: null,
-  },
-  paymentMethod: {
-    type: String,
-    enum: ['PHONEPE', 'CASH', 'OTHER'],
-    default: 'OTHER',
-  },
-  status: {
-    type: String,
-    enum: ['SUCCESS', 'PENDING', 'FAILED'],
-    default: 'SUCCESS',
-  },
-  paidAt: {
-    type: Date,
-    default: Date.now,
-  },
-  processedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null,
-  },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  }
+const Payment = sequelize.define('payments', {
+  ...id(),
+  user: ref(false),
+  group: ref(),
+  fee: ref(false),
+  amount: { type: DataTypes.DOUBLE, allowNull: false },
+  merchantTransactionId: { type: DataTypes.STRING, defaultValue: null },
+  providerTransactionId: { type: DataTypes.STRING, defaultValue: null },
+  paymentMethod: { type: DataTypes.ENUM('PHONEPE', 'CASH', 'OTHER'), defaultValue: 'OTHER' },
+  status: { type: DataTypes.ENUM('SUCCESS', 'PENDING', 'FAILED'), defaultValue: 'SUCCESS' },
+  paidAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  processedBy: { type: DataTypes.UUID, defaultValue: null },
+  collegeId: ref(false),
 });
 
-module.exports = mongoose.model('Payment', paymentSchema);
+module.exports = Payment;

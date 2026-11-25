@@ -1,31 +1,14 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, refArray, createdAt } = require('./_columns');
 
-const groupSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  description: {
-    type: String,
-  },
-  parentGroups: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group'
-  }],
-  isGlobal: {
-    type: Boolean,
-    default: false
-  },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+const Group = sequelize.define('groups', {
+  ...id(),
+  name: { type: DataTypes.STRING, allowNull: false, unique: true },
+  description: { type: DataTypes.TEXT },
+  parentGroups: refArray(), // UUID[] of Group._id
+  isGlobal: { type: DataTypes.BOOLEAN, defaultValue: false },
+  collegeId: ref(false),
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('Group', groupSchema);
+module.exports = Group;

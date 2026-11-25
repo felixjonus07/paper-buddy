@@ -16,7 +16,7 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Username can only contain letters, numbers, and underscores' });
     }
 
-    const userExists = await User.findOne({ username });
+    const userExists = await User.findOne({ where: { username }, raw: true });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ where: { username }, raw: true });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
@@ -73,7 +73,9 @@ const loginUser = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
+    const user = await User.findByPk(req.user._id, {
+      attributes: { exclude: ['password'] },
+    });
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -89,15 +91,18 @@ const generateToken = (id) => {
 const resetPassword = async (req, res) => {
   try {
     const { newPassword } = req.body;
-    
+
     if (!newPassword || newPassword.length < 6) {
-       return res.status(400).json({ message: 'Password must be at least 6 characters' });
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findByPk(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     user.password = hashedPassword;
     user.mustChangePassword = false;
     await user.save();

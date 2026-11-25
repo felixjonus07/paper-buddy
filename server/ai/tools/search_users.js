@@ -1,4 +1,6 @@
+const { Op } = require('sequelize');
 const User = require('../../models/User');
+const { likeEscape } = require('../../utils/populate');
 
 module.exports = {
   name: 'search_users',
@@ -21,17 +23,20 @@ module.exports = {
   },
   executor: async (args, userContext) => {
     try {
-      const query = {};
-      if (args.year) query.year = { $regex: args.year, $options: 'i' };
-      if (args.studentClass) query.studentClass = { $regex: args.studentClass, $options: 'i' };
-      if (args.section) query.section = { $regex: args.section, $options: 'i' };
-      if (args.role) query.role = args.role;
+      const where = {};
+      if (args.year) where.year = { [Op.iLike]: `%${likeEscape(args.year)}%` };
+      if (args.studentClass) where.studentClass = { [Op.iLike]: `%${likeEscape(args.studentClass)}%` };
+      if (args.section) where.section = { [Op.iLike]: `%${likeEscape(args.section)}%` };
+      where.role = args.role || 'user';
+      if (userContext?.collegeId) where.collegeId = userContext.collegeId;
 
-      // Only search for students ('user' role) by default if role is not specified
-      if (!args.role) query.role = 'user';
+      const users = await User.findAll({
+        where,
+        attributes: ['_id', 'name', 'username', 'year', 'studentClass', 'section'],
+        limit: 100,
+        raw: true
+      });
 
-      const users = await User.find(query).select('_id name username year studentClass section').limit(100);
-      
       return {
         count: users.length,
         users: users

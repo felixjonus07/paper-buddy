@@ -1,3 +1,4 @@
+const { Op, fn, col } = require('sequelize');
 const User = require('../../models/User');
 
 module.exports = {
@@ -22,15 +23,20 @@ module.exports = {
       const { userIds, groupId } = args;
       if (!userIds || !userIds.length) throw new Error('No user IDs provided.');
 
-      // Add groupId to the 'groups' array of each user
-      const result = await User.updateMany(
-        { _id: { $in: userIds } },
-        { $addToSet: { groups: groupId } }
-      );
-      
-      return { 
-        message: 'Users assigned to group successfully', 
-        modifiedCount: result.modifiedCount,
+      const users = await User.findAll({ where: { _id: { [Op.in]: userIds } } });
+      let modifiedCount = 0;
+      for (const u of users) {
+        const current = u.groups || [];
+        if (!current.some(id => String(id) === String(groupId))) {
+          u.groups = [...current, groupId];
+          await u.save();
+          modifiedCount++;
+        }
+      }
+
+      return {
+        message: 'Users assigned to group successfully',
+        modifiedCount,
         userIdsAssigned: userIds,
         groupId
       };
@@ -41,9 +47,9 @@ module.exports = {
   rollbackHandler: async (args, result, userContext) => {
     console.log(`[assign_users_to_group] Rolling back user assignments...`);
     if (result.userIdsAssigned && result.groupId) {
-      await User.updateMany(
-        { _id: { $in: result.userIdsAssigned } },
-        { $pull: { groups: result.groupId } }
+      await User.update(
+        { groups: fn('array_remove', col('groups'), result.groupId) },
+        { where: { _id: { [Op.in]: result.userIdsAssigned } } }
       );
     }
   }

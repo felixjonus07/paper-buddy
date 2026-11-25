@@ -1,61 +1,22 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, createdAt } = require('./_columns');
 
 /**
- * ============================================================================
- * FEE MODEL - SIMPLE EXPLANATION
- * ============================================================================
- * This file defines how a "Fee" (like a tuition fee or exam fee) is saved 
- * in our database. 
- * 
- * IMPORTANT: Every fee must have a `collegeId`. This ensures that when College A 
- * creates a fee, College B cannot see it or use it. This is called "Data Separation".
- * ============================================================================
+ * FEE MODEL
+ * Every fee must have a `collegeId` so College A never sees College B's fees.
  */
-
-const feeSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  feeType: { 
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'FeeType',
-    required: false 
-  },
-  assignedToGroup: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group',
-  },
-  assignedToUser: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  },
-  deadlineDate: {
-    type: Date,
-    required: false
-  },
-  lateFeeFine: {
-    type: Number,
-    default: 0
-  },
-  lateFeeFineType: {
-    type: String,
-    enum: ['per day', 'per month', 'total'],
-    default: 'total'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+const Fee = sequelize.define('fees', {
+  ...id(),
+  title: { type: DataTypes.STRING, allowNull: false },
+  amount: { type: DataTypes.DOUBLE, allowNull: false },
+  feeType: ref(),
+  assignedToGroup: ref(),
+  assignedToUser: ref(),
+  collegeId: ref(false),
+  deadlineDate: { type: DataTypes.DATE },
+  lateFeeFine: { type: DataTypes.DOUBLE, defaultValue: 0 },
+  lateFeeFineType: { type: DataTypes.ENUM('per day', 'per month', 'total'), defaultValue: 'total' },
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('Fee', feeSchema);
+module.exports = Fee;

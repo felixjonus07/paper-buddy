@@ -1,14 +1,16 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref } = require('./_columns');
 
-const StudentFeeSchema = new mongoose.Schema({
-  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' },
-  feeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Fee', required: true },
-  baseAmount: { type: Number, required: true },
-  discountAmount: { type: Number, default: 0 },
-  finalAmount: { type: Number, required: true }, // baseAmount - discountAmount
-  status: { type: String, enum: ['PENDING', 'PAID'], default: 'PENDING' },
-  collegeId: { type: mongoose.Schema.Types.ObjectId, ref: 'College', required: true }
-}, { timestamps: true });
+const StudentFee = sequelize.define('student_fees', {
+  ...id(),
+  studentId: ref(false),
+  groupId: ref(),
+  feeId: ref(false),
+  baseAmount: { type: DataTypes.DOUBLE, allowNull: false },
+  discountAmount: { type: DataTypes.DOUBLE, defaultValue: 0 },
+  finalAmount: { type: DataTypes.DOUBLE, allowNull: false }, // baseAmount - discountAmount
+  status: { type: DataTypes.ENUM('PENDING', 'PAID'), defaultValue: 'PENDING' },
+  collegeId: ref(false),
+}, { timestamps: true }); // createdAt + updatedAt
 
-module.exports = mongoose.model('StudentFee', StudentFeeSchema);
+module.exports = StudentFee;

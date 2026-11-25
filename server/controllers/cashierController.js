@@ -1,9 +1,11 @@
+const { Op } = require('sequelize');
 const User = require('../models/User');
 const StudentFee = require('../models/StudentFee');
 const Payment = require('../models/Payment');
 const Fee = require('../models/Fee');
 const FeeType = require('../models/FeeType');
 const { calculateDynamicFeeAmount } = require('../utils/feeUtils');
+const { populate, likeEscape, isUUID } = require('../utils/populate');
 
 // Search students by name / username / register number (live search)
 const searchStudents = async (req, res) => {
@@ -11,15 +13,21 @@ const searchStudents = async (req, res) => {
     const { query } = req.query;
     if (!query || query.trim().length < 1) return res.json([]);
 
-    const students = await User.find({
-      role: 'user',
-      collegeId: req.user.collegeId,
-      $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { username: { $regex: query, $options: 'i' } },
-        { registerNumber: { $regex: query, $options: 'i' } }
-      ]
-    }).select('-password').limit(200);
+    const pattern = `%${likeEscape(query.trim())}%`;
+    const students = await User.findAll({
+      where: {
+        role: 'user',
+        collegeId: req.user.collegeId,
+        [Op.or]: [
+          { name: { [Op.iLike]: pattern } },
+          { username: { [Op.iLike]: pattern } },
+          { registerNumber: { [Op.iLike]: pattern } }
+        ]
+      },
+      attributes: { exclude: ['password'] },
+      limit: 200,
+      raw: true
+    });
 
     res.json(students);
   } catch (error) {
@@ -31,10 +39,16 @@ const searchStudents = async (req, res) => {
 const getStudentPendingFees = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const pendingFees = await StudentFee.find({
-      studentId: studentId,
-      status: 'PENDING'
-    }).populate('feeId').lean();
+    if (!isUUID(studentId)) return res.json([]);
+
+    const rawFees = await StudentFee.findAll({
+      where: {
+        studentId: studentId,
+        status: 'PENDING'
+      },
+      raw: true
+    });
+    const pendingFees = await populate(rawFees, 'feeId', Fee);
 
     const updatedPendingFees = pendingFees.map(sf => {
       sf.finalAmount = calculateDynamicFeeAmount(sf);
@@ -51,13 +65,19 @@ const getStudentPendingFees = async (req, res) => {
 const getStudentPayments = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const payments = await Payment.find({
-      user: studentId,
-      status: 'SUCCESS'
-    })
-      .populate('user', 'name username registerNumber')
-      .populate('fee', 'title')
-      .sort({ paidAt: -1 });
+    if (!isUUID(studentId)) return res.json([]);
+
+    const rawPayments = await Payment.findAll({
+      where: {
+        user: studentId,
+        status: 'SUCCESS'
+      },
+      order: [['paidAt', 'DESC']],
+      raw: true
+    });
+
+    let payments = await populate(rawPayments, 'user', User, ['name', 'username', 'registerNumber']);
+    payments = await populate(payments, 'fee', Fee, ['title']);
 
     res.json(payments);
   } catch (error) {
@@ -69,18 +89,24 @@ const getStudentPayments = async (req, res) => {
 const processCashPayment = async (req, res) => {
   try {
     const { studentId, studentFeeId } = req.body;
-
-    const studentFee = await StudentFee.findOne({ _id: studentFeeId, studentId, status: 'PENDING' }).populate('feeId');
-    if (!studentFee) {
+    if (!isUUID(studentId) || !isUUID(studentFeeId)) {
       return res.status(404).json({ message: 'Pending fee not found' });
     }
 
-    const dynamicFinalAmount = calculateDynamicFeeAmount(studentFee);
+    const studentFeeInstance = await StudentFee.findOne({
+      where: { _id: studentFeeId, studentId, status: 'PENDING' }
+    });
+    if (!studentFeeInstance) {
+      return res.status(404).json({ message: 'Pending fee not found' });
+    }
+
+    const populatedSf = await populate(studentFeeInstance, 'feeId', Fee);
+    const dynamicFinalAmount = calculateDynamicFeeAmount(populatedSf);
 
     const payment = await Payment.create({
       user: studentId,
-      fee: studentFee.feeId._id,
-      group: studentFee.groupId,
+      fee: populatedSf.feeId._id,
+      group: populatedSf.groupId,
       amount: dynamicFinalAmount,
       paymentMethod: 'CASH',
       status: 'SUCCESS',
@@ -89,9 +115,9 @@ const processCashPayment = async (req, res) => {
       paidAt: new Date()
     });
 
-    studentFee.status = 'PAID';
-    studentFee.finalAmount = dynamicFinalAmount;
-    await studentFee.save();
+    studentFeeInstance.status = 'PAID';
+    studentFeeInstance.finalAmount = dynamicFinalAmount;
+    await studentFeeInstance.save();
 
     res.status(200).json({ message: 'Payment recorded successfully', payment });
   } catch (error) {
@@ -108,15 +134,19 @@ const getTodayLog = async (req, res) => {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const payments = await Payment.find({
-      collegeId: req.user.collegeId,
-      paymentMethod: 'CASH',
-      status: 'SUCCESS',
-      paidAt: { $gte: startOfDay, $lte: endOfDay }
-    })
-      .populate('user', 'name username registerNumber')
-      .populate('fee', 'title')
-      .sort({ paidAt: -1 });
+    const rawPayments = await Payment.findAll({
+      where: {
+        collegeId: req.user.collegeId,
+        paymentMethod: 'CASH',
+        status: 'SUCCESS',
+        paidAt: { [Op.gte]: startOfDay, [Op.lte]: endOfDay }
+      },
+      order: [['paidAt', 'DESC']],
+      raw: true
+    });
+
+    let payments = await populate(rawPayments, 'user', User, ['name', 'username', 'registerNumber']);
+    payments = await populate(payments, 'fee', Fee, ['title']);
 
     const totalToday = payments.reduce((sum, p) => sum + p.amount, 0);
 
@@ -138,14 +168,18 @@ const getReport = async (req, res) => {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const payments = await Payment.find({
-      collegeId: req.user.collegeId,
-      status: 'SUCCESS',
-      paidAt: { $gte: start, $lte: end }
-    })
-      .populate('user', 'name username registerNumber')
-      .populate('fee', 'title')
-      .sort({ paidAt: -1 });
+    const rawPayments = await Payment.findAll({
+      where: {
+        collegeId: req.user.collegeId,
+        status: 'SUCCESS',
+        paidAt: { [Op.gte]: start, [Op.lte]: end }
+      },
+      order: [['paidAt', 'DESC']],
+      raw: true
+    });
+
+    let payments = await populate(rawPayments, 'user', User, ['name', 'username', 'registerNumber']);
+    payments = await populate(payments, 'fee', Fee, ['title']);
 
     const total = payments.reduce((sum, p) => sum + p.amount, 0);
 
@@ -162,12 +196,13 @@ const addFeeToStudent = async (req, res) => {
     if (!studentId || !title || !amount || !feeType) {
       return res.status(400).json({ message: 'studentId, title, amount and feeType are required' });
     }
+    if (!isUUID(studentId)) return res.status(404).json({ message: 'Student not found' });
 
-    const student = await User.findOne({ _id: studentId, collegeId: req.user.collegeId });
+    const student = await User.findOne({ where: { _id: studentId, collegeId: req.user.collegeId }, raw: true });
     if (!student) return res.status(404).json({ message: 'Student not found' });
 
     // Create a one-off fee record for this college
-    let fee = await Fee.create({
+    const fee = await Fee.create({
       title,
       amount: parseFloat(amount),
       collegeId: req.user.collegeId,
@@ -195,7 +230,7 @@ const addFeeToStudent = async (req, res) => {
 // Get all fee types for the college
 const getFeeTypes = async (req, res) => {
   try {
-    const feeTypes = await FeeType.find({ collegeId: req.user.collegeId });
+    const feeTypes = await FeeType.findAll({ where: { collegeId: req.user.collegeId }, raw: true });
     res.json(feeTypes);
   } catch (error) {
     res.status(500).json({ message: error.message });

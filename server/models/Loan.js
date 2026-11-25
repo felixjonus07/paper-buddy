@@ -1,28 +1,13 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref } = require('./_columns');
 
-const loanSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  purpose: {
-    type: String,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',
-  },
-  appliedAt: {
-    type: Date,
-    default: Date.now,
-  }
+const Loan = sequelize.define('loans', {
+  ...id(),
+  user: ref(false),
+  amount: { type: DataTypes.DOUBLE, allowNull: false },
+  purpose: { type: DataTypes.TEXT, allowNull: false },
+  status: { type: DataTypes.ENUM('pending', 'approved', 'rejected'), defaultValue: 'pending' },
+  appliedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
 });
 
-module.exports = mongoose.model('Loan', loanSchema);
+module.exports = Loan;

@@ -1,10 +1,12 @@
 const Loan = require('../models/Loan');
+const User = require('../models/User');
+const { populate, toPlain, isUUID } = require('../utils/populate');
 
 // User: Apply for a loan
 const applyLoan = async (req, res) => {
   try {
     const { amount, purpose } = req.body;
-    
+
     if (!amount || !purpose) {
       return res.status(400).json({ message: 'Amount and purpose are required' });
     }
@@ -24,7 +26,10 @@ const applyLoan = async (req, res) => {
 // User: Get their own loans
 const getMyLoans = async (req, res) => {
   try {
-    const loans = await Loan.find({ user: req.user._id }).sort({ appliedAt: -1 });
+    const loans = await Loan.findAll({
+      where: { user: req.user._id },
+      order: [['appliedAt', 'DESC']],
+    });
     res.json(loans);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -34,7 +39,8 @@ const getMyLoans = async (req, res) => {
 // Admin: Get all loans
 const getAllLoans = async (req, res) => {
   try {
-    const loans = await Loan.find().populate('user', 'name email').sort({ appliedAt: -1 });
+    const rawLoans = await Loan.findAll({ order: [['appliedAt', 'DESC']] });
+    const loans = await populate(toPlain(rawLoans), 'user', User, ['name', 'personalEmail', 'collegeEmail']);
     res.json(loans);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -45,7 +51,10 @@ const getAllLoans = async (req, res) => {
 const updateLoanStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const loan = await Loan.findById(req.params.id);
+    if (!isUUID(req.params.id)) {
+      return res.status(404).json({ message: 'Loan not found' });
+    }
+    const loan = await Loan.findByPk(req.params.id);
 
     if (!loan) {
       return res.status(404).json({ message: 'Loan not found' });

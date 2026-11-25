@@ -1,22 +1,12 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, createdAt } = require('./_columns');
 
-const feeTypeSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  description: {
-    type: String
-  },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+const FeeType = sequelize.define('fee_types', {
+  ...id(),
+  name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT },
+  collegeId: ref(false),
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('FeeType', feeTypeSchema);
+module.exports = FeeType;

@@ -1,11 +1,13 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, createdAt } = require('./_columns');
 
-const auditLogSchema = new mongoose.Schema({
-  action: { type: String, required: true },
-  details: { type: String, required: true },
-  performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  collegeId: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
-  createdAt: { type: Date, default: Date.now }
+const AuditLog = sequelize.define('audit_logs', {
+  ...id(),
+  action: { type: DataTypes.STRING, allowNull: false },
+  details: { type: DataTypes.TEXT, allowNull: false },
+  performedBy: ref(),
+  collegeId: ref(),
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('AuditLog', auditLogSchema);
+module.exports = AuditLog;

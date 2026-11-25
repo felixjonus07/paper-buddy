@@ -1,55 +1,28 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, refArray, createdAt } = require('./_columns');
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  mustChangePassword: {
-    type: Boolean,
-    default: false,
-  },
-  groups: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group'
-  }],
-  scholarship: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Scholarship'
-  },
-  academicScore: {
-    type: Number,
-    default: 0
-  },
-  phoneNumber: { type: String },
-  studentClass: { type: String },
-  section: { type: String },
-  year: { type: String },
-  personalEmail: { type: String },
-  collegeEmail: { type: String },
-  registerNumber: { type: String },
-  password: {
-    type: String,
-    required: true,
-  },
+const User = sequelize.define('users', {
+  ...id(),
+  name: { type: DataTypes.STRING, allowNull: false },
+  username: { type: DataTypes.STRING, allowNull: false, unique: true },
+  mustChangePassword: { type: DataTypes.BOOLEAN, defaultValue: false },
+  groups: refArray(), // UUID[] of Group._id
+  scholarship: ref(),
+  academicScore: { type: DataTypes.DOUBLE, defaultValue: 0 },
+  phoneNumber: { type: DataTypes.STRING },
+  studentClass: { type: DataTypes.STRING },
+  section: { type: DataTypes.STRING },
+  year: { type: DataTypes.STRING },
+  personalEmail: { type: DataTypes.STRING },
+  collegeEmail: { type: DataTypes.STRING },
+  registerNumber: { type: DataTypes.STRING },
+  password: { type: DataTypes.STRING, allowNull: false },
   role: {
-    type: String,
-    enum: ['user', 'admin', 'cashier', 'mentor', 'superadmin'],
-    default: 'user',
+    type: DataTypes.ENUM('user', 'admin', 'cashier', 'mentor', 'superadmin'),
+    defaultValue: 'user',
   },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+  collegeId: ref(),
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

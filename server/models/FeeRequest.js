@@ -1,41 +1,16 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../config/db');
+const { DataTypes, id, ref, createdAt } = require('./_columns');
 
-const feeRequestSchema = new mongoose.Schema({
-  studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  requestedFeeTitle: {
-    type: String,
-    required: true
-  },
-  amount: {
-    type: Number,
-    required: true
-  },
-  feeType: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'FeeType',
-    required: true
-  },
-  reason: {
-    type: String
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
-  },
-  collegeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'College',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+const FeeRequest = sequelize.define('fee_requests', {
+  ...id(),
+  studentId: ref(false),
+  requestedFeeTitle: { type: DataTypes.STRING, allowNull: false },
+  amount: { type: DataTypes.DOUBLE, allowNull: false },
+  feeType: ref(false),
+  reason: { type: DataTypes.TEXT },
+  status: { type: DataTypes.ENUM('pending', 'approved', 'rejected'), defaultValue: 'pending' },
+  collegeId: ref(false),
+  ...createdAt(),
 });
 
-module.exports = mongoose.model('FeeRequest', feeRequestSchema);
+module.exports = FeeRequest;

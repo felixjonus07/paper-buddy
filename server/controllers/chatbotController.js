@@ -1,6 +1,10 @@
+const { Op } = require('sequelize');
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const College = require('../models/College');
 const StudentFee = require('../models/StudentFee');
+const Fee = require('../models/Fee');
+const Payment = require('../models/Payment');
+const { populate, isUUID } = require('../utils/populate');
 
 const getSystemPrompt = (role, userContext = '') => {
   let prompt = `You are EduFin AI, a smart admin assistant for a college fee management system.
@@ -153,8 +157,8 @@ const chat = async (req, res) => {
     }
 
     // Check AI access for the user's college
-    if (req.user && req.user.collegeId && req.user.role !== 'superadmin') {
-      const college = await College.findById(req.user.collegeId);
+    if (req.user && req.user.collegeId && req.user.role !== 'superadmin' && isUUID(req.user.collegeId)) {
+      const college = await College.findByPk(req.user.collegeId, { raw: true });
       if (college && college.aiAccess === false) {
         return res.json({
           actions: [],
@@ -179,23 +183,28 @@ const chat = async (req, res) => {
       userContextStr = `Name: ${req.user.name}\nRole: ${req.user.role}`;
       try {
         if (req.user.role === 'superadmin') {
-          const colleges = await College.find().select('name code aiAccess tokenCount promptCount');
+          const colleges = await College.findAll({
+            attributes: ['name', 'code', 'aiAccess', 'tokenCount', 'promptCount'],
+            raw: true
+          });
           userContextStr += `\n\n=== SYSTEM DATA (COLLEGES) ===\n`;
           colleges.forEach(c => {
             userContextStr += `- ${c.name} (Code: ${c.code}): AI Access=${c.aiAccess ? 'Enabled' : 'Disabled'}, Tokens Used=${c.tokenCount || 0}, Prompts Used=${c.promptCount || 0}\n`;
           });
         } else if (req.user.role === 'cashier') {
-          const Payment = require('../models/Payment');
           const startOfDay = new Date();
           startOfDay.setHours(0, 0, 0, 0);
           const endOfDay = new Date();
           endOfDay.setHours(23, 59, 59, 999);
 
-          const payments = await Payment.find({
-            collegeId: req.user.collegeId,
-            paymentMethod: 'CASH',
-            status: 'SUCCESS',
-            paidAt: { $gte: startOfDay, $lte: endOfDay }
+          const payments = await Payment.findAll({
+            where: {
+              collegeId: req.user.collegeId,
+              paymentMethod: 'CASH',
+              status: 'SUCCESS',
+              paidAt: { [Op.gte]: startOfDay, [Op.lte]: endOfDay }
+            },
+            raw: true
           });
 
           const totalToday = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -203,7 +212,11 @@ const chat = async (req, res) => {
           userContextStr += `Total Cash Collected Today: ₹${totalToday}\n`;
           userContextStr += `Transactions Today: ${payments.length}\n`;
         } else {
-          const pendingFees = await StudentFee.find({ studentId: req.user._id, status: 'PENDING' }).populate('feeId');
+          const rawFees = await StudentFee.findAll({
+            where: { studentId: req.user._id, status: 'PENDING' },
+            raw: true
+          });
+          const pendingFees = await populate(rawFees, 'feeId', Fee);
           if (pendingFees.length > 0) {
             const totalPending = pendingFees.reduce((sum, f) => sum + f.finalAmount, 0);
             userContextStr += `\nTotal Pending Fees: ₹${totalPending}\nPending Fee Details:\n` +
@@ -276,21 +289,20 @@ const chat = async (req, res) => {
 
     const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content || '';
-    if (req.user && req.user.collegeId) {
+    if (req.user && req.user.collegeId && isUUID(req.user.collegeId)) {
       const tokensUsed = data.usage?.total_tokens || 0;
-      College.findByIdAndUpdate(req.user.collegeId, {
-        $inc: { promptCount: 1, tokenCount: tokensUsed }
-      }).catch(() => { });
+      College.increment(
+        { promptCount: 1, tokenCount: tokensUsed },
+        { where: { _id: req.user.collegeId } }
+      ).catch(() => {});
     }
 
     // Parse JSON response from AI
     let parsed;
     try {
-      // Strip possible markdown code fences
       const cleaned = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       parsed = JSON.parse(cleaned);
       if (!parsed.actions && parsed.intent) {
-        // Fallback for older format if LLM ignores instructions
         parsed.actions = parsed.intent === 'CHAT' ? [] : [{ intent: parsed.intent, data: parsed.data || {} }];
       }
       if (!parsed.actions) parsed.actions = [];
@@ -300,8 +312,7 @@ const chat = async (req, res) => {
 
     // SERVER-SIDE SECURITY CHECK
     const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'superadmin');
-    
-    // Check all actions in the array
+
     if (!isAdmin) {
       let hasUnauthorized = false;
       for (const action of parsed.actions) {
@@ -311,7 +322,7 @@ const chat = async (req, res) => {
           break;
         }
       }
-      
+
       if (hasUnauthorized) {
         parsed = {
           actions: [],
@@ -332,9 +343,8 @@ const getStatus = async (req, res) => {
     if (req.user && (req.user.role === 'superadmin' || req.user.role === 'admin')) {
       return res.json({ enabled: true });
     }
-    if (req.user && req.user.collegeId) {
-      const College = require('../models/College');
-      const college = await College.findById(req.user.collegeId);
+    if (req.user && req.user.collegeId && isUUID(req.user.collegeId)) {
+      const college = await College.findByPk(req.user.collegeId, { raw: true });
       return res.json({ enabled: college ? (college.aiAccess !== false) : true });
     }
     res.json({ enabled: true });

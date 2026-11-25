@@ -1,7 +1,8 @@
-require('dotenv').config({ override: true });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const { connectDB, isConnected } = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -36,30 +37,14 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/mentor', mentorRoutes);
 app.use('/api/superadmin', superadminRoutes);
 
-// Connect to MongoDB
-const connectDB = async () => {
-  try {
-    if (mongoose.connection.readyState >= 1) {
-      return;
-    }
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/edufin', {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log('Connected to MongoDB');
-  } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-  }
-};
-
+// Connect to Supabase Postgres (creates tables on first run)
 connectDB();
 
 app.get('/api/health', async (req, res) => {
-  const dbState = mongoose.connection.readyState;
-  const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
-  res.json({ 
-    status: 'ok', 
-    dbState: states[dbState] || dbState,
-    uriSet: !!process.env.MONGO_URI 
+  res.json({
+    status: 'ok',
+    dbState: isConnected() ? 'connected' : 'disconnected',
+    uriSet: !!process.env.DATABASE_URL,
   });
 });
 
