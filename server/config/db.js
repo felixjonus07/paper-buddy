@@ -1,24 +1,25 @@
 const { Sequelize } = require('sequelize');
+const pg = require('pg');
 
 /**
  * Supabase Postgres connection.
- * Set DATABASE_URL in server/.env to the Supabase connection string
- * (Project Settings -> Database -> Connection string -> URI).
- * Use the "Session pooler" URI (port 5432) if your network has no IPv6.
+ * Set DATABASE_URL in server/.env (local) or Vercel Environment Variables (prod).
+ * On Vercel, you can use the transaction-mode pooler (port 6543) or session-mode (5432).
  */
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  console.warn('[db] DATABASE_URL is not set. Add your Supabase Postgres URI to server/.env');
+  console.warn('[db] DATABASE_URL is not set.');
 }
 
 const isLocal = connectionString && /localhost|127\.0\.0\.1/.test(connectionString);
 
 const sequelize = new Sequelize(connectionString || 'postgres://postgres:postgres@127.0.0.1:5432/postgres', {
   dialect: 'postgres',
+  dialectModule: pg, // Ensures Vercel @vercel/node bundles `pg` alongside `sequelize`
   logging: false,
   dialectOptions: isLocal ? {} : { ssl: { require: true, rejectUnauthorized: false } },
-  pool: { max: 10, min: 0, idle: 10000, acquire: 30000 },
+  pool: { max: 5, min: 0, idle: 10000, acquire: 30000 },
   define: {
     freezeTableName: true,
     timestamps: false,
@@ -26,19 +27,33 @@ const sequelize = new Sequelize(connectionString || 'postgres://postgres:postgre
 });
 
 let connected = false;
+let connectPromise = null;
 
 const connectDB = async () => {
-  try {
-    await sequelize.authenticate();
-    // Load models + associations, then create/alter tables to match the models
-    require('../models');
-    await sequelize.sync({ alter: process.env.DB_SYNC_ALTER === 'true' });
-    connected = true;
-    console.log('Connected to Supabase Postgres');
-  } catch (err) {
-    connected = false;
-    console.error('Postgres connection error:', err.message);
-  }
+  if (connected) return true;
+  if (connectPromise) return connectPromise;
+
+  connectPromise = (async () => {
+    try {
+      await sequelize.authenticate();
+      require('../models');
+      // Tables are already created in Supabase; only run sync() locally or when explicitly requested
+      if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+        await sequelize.sync({ alter: process.env.DB_SYNC_ALTER === 'true' });
+      }
+      connected = true;
+      console.log('Connected to Supabase Postgres');
+      return true;
+    } catch (err) {
+      connected = false;
+      console.error('Postgres connection error:', err.message);
+      return false;
+    } finally {
+      connectPromise = null;
+    }
+  })();
+
+  return connectPromise;
 };
 
 const isConnected = () => connected;

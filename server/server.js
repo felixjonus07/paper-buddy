@@ -37,8 +37,10 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/mentor', mentorRoutes);
 app.use('/api/superadmin', superadminRoutes);
 
-// Connect to Supabase Postgres (creates tables on first run)
-connectDB();
+// Connect to Supabase Postgres on startup in non-serverless environments
+if (!process.env.VERCEL) {
+  connectDB();
+}
 
 app.get('/api/health', async (req, res) => {
   res.json({
